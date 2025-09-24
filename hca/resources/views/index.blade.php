@@ -78,9 +78,7 @@
                     <li class="nav-item me-2">
                         <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
                     </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a>
-                    </li>
+                  
                 @endif
             </ul>
         </div>
@@ -386,4 +384,4 @@
     });
 </script>
 </body>
-</html>
+</html>Z
