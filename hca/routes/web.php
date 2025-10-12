@@ -4,6 +4,7 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\CheckoutController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
@@ -20,17 +21,24 @@ Route::get('/contact', fn() => view('contact'))->name('contact');
 // Product Details
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
 
-// Cart + Checkout (protected by auth)
+// Authentication
+Route::post('/login', [UserController::class, 'login'])->name('login');
+Route::post('/register', [UserController::class, 'register'])->name('register');
+Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+// Cart + Checkout + Profile (protected by auth)
 Route::middleware('auth')->group(function () {
+    // Cart Routes
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
     Route::put('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/remove/{id}', [CartController::class, 'remove'])->name('cart.remove');
 
+    // Checkout Routes
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
-    // ✅ Thank You Page
+    // Thank You Page
     Route::get('/thankyou/{order_id}', function ($order_id) {
         return view('pages.thankyou', [
             'order_id' => $order_id,
@@ -39,9 +47,11 @@ Route::middleware('auth')->group(function () {
             })->count()
         ]);
     })->name('thankyou');
-});
 
-// Authentication
-Route::post('/login', [UserController::class, 'login'])->name('login');
-Route::post('/register', [UserController::class, 'register'])->name('register');
-Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+    // Profile/Settings Routes
+    Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
+    Route::put('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
+    Route::get('/profile/purchase-history', [ProfileController::class, 'purchaseHistory'])->name('profile.purchase-history');
+    Route::get('/profile/track-order', [ProfileController::class, 'trackOrder'])->name('profile.track-order');
+});

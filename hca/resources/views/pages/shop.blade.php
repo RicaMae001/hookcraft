@@ -41,7 +41,7 @@
 </div>
 
 <!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light sticky-top">
+ <nav class="navbar navbar-expand-lg navbar-light sticky-top">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{{ route('home') }}">
             <img src="{{ asset('asset/images/logo.jpg') }}" alt="Logo" width="40" height="40" class="rounded-circle me-2">
@@ -52,7 +52,7 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarContent">
             <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link " href="{{ route('home') }}">Home</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link active" href="{{ route('shop') }}">Shop</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('about') }}">About</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('gallery') }}">Gallery</a></li>
@@ -78,19 +78,45 @@
                 <!-- User -->
                 @if($isLoggedIn)
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle p-0 border-0 bg-transparent" href="#" data-bs-toggle="dropdown">
-                            <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" width="40" height="40" class="rounded-circle">
+                        <a class="nav-link dropdown-toggle p-0 border-0 bg-transparent d-flex align-items-center" 
+                           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
+                                 width="40" height="40" class="rounded-circle" style="object-fit: cover; border: 2px solid #FFB6C1;">
                         </a>
-                        <ul class="dropdown-menu dropdown-menu-end mt-2 p-3 text-center" style="min-width:220px;">
-                            <li class="mb-3">
-                                <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" width="60" height="60" class="rounded-circle shadow">
+                        <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" style="min-width: 250px;">
+                            <!-- User Info Header -->
+                            <li class="px-3 py-3 border-bottom">
+                                <div class="d-flex align-items-center">
+                                    <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
+                                         width="50" height="50" class="rounded-circle me-3" style="border: 2px solid #FFB6C1;">
+                                    <div>
+                                        <div class="fw-bold">{{ $user->name }}</div>
+                                        <small class="text-muted">{{ $user->email }}</small>
+                                    </div>
+                                </div>
                             </li>
-                            <li class="fw-bold mb-2">{{ $user->name }}</li>
-                            <li><hr class="dropdown-divider"></li>
+
+                            <!-- Menu Items -->
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('profile.index') }}">
+                                    <i class="bi bi-person-circle me-2"></i>My Account
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('profile.purchase-history') }}">
+                                    <i class="bi bi-clock-history me-2"></i>Purchase History
+                                </a>
+                            </li>
+                            <li>
+                                <a class="dropdown-item py-2" href="{{ route('profile.track-order') }}">
+                                    <i class="bi bi-truck me-2"></i>Track Order
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider my-2"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
-                                    <button class="dropdown-item text-danger fw-medium">
+                                    <button class="dropdown-item text-danger py-2" type="submit">
                                         <i class="bi bi-box-arrow-right me-2"></i>Logout
                                     </button>
                                 </form>
@@ -100,9 +126,6 @@
                 @else
                     <li class="nav-item me-2">
                         <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#signupModal">Sign Up</a>
                     </li>
                 @endif
             </ul>
