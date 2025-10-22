@@ -67,6 +67,11 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
     
+    // ⭐ ADD THESE NEW NOTIFICATION ROUTES
+    Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationAsRead'])->name('admin.notifications.markRead');
+    Route::get('/notifications/mark-all-read', [AdminController::class, 'markAllNotificationsAsRead'])->name('admin.notifications.markAllRead');
+    Route::get('/notifications/clear-all', [AdminController::class, 'clearAllNotifications'])->name('admin.notifications.clearAll');
+    
     // User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
@@ -109,6 +114,7 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
     // Delivery Management
     Route::get('/deliveries', [DeliveryController::class, 'deliveries'])->name('delivery.deliveries');
     Route::put('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
+    Route::post('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus'); // ⭐ ADD THIS LINE
     
     // Delivery History
     Route::get('/history', [DeliveryController::class, 'history'])->name('delivery.history');

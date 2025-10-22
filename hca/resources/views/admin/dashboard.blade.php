@@ -7,6 +7,75 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .notification-dropdown {
+            position: absolute;
+            right: 0;
+            top: 100%;
+            width: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            margin-top: 10px;
+        }
+        .notification-dropdown.show {
+            display: block;
+        }
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+        }
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+        .notification-item.unread {
+            background: #e3f2fd;
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        .notification-time {
+            font-size: 11px;
+            color: #999;
+        }
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        .notification-icon.delivery {
+            background: #e3f2fd;
+            color: #2196f3;
+        }
+    </style>
 </head>
 <body>
     @include('admin.layouts.navbar')
@@ -25,6 +94,53 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-calendar"></i> Today
                             </button>
+                        </div>
+                        
+                        <!-- Notification Bell -->
+                        <div class="position-relative">
+                            <div class="notification-bell" onclick="toggleNotifications()">
+                                <i class="fas fa-bell fa-2x text-primary"></i>
+                                @if($unreadCount > 0)
+                                <span class="notification-badge">{{ $unreadCount }}</span>
+                                @endif
+                            </div>
+                            
+                            <!-- Notification Dropdown -->
+                            <div class="notification-dropdown" id="notificationDropdown">
+                                <div class="notification-header">
+                                    <h6 class="mb-0"><strong>Notifications</strong></h6>
+                                    @if($unreadCount > 0)
+                                    <a href="{{ route('admin.notifications.markAllRead') }}" class="btn btn-sm btn-link text-decoration-none">
+                                        Mark all read
+                                    </a>
+                                    @endif
+                                </div>
+                                
+                                <div class="notification-list">
+                                    @forelse($notifications as $notification)
+                                    <div class="notification-item {{ $notification['is_read'] ? '' : 'unread' }}" onclick="markAsRead('{{ $notification['id'] }}', '{{ $notification['order_id'] }}')">
+                                        <div class="d-flex">
+                                            <div class="notification-icon delivery">
+                                                <i class="fas fa-truck"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-1"><strong>{{ $notification['title'] }}</strong></h6>
+                                                <p class="mb-1 small">{{ $notification['message'] }}</p>
+                                                <span class="notification-time">
+                                                    <i class="far fa-clock"></i> 
+                                                    {{ \Carbon\Carbon::parse($notification['timestamp'])->diffForHumans() }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @empty
+                                    <div class="text-center py-5 text-muted">
+                                        <i class="far fa-bell-slash fa-3x mb-3"></i>
+                                        <p>No notifications yet</p>
+                                    </div>
+                                    @endforelse
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,6 +288,37 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
+        // Notification Toggle
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const bell = document.querySelector('.notification-bell');
+            const dropdown = document.getElementById('notificationDropdown');
+            
+            if (!bell.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Mark notification as read
+        function markAsRead(notificationId, orderId) {
+            fetch('/admin/notifications/' + notificationId + '/read', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            }).then(response => {
+                if (response.ok) {
+                    window.location.href = '/admin/orders/' + orderId;
+                }
+            });
+        }
+
         // Sales Chart
         const salesCtx = document.getElementById('salesChart').getContext('2d');
         const salesChart = new Chart(salesCtx, {

@@ -404,7 +404,7 @@
                                         <tr>
                                             <td>
                                                 <div class="d-flex align-items-center">
-                                                    <img src="{{ asset('uploads/products/' . $item->image) }}" width="40" class="rounded me-2">
+                                                    <img src="{{ asset('asset/images/' . $item->image) }}" width="40" class="rounded me-2">
                                                     {{ $item->name }}
                                                 </div>
                                             </td>

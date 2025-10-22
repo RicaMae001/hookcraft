@@ -65,6 +65,9 @@
                         <button class="btn btn-info me-2" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
                             <i class="fas fa-folder-plus me-2"></i>Add Category
                         </button>
+                        <button class="btn btn-secondary me-2" data-bs-toggle="modal" data-bs-target="#manageCategoriesModal">
+                            <i class="fas fa-cog me-2"></i>Manage Categories
+                        </button>
                         <button class="btn btn-pink px-4" data-bs-toggle="modal" data-bs-target="#addProductModal">
                             <i class="fas fa-plus-circle me-2"></i>Add New Product
                         </button>
@@ -255,6 +258,137 @@
         </div>
     </div>
 
+    <!-- Manage Categories Modal -->
+    <div class="modal fade" id="manageCategoriesModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-secondary text-white">
+                    <h5 class="modal-title"><i class="fas fa-cog me-2"></i>Manage Categories</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Category Name</th>
+                                    <th>Description</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($categories as $category)
+                                    <tr>
+                                        <td><span class="badge bg-secondary">#{{ $category->id }}</span></td>
+                                        <td><strong>{{ $category->name }}</strong></td>
+                                        <td>{{ $category->description ?? 'No description' }}</td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-warning" onclick="openEditCategory({{ $category->id }})" title="Edit Category">
+                                                    <i class="fas fa-edit"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="confirmDeleteCategory({{ $category->id }}, '{{ $category->name }}')" title="Delete Category">
+                                                    <i class="fas fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Category Modals (Outside Manage Modal) -->
+    @foreach($categories as $category)
+        <div class="modal fade" id="editCategoryModal{{ $category->id }}" tabindex="-1">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <form method="POST" action="{{ route('admin.categories.update', $category->id) }}">
+                        @csrf
+                        @method('PUT')
+                        <div class="modal-header bg-warning text-white">
+                            <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Edit Category</h5>
+                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label class="form-label"><i class="fas fa-tag me-2"></i>Category Name *</label>
+                                <input type="text" name="name" class="form-control" value="{{ $category->name }}" required>
+                            </div>
+                            <div class="mb-3">
+                              
+                                
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button type="submit" class="btn btn-warning"><i class="fas fa-save me-2"></i>Update Category</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endforeach
+
+    <!-- Delete Category Confirmation Modal -->
+    <div class="modal fade" id="deleteCategoryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-triangle me-2"></i>Confirm Delete</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="fas fa-folder-open fa-4x text-danger mb-3"></i>
+                    <h5>Delete <strong id="deleteCategoryName"></strong>?</h5>
+                    <p class="text-muted">This will also affect products in this category!</p>
+                </div>
+                <div class="modal-footer justify-content-center">
+                    <form id="deleteCategoryForm" method="POST" class="d-inline">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger px-4">Delete</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Category Modal -->
+    <div class="modal fade" id="addCategoryModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form method="POST" action="{{ route('admin.categories.store') }}">
+                    @csrf
+                    <div class="modal-header bg-info text-white">
+                        <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>Add New Category</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label"><i class="fas fa-tag me-2"></i>Category Name *</label>
+                            <input type="text" name="name" class="form-control" placeholder="Enter category name" required>
+                        </div>
+                        
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-info"><i class="fas fa-plus me-2"></i>Add Category</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
@@ -339,6 +473,23 @@
             document.getElementById('deleteProductName').textContent = productName;
             document.getElementById('deleteForm').action = '/admin/products/' + productId;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        }
+
+        function confirmDeleteCategory(categoryId, categoryName) {
+            document.getElementById('deleteCategoryName').textContent = categoryName;
+            document.getElementById('deleteCategoryForm').action = '/admin/categories/' + categoryId;
+            new bootstrap.Modal(document.getElementById('deleteCategoryModal')).show();
+        }
+
+        function openEditCategory(categoryId) {
+            // Close the manage categories modal first
+            const manageCategoriesModal = bootstrap.Modal.getInstance(document.getElementById('manageCategoriesModal'));
+            manageCategoriesModal.hide();
+            
+            // Wait for the modal to close, then open the edit modal
+            setTimeout(function() {
+                new bootstrap.Modal(document.getElementById('editCategoryModal' + categoryId)).show();
+            }, 300);
         }
 
         document.getElementById('searchProduct').addEventListener('keyup', function() {
