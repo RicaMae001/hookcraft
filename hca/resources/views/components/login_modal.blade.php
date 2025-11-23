@@ -12,7 +12,7 @@
           <input type="password" name="password" class="form-control mb-2" placeholder="Password" required>
         </div>
         <div class="modal-footer">
-          <button type="submit" class="btn btn-primary">ay ambot</button>
+          <button type="submit" class="btn btn-primary">Login</button>
         </div>
       </form>
     </div>
