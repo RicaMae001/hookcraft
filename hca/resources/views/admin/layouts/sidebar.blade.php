@@ -21,6 +21,12 @@
                     <i class="fas fa-users me-2"></i>Users
                 </a>
             </li>
+            <!-- Gallery Management -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}" href="{{ route('admin.gallery.index') }}">
+                    <i class="fas fa-images me-2"></i>Gallery Management
+                </a>
+            </li>
         </ul>
 
         <h6 class="sidebar-heading d-flex justify-content-between align-items-center px-3 mt-4 mb-1 text-muted">
@@ -46,6 +52,11 @@
             <li class="nav-item">
                 <a class="nav-link" href="{{ route('home') }}" target="_blank">
                     <i class="fas fa-external-link-alt me-2"></i>View Store
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="{{ route('gallery') }}" target="_blank">
+                    <i class="fas fa-eye me-2"></i>View Gallery
                 </a>
             </li>
         </ul>

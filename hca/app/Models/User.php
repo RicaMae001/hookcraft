@@ -29,4 +29,9 @@ class User extends Authenticatable
     
     // Tell Laravel we only have created_at, not updated_at
     const UPDATED_AT = null;
+    
+    public function customizations()
+{
+    return $this->hasMany(ProductCustomization::class);
+}
 }

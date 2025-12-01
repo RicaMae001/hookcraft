@@ -244,9 +244,10 @@
             <img src="{{ asset("asset/images/custom{$i}.png") }}" class="img-fluid" style="width:120px; height:120px; object-fit: cover;" alt="Custom Option">
             @endfor
         </div>
-        <a href="{{ route('shop') }}" class="btn btn-pink btn-lg">
-            <i class="bi bi-palette me-2"></i>Customize Now
-        </a>
+      <!-- Make sure this uses the correct product ID -->
+<a href="{{ route('customization.create', ['id' => 1]) }}" class="btn btn-pink btn-lg">
+    <i class="bi bi-palette me-2"></i>Customize Now
+</a>
     </div>
 </section>
 <!-- Product Modal -->
@@ -410,4 +411,4 @@
     });
 </script>
 </body>
-</html>Z
+</html>

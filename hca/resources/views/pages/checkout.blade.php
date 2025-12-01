@@ -9,6 +9,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylescheckout.css') }}">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         .product-image { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
         body { background-color: #f8f9fa; }
@@ -19,6 +20,39 @@
         .btn { border-radius: 8px; }
         .product-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
         .total-highlight { background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 10px; }
+        
+        /* Map Styles */
+        #map { 
+            height: 400px; 
+            width: 100%; 
+            border-radius: 8px; 
+            margin-bottom: 15px;
+            border: 2px solid #e9ecef;
+        }
+        .map-search-box {
+            position: relative;
+            margin-bottom: 15px;
+        }
+        .map-search-box input {
+            padding-right: 40px;
+        }
+        .map-search-box .search-icon {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #6c757d;
+        }
+        .location-info {
+            background: #e3f2fd;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: none;
+        }
+        .location-info.active {
+            display: block;
+        }
     </style>
 </head>
 <body>
@@ -134,13 +168,44 @@
 
                         <div class="mb-3">
                             <label class="form-label fw-semibold"><i class="bi bi-geo-alt me-1"></i>Delivery Address *</label>
-                            <div class="row g-2">
-                                <div class="col-md-4"><input type="text" class="form-control" name="region" placeholder="Region" required></div>
-                                <div class="col-md-4"><input type="text" class="form-control" name="province" placeholder="Province" required></div>
-                                <div class="col-md-4"><input type="text" class="form-control" name="city" placeholder="City" required></div>
-                                <div class="col-md-6"><input type="text" class="form-control" name="barangay" placeholder="Barangay" required></div>
-                                <div class="col-md-6"><input type="text" class="form-control" name="street" placeholder="Street / House No." required></div>
+                            
+                            <!-- Map Search -->
+                            <div class="map-search-box">
+                                <input type="text" id="mapSearch" class="form-control" placeholder="Search for a location...">
+                                <i class="bi bi-search search-icon"></i>
                             </div>
+
+                            <!-- Map Container -->
+                            <div id="map"></div>
+
+                            <!-- Location Info Display -->
+                            <div class="location-info" id="locationInfo">
+                                <div class="d-flex align-items-center">
+                                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
+                                    <small><strong>Selected Location:</strong> <span id="selectedLocation">Click on the map to select</span></small>
+                                </div>
+                            </div>
+
+                            <!-- Address Fields -->
+                            <div class="row g-2">
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" name="region" id="region" placeholder="Region" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" name="province" id="province" placeholder="Province" required>
+                                </div>
+                                <div class="col-md-4">
+                                    <input type="text" class="form-control" name="city" id="city" placeholder="City" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" name="barangay" id="barangay" placeholder="Barangay" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <input type="text" class="form-control" name="street" id="street" placeholder="Street / House No." required>
+                                </div>
+                            </div>
+                            <input type="hidden" name="latitude" id="latitude">
+                            <input type="hidden" name="longitude" id="longitude">
                         </div>
 
                         <div class="mb-3">
@@ -225,5 +290,138 @@
 </footer>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+    // Initialize map centered on Cebu City, Philippines
+    const map = L.map('map').setView([10.3157, 123.8854], 13);
+    
+    // Add OpenStreetMap tiles
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 19
+    }).addTo(map);
+    
+    let marker = null;
+    
+    // Function to reverse geocode (get address from coordinates)
+    async function reverseGeocode(lat, lng) {
+        try {
+            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Geocoding error:', error);
+            return null;
+        }
+    }
+    
+    // Function to fill address fields
+    function fillAddressFields(address) {
+        if (!address) return;
+        
+        const locationInfo = document.getElementById('locationInfo');
+        const selectedLocation = document.getElementById('selectedLocation');
+        
+        // Extract address components
+        const street = address.road || address.suburb || '';
+        const barangay = address.suburb || address.village || address.neighbourhood || '';
+        const city = address.city || address.town || address.municipality || '';
+        const province = address.state || address.province || '';
+        const region = address.region || 'Region VII';
+        
+        // Fill form fields
+        document.getElementById('street').value = street;
+        document.getElementById('barangay').value = barangay;
+        document.getElementById('city').value = city;
+        document.getElementById('province').value = province;
+        document.getElementById('region').value = region;
+        
+        // Show location info
+        selectedLocation.textContent = address.display_name || 'Location selected';
+        locationInfo.classList.add('active');
+    }
+    
+    // Handle map clicks
+    map.on('click', async function(e) {
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        // Store coordinates
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        
+        // Remove existing marker
+        if (marker) {
+            map.removeLayer(marker);
+        }
+        
+        // Add new marker
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        // Get address and fill fields
+        const data = await reverseGeocode(lat, lng);
+        if (data && data.address) {
+            fillAddressFields(data.address);
+        }
+    });
+    
+    // Search functionality
+    const searchInput = document.getElementById('mapSearch');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length < 3) return;
+        
+        searchTimeout = setTimeout(async () => {
+            try {
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&addressdetails=1&limit=1`);
+                const results = await response.json();
+                
+                if (results.length > 0) {
+                    const result = results[0];
+                    const lat = parseFloat(result.lat);
+                    const lng = parseFloat(result.lon);
+                    
+                    // Remove existing marker
+                    if (marker) {
+                        map.removeLayer(marker);
+                    }
+                    
+                    // Add marker and center map
+                    marker = L.marker([lat, lng]).addTo(map);
+                    map.setView([lat, lng], 15);
+                    
+                    // Store coordinates
+                    document.getElementById('latitude').value = lat;
+                    document.getElementById('longitude').value = lng;
+                    
+                    // Fill address fields
+                    if (result.address) {
+                        fillAddressFields(result.address);
+                    }
+                }
+            } catch (error) {
+                console.error('Search error:', error);
+            }
+        }, 500);
+    });
+    
+    // Try to get user's current location
+    if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                const lat = position.coords.latitude;
+                const lng = position.coords.longitude;
+                map.setView([lat, lng], 15);
+            },
+            function(error) {
+                console.log('Location access denied or unavailable');
+            }
+        );
+    }
+</script>
 </body>
 </html>

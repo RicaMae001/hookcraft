@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use App\Models\GalleryImage;
 
 class AdminController extends Controller
 {
@@ -636,5 +637,143 @@ class AdminController extends Controller
     {
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->delete();
         return redirect()->back()->with('success', 'Delivery coordinator deleted successfully');
+    }
+
+    // ⭐ GALLERY MANAGEMENT METHODS (Integrated from AdminGalleryController)
+    
+    /**
+     * Display gallery images
+     */
+    public function galleryIndex()
+    {
+        $galleries = GalleryImage::orderBy('display_order', 'asc')->paginate(12);
+        return view('admin.gallery.index', compact('galleries'));
+    }
+
+    /**
+     * Show gallery creation form
+     */
+    public function galleryCreate()
+    {
+        return view('admin.gallery.create');
+    }
+
+    /**
+     * Store new gallery image
+     */
+    public function galleryStore(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category' => 'required|in:birthday,casual,tiny,wedding,custom',
+            'display_order' => 'nullable|integer',
+            'is_active' => 'boolean'
+        ]);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('asset/images'), $imageName);
+
+            GalleryImage::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'image_path' => $imageName,
+                'category' => $request->category,
+                'display_order' => $request->display_order ?? 0,
+                'is_active' => $request->has('is_active') ? 1 : 0,
+                'admin_id' => session('admin_id') // Using session admin_id instead of Auth::guard('admin')->id()
+            ]);
+
+            return redirect()->route('admin.gallery.index')
+                ->with('success', 'Gallery image added successfully!');
+        }
+
+        return back()->with('error', 'Failed to upload image.');
+    }
+
+    /**
+     * Show gallery edit form
+     */
+    public function galleryEdit($id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+        return view('admin.gallery.edit', compact('gallery'));
+    }
+
+    /**
+     * Update gallery image
+     */
+    public function galleryUpdate(Request $request, $id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category' => 'required|in:birthday,casual,tiny,wedding,custom',
+            'display_order' => 'nullable|integer',
+            'is_active' => 'boolean'
+        ]);
+
+        $imageName = $gallery->image_path;
+
+        // Handle new image upload
+        if ($request->hasFile('image')) {
+            // Delete old image
+            if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
+                unlink(public_path('asset/images/' . $gallery->image_path));
+            }
+
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('asset/images'), $imageName);
+        }
+
+        $gallery->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'image_path' => $imageName,
+            'category' => $request->category,
+            'display_order' => $request->display_order ?? 0,
+            'is_active' => $request->has('is_active') ? 1 : 0,
+        ]);
+
+        return redirect()->route('admin.gallery.index')
+            ->with('success', 'Gallery image updated successfully!');
+    }
+
+    /**
+     * Delete gallery image
+     */
+    public function galleryDestroy($id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+
+        // Delete image file
+        if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
+            unlink(public_path('asset/images/' . $gallery->image_path));
+        }
+
+        $gallery->delete();
+
+        return redirect()->route('admin.gallery.index')
+            ->with('success', 'Gallery image deleted successfully!');
+    }
+
+    /**
+     * Toggle gallery image status
+     */
+    public function galleryToggleStatus($id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+        $gallery->is_active = !$gallery->is_active;
+        $gallery->save();
+
+        return back()->with('success', 'Gallery status updated successfully!');
     }
 }

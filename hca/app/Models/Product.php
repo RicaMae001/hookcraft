@@ -26,4 +26,20 @@ class Product extends Model
     {
         return $this->belongsTo(Category::class);
     }
+    // Add these methods to your existing Product model:
+
+public function customizations()
+{
+    return $this->hasMany(ProductCustomization::class);
+}
+
+public function customizableProduct()
+{
+    return $this->hasOne(CustomizableProduct::class);
+}
+
+public function isCustomizable()
+{
+    return $this->customizableProduct && $this->customizableProduct->is_customizable;
+}
 }

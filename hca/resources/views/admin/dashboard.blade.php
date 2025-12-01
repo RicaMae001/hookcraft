@@ -75,6 +75,7 @@
             background: #e3f2fd;
             color: #2196f3;
         }
+
     </style>
 </head>
 <body>
@@ -94,6 +95,21 @@
                             <button type="button" class="btn btn-sm btn-outline-secondary">
                                 <i class="fas fa-calendar"></i> Today
                             </button>
+                        </div>
+                        
+                        <!-- Export Dropdown -->
+                        <div class="btn-group me-2">
+                            <button type="button" class="btn btn-sm btn-success dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-file-csv"></i> Export Reports
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); exportOrdersCSV();">
+                                    <i class="fas fa-shopping-cart me-2"></i>Orders Report
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="event.preventDefault(); exportSalesCSV();">
+                                    <i class="fas fa-chart-line me-2"></i>Sales Report
+                                </a></li>
+                            </ul>
                         </div>
                         
                         <!-- Notification Bell -->
@@ -285,6 +301,8 @@
         </div>
     </div>
 
+
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
@@ -317,6 +335,51 @@
                     window.location.href = '/admin/orders/' + orderId;
                 }
             });
+        }
+
+        // Export Orders to CSV
+        function exportOrdersCSV() {
+            const orders = {!! json_encode($recentOrders) !!};
+            
+            let csv = 'Order ID,Customer Name,Total,Payment Status,Delivery Status,Date\n';
+            
+            orders.forEach(order => {
+                const total = parseFloat(order.total).toFixed(2);
+                const date = new Date(order.created_at).toLocaleDateString();
+                csv += `#${order.id},"${order.customer_name}",${total},${order.payment_status},${order.delivery_status},"${date}"\n`;
+            });
+            
+            downloadCSV(csv, `orders_report_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        // Export Sales to CSV
+        function exportSalesCSV() {
+            const salesData = {!! json_encode($monthlySales) !!};
+            
+            let csv = 'Month,Total Sales\n';
+            
+            salesData.forEach(item => {
+                const total = parseFloat(item.total).toFixed(2);
+                csv += `"${item.month}",${total}\n`;
+            });
+            
+            downloadCSV(csv, `sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+        }
+
+        // Download CSV Helper Function
+        function downloadCSV(csvContent, filename) {
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            
+            if (link.download !== undefined) {
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', filename);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
         }
 
         // Sales Chart

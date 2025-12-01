@@ -7,6 +7,8 @@ use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DeliveryController;
+use App\Http\Controllers\CustomizationController;
+use App\Http\Controllers\GalleryController; // ADD THIS LINE
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
@@ -16,9 +18,9 @@ Route::get('/', [ProductController::class, 'index'])->name('home');
 
 // Shop, About, Gallery, Contact
 Route::get('/shop', [ProductController::class, 'shop'])->name('shop');
-Route::get('/about', fn() => view('about'))->name('about');
-Route::get('/gallery', fn() => view('gallery'))->name('gallery');
-Route::get('/contact', fn() => view('contact'))->name('contact');
+Route::get('/about', [ProductController::class, 'about'])->name('about');
+Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery'); // CHANGED TO GalleryController
+Route::get('/contact', [ProductController::class, 'contact'])->name('contact');
 
 // Product Details
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
@@ -56,6 +58,15 @@ Route::middleware('auth')->group(function () {
     Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.update-password');
     Route::get('/profile/purchase-history', [ProfileController::class, 'purchaseHistory'])->name('profile.purchase-history');
     Route::get('/profile/track-order', [ProfileController::class, 'trackOrder'])->name('profile.track-order');
+    
+    // Customization Routes
+    Route::get('/product/{id}/customize', [CustomizationController::class, 'create'])->name('customization.create');
+    Route::post('/product/{id}/customize', [CustomizationController::class, 'store'])->name('customization.store');
+    Route::get('/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
+    Route::get('/customization/{id}', [CustomizationController::class, 'show'])->name('customization.show');
+    Route::get('/customization/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
+    Route::put('/customization/{id}', [CustomizationController::class, 'update'])->name('customization.update');
+    Route::delete('/customization/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
 });
 
 // Unified Staff Login (Admin & Delivery)
@@ -67,7 +78,7 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     Route::get('/dashboard', [AdminController::class, 'dashboard'])->name('admin.dashboard');
     Route::post('/logout', [AdminController::class, 'logout'])->name('admin.logout');
     
-    // ⭐ ADD THESE NEW NOTIFICATION ROUTES
+    // Notification Routes
     Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationAsRead'])->name('admin.notifications.markRead');
     Route::get('/notifications/mark-all-read', [AdminController::class, 'markAllNotificationsAsRead'])->name('admin.notifications.markAllRead');
     Route::get('/notifications/clear-all', [AdminController::class, 'clearAllNotifications'])->name('admin.notifications.clearAll');
@@ -104,6 +115,18 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     Route::post('/staff/delivery', [AdminController::class, 'storeDelivery'])->name('admin.staff.delivery.store');
     Route::put('/staff/delivery/{id}', [AdminController::class, 'updateDelivery'])->name('admin.staff.delivery.update');
     Route::delete('/staff/delivery/{id}', [AdminController::class, 'deleteDelivery'])->name('admin.staff.delivery.delete');
+    
+    // ⭐ GALLERY MANAGEMENT ROUTES (UPDATED TO USE GalleryController)
+    Route::prefix('gallery')->name('admin.gallery.')->group(function () {
+        Route::get('/', [GalleryController::class, 'adminIndex'])->name('index');
+        Route::get('/create', [GalleryController::class, 'create'])->name('create');
+        Route::post('/', [GalleryController::class, 'store'])->name('store');
+        Route::get('/{id}/edit', [GalleryController::class, 'edit'])->name('edit');
+        Route::put('/{id}', [GalleryController::class, 'update'])->name('update');
+        Route::delete('/{id}', [GalleryController::class, 'destroy'])->name('destroy');
+        Route::patch('/{id}/toggle-status', [GalleryController::class, 'toggleStatus'])->name('toggle-status');
+        Route::post('/update-order', [GalleryController::class, 'updateOrder'])->name('update-order');
+    });
 });
 
 // Delivery Routes
@@ -114,7 +137,7 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
     // Delivery Management
     Route::get('/deliveries', [DeliveryController::class, 'deliveries'])->name('delivery.deliveries');
     Route::put('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
-    Route::post('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus'); // ⭐ ADD THIS LINE
+    Route::post('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
     
     // Delivery History
     Route::get('/history', [DeliveryController::class, 'history'])->name('delivery.history');

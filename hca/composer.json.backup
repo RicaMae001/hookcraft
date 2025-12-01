@@ -28,17 +28,7 @@
                                    "App\\":  "app/",
                                    "Database\\Factories\\":  "database/factories/",
                                    "Database\\Seeders\\":  "database/seeders/"
-                               },
-                     "files":  [
-                                   "app/Http/Kernel.php",
-                                   "app/Console/Kernel.php",
-                                   "app/Exceptions/Handler.php",
-                                   "app/Providers/AppServiceProvider.php",
-                                   "app/Providers/AuthServiceProvider.php",
-                                   "app/Providers/BroadcastServiceProvider.php",
-                                   "app/Providers/EventServiceProvider.php",
-                                   "app/Providers/RouteServiceProvider.php"
-                               ]
+                               }
                  },
     "autoload-dev":  {
                          "psr-4":  {
