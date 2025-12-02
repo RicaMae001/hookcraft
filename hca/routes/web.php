@@ -12,6 +12,9 @@ use App\Http\Controllers\GalleryController; // ADD THIS LINE
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
+use App\Http\Controllers\ChatbotController;
+
+
 
 // Home
 Route::get('/', [ProductController::class, 'index'])->name('home');
@@ -142,3 +145,7 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
     // Delivery History
     Route::get('/history', [DeliveryController::class, 'history'])->name('delivery.history');
 });
+
+//chatbot
+Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
+Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
