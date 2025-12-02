@@ -40,6 +40,15 @@
             @endphp
 
             <ul class="navbar-nav flex-row align-items-center">
+                    <!-- Chatbot Icon -->
+                <li class="nav-item me-3">
+                    <a class="nav-link position-relative" href="{{ route('chatbot') }}" title="AI Assistant">
+                        <i class="bi bi-robot fs-5" style="color: #FF69B4;"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle">
+                            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
+                        </span>
+                    </a>
+                </li>
                 <!-- Cart -->
                 <li class="nav-item me-3">
                     <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
@@ -105,6 +114,11 @@
     </div>
 </nav>
 
+<div class="chatbot-float">
+    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+        <i class="bi bi-robot"></i>
+    </a>
+</div>
 <!-- About Hero Section -->
 <section class="hero" style="padding: 80px 0;">
     <div class="container">

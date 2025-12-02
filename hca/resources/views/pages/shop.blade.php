@@ -12,11 +12,53 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <link rel="stylesheet" href="{{ asset('asset/stylesshop.css') }}">
+<style>
+    .chatbot-float {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
     
-    <style>
-        
+    .chatbot-float a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+        border-radius: 50%;
+        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        color: white;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+    
+    .chatbot-float a:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 25px rgba(255, 105, 180, 0.6);
+    }
+    
+    .chatbot-float i {
+        font-size: 28px;
+    }
 
-    </style>
+    .chatbot-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        }
+        50% {
+            box-shadow: 0 4px 30px rgba(255, 105, 180, 0.7);
+        }
+        100% {
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        }
+    }
+  </style>  
 </head>
 <body>
 
@@ -41,7 +83,7 @@
 </div>
 
 <!-- Navbar -->
- <nav class="navbar navbar-expand-lg navbar-light sticky-top">
+<nav class="navbar navbar-expand-lg navbar-light sticky-top">
     <div class="container">
         <a class="navbar-brand fw-bold" href="{{ route('home') }}">
             <img src="{{ asset('asset/images/logo.jpg') }}" alt="Logo" width="40" height="40" class="rounded-circle me-2">
@@ -65,6 +107,16 @@
             @endphp
 
             <ul class="navbar-nav flex-row align-items-center">
+                <!-- Chatbot Icon -->
+                <li class="nav-item me-3">
+                    <a class="nav-link position-relative" href="{{ route('chatbot') }}" title="AI Assistant">
+                        <i class="bi bi-robot fs-5" style="color: #FF69B4;"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle">
+                            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
+                        </span>
+                    </a>
+                </li>
+
                 <!-- Cart -->
                 <li class="nav-item me-3">
                     <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
@@ -132,7 +184,11 @@
         </div>
     </div>
 </nav>
-
+<div class="chatbot-float">
+    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+        <i class="bi bi-robot"></i>
+    </a>
+</div>
 
 <!-- Shop Layout -->
 <div class="container-fluid">
@@ -341,6 +397,7 @@
         </div>
     </div>
 </footer>
+
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>

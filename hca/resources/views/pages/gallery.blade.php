@@ -256,6 +256,52 @@
             color: #ff69b4;
             margin-bottom: 20px;
         }
+        .chatbot-float {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        z-index: 1000;
+    }
+    
+    .chatbot-float a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 60px;
+        height: 60px;
+        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+        border-radius: 50%;
+        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        color: white;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        margin-bottom: 100px;
+    }
+    
+    .chatbot-float a:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 25px rgba(255, 105, 180, 0.6);
+    }
+    
+    .chatbot-float i {
+        font-size: 28px;
+    }
+
+    .chatbot-pulse {
+        animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+        0% {
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        }
+        50% {
+            box-shadow: 0 4px 30px rgba(255, 105, 180, 0.7);
+        }
+        100% {
+            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        }
+    }
     </style>
 </head>
 <body>
@@ -288,15 +334,27 @@
             @endphp
 
             <ul class="navbar-nav flex-row align-items-center">
+                <!-- Chatbot Icon -->
                 <li class="nav-item me-3">
-                    <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
-                        <i class="bi bi-cart fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
-                            {{ $cartCount ?? 0 }}
+                    <a class="nav-link position-relative" href="{{ route('chatbot') }}" title="AI Assistant">
+                        <i class="bi bi-robot fs-5" style="color: #FF69B4;"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle">
+                            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
                         </span>
                     </a>
                 </li>
 
+                <!-- Cart -->
+                <li class="nav-item me-3">
+                    <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
+                        <i class="bi bi-cart fs-5"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
+                            {{ $cartCount }}
+                        </span>
+                    </a>
+                </li>
+
+                <!-- User -->
                 @if($isLoggedIn)
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle p-0 border-0 bg-transparent d-flex align-items-center" 
@@ -305,6 +363,7 @@
                                  width="40" height="40" class="rounded-circle" style="object-fit: cover; border: 2px solid #FFB6C1;">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" style="min-width: 250px;">
+                            <!-- User Info Header -->
                             <li class="px-3 py-3 border-bottom">
                                 <div class="d-flex align-items-center">
                                     <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
@@ -315,6 +374,8 @@
                                     </div>
                                 </div>
                             </li>
+
+                            <!-- Menu Items -->
                             <li>
                                 <a class="dropdown-item py-2" href="{{ route('profile.index') }}">
                                     <i class="bi bi-person-circle me-2"></i>My Account
@@ -350,6 +411,13 @@
         </div>
     </div>
 </nav>
+
+
+<div class="chatbot-float">
+    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+        <i class="bi bi-robot"></i>
+    </a>
+</div>
 
 <!-- Page Header -->
 <div class="page-header text-center">
