@@ -91,7 +91,7 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
     Route::put('/products/{id}', [AdminController::class, 'updateProduct'])->name('admin.products.update');
-    Route::delete('/products/{id}', [AdminController::class, 'deleteProduct'])->name('admin.products.delete');
+    Route::delete('/products/{id}', [AdminController::class, 'deleteProduct'])->name('admin.products.destroy');
     
     // Category Management
     Route::post('/categories', [AdminController::class, 'storeCategory'])->name('admin.categories.store');

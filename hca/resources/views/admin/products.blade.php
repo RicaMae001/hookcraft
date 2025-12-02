@@ -184,7 +184,9 @@
                                                     <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $product->id }}" title="Edit Product">
                                                         <i class="fas fa-edit"></i>
                                                     </button>
-                                                    <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $product->id }}, '{{ $product->name }}')" title="Delete Product">
+                                                    <button class="btn btn-sm btn-danger"
+                                                            onclick="confirmDelete({{ $product->id }}, '{{ $product->name }}', '{{ route('admin.products.destroy', $product->id) }}')"
+                                                            title="Delete Product">
                                                         <i class="fas fa-trash"></i>
                                                     </button>
                                                 </div>
@@ -288,7 +290,9 @@
                                                 <button class="btn btn-sm btn-warning" onclick="openEditCategory({{ $category->id }})" title="Edit Category">
                                                     <i class="fas fa-edit"></i>
                                                 </button>
-                                                <button class="btn btn-sm btn-danger" onclick="confirmDeleteCategory({{ $category->id }}, '{{ $category->name }}')" title="Delete Category">
+                                                <button class="btn btn-sm btn-danger"
+                                                        onclick="confirmDeleteCategory({{ $category->id }}, '{{ $category->name }}', '{{ route('admin.categories.delete', $category->id) }}')"
+                                                        title="Delete Category">
                                                     <i class="fas fa-trash"></i>
                                                 </button>
                                             </div>
@@ -352,7 +356,7 @@
                     <p class="text-muted">This will also affect products in this category!</p>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <form id="deleteCategoryForm" method="POST" class="d-inline">
+                    <form id="deleteCategoryForm" method="POST">
                         @csrf
                         @method('DELETE')
                         <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
@@ -469,15 +473,15 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function confirmDelete(productId, productName) {
+        function confirmDelete(productId, productName, deleteUrl) {
             document.getElementById('deleteProductName').textContent = productName;
-            document.getElementById('deleteForm').action = '/admin/products/' + productId;
+            document.getElementById('deleteForm').action = deleteUrl;
             new bootstrap.Modal(document.getElementById('deleteModal')).show();
         }
 
-        function confirmDeleteCategory(categoryId, categoryName) {
+        function confirmDeleteCategory(categoryId, categoryName, deleteUrl) {
             document.getElementById('deleteCategoryName').textContent = categoryName;
-            document.getElementById('deleteCategoryForm').action = '/admin/categories/' + categoryId;
+            document.getElementById('deleteCategoryForm').action = deleteUrl;
             new bootstrap.Modal(document.getElementById('deleteCategoryModal')).show();
         }
 

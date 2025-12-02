@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Models\GalleryImage;
+use App\Models\Category; // Add this line
 
 class AdminController extends Controller
 {
@@ -367,15 +368,24 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Product updated successfully');
     }
 
+    // ⭐ FIXED - Delete Product Method
     public function deleteProduct($id)
     {
-        // ⭐ DELETE IMAGE FILE WHEN DELETING PRODUCT
+        // Get product details before deletion
         $product = DB::table('products')->where('id', $id)->first();
-        if ($product && $product->image && file_exists(public_path('asset/images/' . $product->image))) {
+        
+        if (!$product) {
+            return redirect()->back()->withErrors(['error' => 'Product not found']);
+        }
+
+        // Delete the product image file if it exists
+        if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
             unlink(public_path('asset/images/' . $product->image));
         }
 
+        // Delete the product from database
         DB::table('products')->where('id', $id)->delete();
+
         return redirect()->back()->with('success', 'Product deleted successfully');
     }
 
@@ -408,14 +418,10 @@ class AdminController extends Controller
 
     public function deleteCategory($id)
     {
-        $productCount = DB::table('products')->where('category_id', $id)->count();
-        
-        if ($productCount > 0) {
-            return redirect()->back()->withErrors(['error' => 'Cannot delete category with existing products.']);
-        }
+        $category = Category::findOrFail($id);
+        $category->delete();
 
-        DB::table('categories')->where('id', $id)->delete();
-        return redirect()->back()->with('success', 'Category deleted successfully');
+        return redirect()->route('admin.products')->with('success', 'Category deleted successfully.');
     }
 
     // Order Management - ⭐ UPDATED WITH STOCK MANAGEMENT

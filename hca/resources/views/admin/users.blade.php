@@ -123,7 +123,8 @@
                                             <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $user->id }}" title="Edit User">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $user->id }}, '{{ $user->name }}')" title="Delete User">
+                                            <button class="btn btn-sm btn-danger"
+                                                    onclick="confirmDeleteUser({{ $user->id }}, '{{ $user->name }}', '{{ route('admin.users.delete', $user->id) }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -242,11 +243,11 @@
                     <p class="text-muted">This action cannot be undone and will delete all user data!</p>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <form id="deleteForm" method="POST" class="d-inline">
+                    <form id="deleteUserForm" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger px-4">Delete User</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
                 </div>
             </div>
@@ -255,10 +256,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function confirmDelete(userId, userName) {
+        function confirmDeleteUser(userId, userName, deleteUrl) {
             document.getElementById('deleteUserName').textContent = userName;
-            document.getElementById('deleteForm').action = '/admin/users/' + userId;
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            document.getElementById('deleteUserForm').action = deleteUrl;
+            new bootstrap.Modal(document.getElementById('deleteModal')).show(); // <-- Fix here
         }
 
         document.getElementById('searchUser').addEventListener('keyup', function() {
