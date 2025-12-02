@@ -245,7 +245,8 @@
                                             <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $order->id }}" title="Update Status">
                                                 <i class="fas fa-edit"></i>
                                             </button>
-                                            <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $order->id }})" title="Delete Order">
+                                            <button class="btn btn-sm btn-danger"
+                                                    onclick="confirmDeleteOrder({{ $order->id }}, '{{ $order->id }}', '{{ route('admin.orders.delete', $order->id) }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         </div>
@@ -485,7 +486,7 @@
     @endforeach
 
     <!-- Delete Confirmation Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal fade" id="deleteOrderModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -493,16 +494,16 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center py-4">
-                    <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
-                    <h5>Are you sure you want to delete this order?</h5>
+                    <i class="fas fa-file-invoice fa-4x text-danger mb-3"></i>
+                    <h5>Are you sure you want to delete order <strong id="deleteOrderNumber"></strong>?</h5>
                     <p class="text-muted">This action cannot be undone!</p>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <form id="deleteForm" method="POST" class="d-inline">
+                    <form id="deleteOrderForm" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger px-4">Delete Order</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
                 </div>
             </div>
@@ -511,9 +512,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function confirmDelete(orderId) {
-            document.getElementById('deleteForm').action = '/admin/orders/' + orderId;
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        function confirmDeleteOrder(orderId, orderNumber, deleteUrl) {
+            document.getElementById('deleteOrderNumber').textContent = orderNumber;
+            document.getElementById('deleteOrderForm').action = deleteUrl;
+            new bootstrap.Modal(document.getElementById('deleteOrderModal')).show();
         }
 
         document.getElementById('searchOrder').addEventListener('keyup', function() {
