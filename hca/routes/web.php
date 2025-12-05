@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\OrderController;
 
 
 
@@ -150,3 +151,8 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
 //chatbot
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
 Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
+
+Route::middleware(['auth'])->group(function () {
+    // ...other user routes...
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+});
