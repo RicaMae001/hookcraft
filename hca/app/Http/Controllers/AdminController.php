@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Models\GalleryImage;
 use App\Models\Category; // Add this line
+use App\Models\User; // Add this line
 
 class AdminController extends Controller
 {
@@ -287,6 +288,19 @@ class AdminController extends Controller
     {
         DB::table('users')->where('id', $id)->delete();
         return redirect()->back()->with('success', 'User deleted successfully');
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $user = User::findOrFail($id);
+        $user->name = $request->input('name');
+        $user->email = $request->input('email');
+        if ($request->filled('password')) {
+            $user->password = bcrypt($request->input('password'));
+        }
+        $user->save();
+
+        return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
 
     // Product Management

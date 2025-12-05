@@ -89,7 +89,8 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     // User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
-    
+    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+
     // Product Management
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
