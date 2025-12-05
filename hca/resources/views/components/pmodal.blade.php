@@ -35,7 +35,7 @@
                         </div>
 
                         <!-- Stock Info -->
-                        <div class="stock-info">
+                        <div class="stock-info mb-3">
                             <div class="d-flex justify-content-between align-items-center">
                                 <span><i class="fas fa-boxes me-2"></i>Stock Available:</span>
                                 <span id="modalProductStock" class="fw-bold"></span>
@@ -46,39 +46,21 @@
                         <div class="mb-3">
                             <label class="form-label"><i class="fas fa-sort-numeric-up me-2"></i>Quantity</label>
                             <div class="quantity-input-group d-flex">
-                                <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">
+                                <button type="button" class="quantity-btn" id="modalDecreaseBtn">
                                     <i class="fas fa-minus"></i>
                                 </button>
                                 <input type="number" class="form-control quantity-input" id="modalQuantity" value="1" min="1" readonly>
-                                <button type="button" class="quantity-btn" onclick="changeQuantity(1)">
+                                <button type="button" class="quantity-btn" id="modalIncreaseBtn">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Add-ons Section -->
-                        <div class="add-ons-section" id="addOnsSection">
+                        <!-- Add-ons Section (Dynamic) -->
+                        <div class="add-ons-section d-none" id="addOnsSection">
                             <h6><i class="fas fa-plus-circle me-2"></i>Add-ons (Optional)</h6>
                             <div id="addOnsList">
-                                <!-- Example add-ons (make these dynamic later) -->
-                                <div class="add-on-item" data-addon-id="1" data-addon-price="25" onclick="toggleAddOn(this)">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Gift Wrapping</strong>
-                                            <small class="text-muted d-block">Beautiful gift wrap with ribbon</small>
-                                        </div>
-                                        <span class="text-primary fw-bold">+₱25</span>
-                                    </div>
-                                </div>
-                                <div class="add-on-item" data-addon-id="2" data-addon-price="15" onclick="toggleAddOn(this)">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Express Shipping</strong>
-                                            <small class="text-muted d-block">Delivered within 1-2 days</small>
-                                        </div>
-                                        <span class="text-primary fw-bold">+₱15</span>
-                                    </div>
-                                </div>
+                                <!-- Add-ons will be populated dynamically from database -->
                             </div>
                         </div>
 
@@ -104,12 +86,46 @@
     </div>
 </div>
 
+<style>
+.add-on-item {
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 2px solid #e0e0e0;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.add-on-item:hover {
+    border-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.add-on-item.selected {
+    border-color: #28a745;
+    background-color: #d4edda;
+}
+
+.add-on-item .fa-check-circle {
+    color: #28a745;
+    font-size: 1.2em;
+}
+</style>
+
 <script>
+    // Global variables for modal
     let currentProduct = null;
     let selectedAddOns = [];
     let basePrice = 0;
+    let modalInstance = null;
 
+    /**
+     * Open product modal with product details
+     */
     function openProductModal(productElement) {
+        console.log('Opening modal for product:', productElement);
+        
+        // Extract product data from element
         currentProduct = {
             id: productElement.dataset.productId,
             name: productElement.dataset.productName,
@@ -117,122 +133,339 @@
             description: productElement.dataset.productDescription,
             price: parseFloat(productElement.dataset.price),
             stock: parseInt(productElement.dataset.productStock),
-            category: productElement.dataset.productCategoryName
+            category: productElement.dataset.productCategoryName,
+            hasAddons: productElement.dataset.hasAddons === '1',
+            addons: []
         };
 
+        // Parse add-ons from JSON if available
+        if (currentProduct.hasAddons && productElement.dataset.productAddons) {
+            try {
+                const addonsData = JSON.parse(productElement.dataset.productAddons);
+                currentProduct.addons = addonsData.addons || [];
+            } catch (e) {
+                console.error('Error parsing add-ons:', e);
+                currentProduct.addons = [];
+            }
+        }
+
+        console.log('Current product data:', currentProduct);
+
+        // Reset modal state
         selectedAddOns = [];
         basePrice = currentProduct.price;
 
+        // Populate modal with product data
         document.getElementById('modalProductName').textContent = currentProduct.name;
         document.getElementById('modalProductImage').src = currentProduct.image;
+        document.getElementById('modalProductImage').alt = currentProduct.name;
         document.getElementById('modalProductPrice').textContent = `₱${currentProduct.price.toFixed(2)}`;
         document.getElementById('modalProductCategory').textContent = currentProduct.category;
         document.getElementById('modalProductDescription').textContent = currentProduct.description;
         document.getElementById('modalProductStock').textContent = `${currentProduct.stock} pieces`;
         document.getElementById('modalQuantity').value = 1;
+        document.getElementById('modalQuantity').max = currentProduct.stock;
 
-        updateTotalPrice();
-        new bootstrap.Modal(document.getElementById('productModal')).show();
+        // Populate add-ons section
+        populateAddOns();
+
+        // Update total price
+        updateModalTotalPrice();
+
+        // Show modal
+        const modalElement = document.getElementById('productModal');
+        if (!modalInstance) {
+            modalInstance = new bootstrap.Modal(modalElement);
+        }
+        modalInstance.show();
     }
 
-    function changeQuantity(delta) {
+    /**
+     * Populate add-ons dynamically
+     */
+    function populateAddOns() {
+        const addOnsSection = document.getElementById('addOnsSection');
+        const addOnsList = document.getElementById('addOnsList');
+        
+        // Clear previous add-ons
+        addOnsList.innerHTML = '';
+        
+        if (currentProduct.addons && currentProduct.addons.length > 0) {
+            // Show add-ons section
+            addOnsSection.classList.remove('d-none');
+            
+            // Create add-on elements
+            currentProduct.addons.forEach(addon => {
+                const addonElement = document.createElement('div');
+                addonElement.className = 'add-on-item';
+                addonElement.dataset.addonId = addon.id;
+                addonElement.dataset.addonName = addon.name;
+                addonElement.dataset.addonPrice = addon.price;
+                
+                addonElement.innerHTML = `
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <strong>${addon.name}</strong>
+                            ${addon.description ? `<small class="text-muted d-block">${addon.description}</small>` : ''}
+                        </div>
+                        <div class="text-end">
+                            <span class="text-primary fw-bold">+₱${parseFloat(addon.price).toFixed(2)}</span>
+                            <i class="fas fa-check-circle ms-2 d-none"></i>
+                        </div>
+                    </div>
+                `;
+                
+                addonElement.addEventListener('click', function() {
+                    toggleAddOn(this);
+                });
+                
+                addOnsList.appendChild(addonElement);
+            });
+        } else {
+            // Hide add-ons section if no add-ons available
+            addOnsSection.classList.add('d-none');
+        }
+    }
+
+    /**
+     * Change quantity in modal
+     */
+    function changeModalQuantity(delta) {
+        if (!currentProduct) return;
+        
         const input = document.getElementById('modalQuantity');
-        let qty = parseInt(input.value);
-        qty = Math.max(1, Math.min(currentProduct.stock, qty + delta));
+        let qty = parseInt(input.value) || 1;
+        
+        // Calculate new quantity
+        qty = qty + delta;
+        
+        // Ensure quantity is within bounds
+        qty = Math.max(1, Math.min(currentProduct.stock, qty));
+        
         input.value = qty;
-        updateTotalPrice();
+        updateModalTotalPrice();
     }
 
+    /**
+     * Toggle add-on selection
+     */
     function toggleAddOn(addOnElement) {
         const id = addOnElement.dataset.addonId;
+        const name = addOnElement.dataset.addonName;
         const price = parseFloat(addOnElement.dataset.addonPrice);
+        const checkIcon = addOnElement.querySelector('.fa-check-circle');
 
         if (addOnElement.classList.contains('selected')) {
+            // Deselect
             addOnElement.classList.remove('selected');
+            checkIcon.classList.add('d-none');
             selectedAddOns = selectedAddOns.filter(a => a.id !== id);
         } else {
+            // Select
             addOnElement.classList.add('selected');
-            selectedAddOns.push({ id, price });
+            checkIcon.classList.remove('d-none');
+            selectedAddOns.push({ id, name, price });
         }
-        updateTotalPrice();
+        
+        updateModalTotalPrice();
     }
 
-    function updateTotalPrice() {
-        const qty = parseInt(document.getElementById('modalQuantity').value);
+    /**
+     * Update total price display
+     */
+    function updateModalTotalPrice() {
+        if (!currentProduct) return;
+        
+        const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
         const addOnsTotal = selectedAddOns.reduce((sum, a) => sum + a.price, 0);
         const total = (basePrice * qty) + addOnsTotal;
+        
         document.getElementById('modalTotalPrice').textContent = `₱${total.toFixed(2)}`;
     }
 
-    // ✅ Real Add to Cart (AJAX)
+    /**
+     * Add to cart from modal
+     */
     function modalAddToCart() {
-        const qty = parseInt(document.getElementById('modalQuantity').value);
+        if (!currentProduct) {
+            showToast("No product selected", true);
+            return;
+        }
+
+        const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
+        const button = document.getElementById('modalAddToCart');
+        
+        // Disable button and show loading
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
 
         fetch("{{ route('cart.add') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                "X-Requested-With": "XMLHttpRequest"
             },
             body: JSON.stringify({
                 product_id: currentProduct.id,
-                quantity: qty
+                quantity: qty,
+                selected_addons: selectedAddOns  // Include selected add-ons
             })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
                 updateCartCount(data.cart_count);
-                showToast("Added to cart: " + currentProduct.name);
+                
+                // Build toast message
+                let message = `${currentProduct.name} (${qty}) added to cart!`;
+                if (selectedAddOns.length > 0) {
+                    message += ` with ${selectedAddOns.length} add-on(s)`;
+                }
+                showToast(message);
+                
+                // Close modal after successful add
+                setTimeout(() => {
+                    if (modalInstance) {
+                        modalInstance.hide();
+                    }
+                }, 1000);
             } else {
-                showToast(data.message, true);
+                showToast(data.message || "Failed to add to cart", true);
             }
         })
-        .catch(() => showToast("Error adding to cart", true));
+        .catch(error => {
+            console.error('Error adding to cart:', error);
+            showToast("Error adding to cart", true);
+        })
+        .finally(() => {
+            // Re-enable button
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        });
     }
 
-    // ✅ Buy Now (add item then go to checkout)
+    /**
+     * Buy now from modal
+     */
     function modalBuyNow() {
-        const qty = parseInt(document.getElementById('modalQuantity').value);
+        if (!currentProduct) {
+            showToast("No product selected", true);
+            return;
+        }
+
+        const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
+        const button = document.getElementById('modalBuyNow');
+        
+        // Disable button and show loading
+        button.disabled = true;
+        const originalHTML = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
 
         fetch("{{ route('cart.add') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
-                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content
+                "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                "X-Requested-With": "XMLHttpRequest"
             },
             body: JSON.stringify({
                 product_id: currentProduct.id,
-                quantity: qty
+                quantity: qty,
+                selected_addons: selectedAddOns  // Include selected add-ons
             })
         })
         .then(res => res.json())
         .then(data => {
             if (data.success) {
+                // Redirect to checkout
                 window.location.href = "{{ route('checkout.index') }}";
             } else {
-                showToast(data.message, true);
+                showToast(data.message || "Failed to process order", true);
+                button.disabled = false;
+                button.innerHTML = originalHTML;
             }
         })
-        .catch(() => showToast("Error processing order", true));
+        .catch(error => {
+            console.error('Error processing order:', error);
+            showToast("Error processing order", true);
+            button.disabled = false;
+            button.innerHTML = originalHTML;
+        });
     }
 
+    /**
+     * Update cart count badge
+     */
     function updateCartCount(newCount) {
-        const badge = document.getElementById('cartCount');
+        const badge = document.querySelector('.cart-badge');
         if (badge) {
             badge.textContent = newCount;
-            badge.style.animation = "pulse 0.6s";
+            badge.style.animation = 'none';
+            setTimeout(() => {
+                badge.style.animation = 'pulse 0.6s';
+            }, 10);
         }
     }
 
+    /**
+     * Show toast notification
+     */
     function showToast(message, isError = false) {
-        const toastEl = document.getElementById(isError ? "errorToast" : "cartToast");
-        toastEl.querySelector("span").textContent = message;
-        new bootstrap.Toast(toastEl).show();
+        const toastId = isError ? "errorToast" : "cartToast";
+        const toastEl = document.getElementById(toastId);
+        
+        if (!toastEl) {
+            console.error('Toast element not found:', toastId);
+            return;
+        }
+        
+        const messageSpan = toastEl.querySelector("span");
+        if (messageSpan) {
+            messageSpan.textContent = message;
+        }
+        
+        const toast = new bootstrap.Toast(toastEl, {
+            autohide: true,
+            delay: 3000
+        });
+        toast.show();
     }
 
+    /**
+     * Initialize modal event listeners
+     */
     document.addEventListener("DOMContentLoaded", () => {
-        document.getElementById("modalAddToCart").addEventListener("click", modalAddToCart);
-        document.getElementById("modalBuyNow").addEventListener("click", modalBuyNow);
+        console.log('Initializing modal event listeners');
+        
+        // Quantity buttons
+        const decreaseBtn = document.getElementById("modalDecreaseBtn");
+        const increaseBtn = document.getElementById("modalIncreaseBtn");
+        
+        if (decreaseBtn) {
+            decreaseBtn.addEventListener("click", () => changeModalQuantity(-1));
+        }
+        
+        if (increaseBtn) {
+            increaseBtn.addEventListener("click", () => changeModalQuantity(1));
+        }
+        
+        // Action buttons
+        const addToCartBtn = document.getElementById("modalAddToCart");
+        const buyNowBtn = document.getElementById("modalBuyNow");
+        
+        if (addToCartBtn) {
+            addToCartBtn.addEventListener("click", modalAddToCart);
+        }
+        
+        if (buyNowBtn) {
+            buyNowBtn.addEventListener("click", modalBuyNow);
+        }
+        
+        console.log('Modal event listeners initialized');
     });
+
+    // Make function globally accessible
+    window.openProductModal = openProductModal;
 </script>
