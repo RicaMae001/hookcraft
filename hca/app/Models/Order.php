@@ -28,4 +28,8 @@ class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function customizations()
+{
+    return $this->hasMany(ProductCustomization::class);
+}
 }

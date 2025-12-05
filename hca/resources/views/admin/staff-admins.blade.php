@@ -111,7 +111,8 @@
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         @if($admin->id != session('admin_id'))
-                                            <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $admin->id }}, '{{ $admin->name }}')">
+                                            <button class="btn btn-sm btn-danger"
+                                                    onclick="confirmDeleteAdmin({{ $admin->id }}, '{{ $admin->name }}', '{{ route('admin.staff.admins.delete', $admin->id) }}')">
                                                 <i class="fas fa-trash"></i>
                                             </button>
                                         @endif
@@ -206,8 +207,8 @@
         </div>
     </div>
 
-    <!-- Delete Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
+    <!-- Delete Admin Confirmation Modal -->
+    <div class="modal fade" id="deleteAdminModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -215,16 +216,16 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center py-4">
-                    <i class="fas fa-user-times fa-4x text-danger mb-3"></i>
-                    <h5>Delete admin <strong id="deleteAdminName"></strong>?</h5>
+                    <i class="fas fa-user-shield fa-4x text-danger mb-3"></i>
+                    <h5>Are you sure you want to delete admin <strong id="deleteAdminName"></strong>?</h5>
                     <p class="text-muted">This action cannot be undone!</p>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <form id="deleteForm" method="POST">
+                    <form id="deleteAdminForm" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger px-4">Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
                 </div>
             </div>
@@ -233,10 +234,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function confirmDelete(adminId, adminName) {
+        function confirmDeleteAdmin(adminId, adminName, deleteUrl) {
             document.getElementById('deleteAdminName').textContent = adminName;
-            document.getElementById('deleteForm').action = '/admin/staff/admins/' + adminId;
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+            document.getElementById('deleteAdminForm').action = deleteUrl;
+            new bootstrap.Modal(document.getElementById('deleteAdminModal')).show();
         }
     </script>
 </body>

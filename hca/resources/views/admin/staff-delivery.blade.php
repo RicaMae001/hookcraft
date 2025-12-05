@@ -141,7 +141,8 @@
                                         <button class="btn btn-sm btn-warning" data-bs-toggle="modal" data-bs-target="#editModal{{ $coordinator->coordinator_id }}">
                                             <i class="fas fa-edit"></i>
                                         </button>
-                                        <button class="btn btn-sm btn-danger" onclick="confirmDelete({{ $coordinator->coordinator_id }}, '{{ $coordinator->name }}')">
+                                        <button class="btn btn-sm btn-danger"
+                                                onclick="confirmDeleteDelivery({{ $coordinator->coordinator_id }}, '{{ $coordinator->name }}', '{{ route('admin.staff.delivery.delete', $coordinator->coordinator_id) }}')">
                                             <i class="fas fa-trash"></i>
                                         </button>
                                     </td>
@@ -250,8 +251,8 @@
         </div>
     </div>
 
-    <!-- Delete Modal -->
-    <div class="modal fade" id="deleteModal" tabindex="-1">
+    <!-- Delete Delivery Confirmation Modal -->
+    <div class="modal fade" id="deleteDeliveryModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -259,16 +260,16 @@
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body text-center py-4">
-                    <i class="fas fa-user-times fa-4x text-danger mb-3"></i>
-                    <h5>Delete delivery staff <strong id="deleteDeliveryName"></strong>?</h5>
+                    <i class="fas fa-truck fa-4x text-danger mb-3"></i>
+                    <h5>Are you sure you want to delete delivery <strong id="deleteDeliveryName"></strong>?</h5>
                     <p class="text-muted">This action cannot be undone!</p>
                 </div>
                 <div class="modal-footer justify-content-center">
-                    <form id="deleteForm" method="POST">
+                    <form id="deleteDeliveryForm" method="POST">
                         @csrf
                         @method('DELETE')
-                        <button type="button" class="btn btn-secondary px-4" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-danger px-4">Delete</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn btn-danger">Delete</button>
                     </form>
                 </div>
             </div>
@@ -277,10 +278,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        function confirmDelete(coordinatorId, coordinatorName) {
-            document.getElementById('deleteDeliveryName').textContent = coordinatorName;
-            document.getElementById('deleteForm').action = '/admin/staff/delivery/' + coordinatorId;
-            new bootstrap.Modal(document.getElementById('deleteModal')).show();
+        function confirmDeleteDelivery(deliveryId, deliveryName, deleteUrl) {
+            document.getElementById('deleteDeliveryName').textContent = deliveryName;
+            document.getElementById('deleteDeliveryForm').action = deleteUrl;
+            new bootstrap.Modal(document.getElementById('deleteDeliveryModal')).show();
         }
     </script>
 </body>

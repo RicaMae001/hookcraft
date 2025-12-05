@@ -6,9 +6,133 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Session;
+use App\Models\GalleryImage;
+use App\Models\Category; // Add this line
 
 class AdminController extends Controller
 {
+    // ⭐ ADD THESE NEW METHODS FOR NOTIFICATIONS
+    /**
+     * Get all notifications from session
+     */
+    private function getAllNotifications()
+    {
+        return Session::get('admin_notifications', []);
+    }
+
+    /**
+     * Get unread notifications count
+     */
+    private function getUnreadCount()
+    {
+        $notifications = $this->getAllNotifications();
+        return count(array_filter($notifications, function($n) {
+            return !$n['is_read'];
+        }));
+    }
+
+    /**
+     * Mark notification as read
+     */
+    private function markAsRead($notificationId)
+    {
+        $notifications = $this->getAllNotifications();
+        
+        foreach ($notifications as &$notification) {
+            if ($notification['id'] === $notificationId) {
+                $notification['is_read'] = true;
+                break;
+            }
+        }
+        
+        Session::put('admin_notifications', $notifications);
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    private function markAllRead()
+    {
+        $notifications = $this->getAllNotifications();
+        
+        foreach ($notifications as &$notification) {
+            $notification['is_read'] = true;
+        }
+        
+        Session::put('admin_notifications', $notifications);
+    }
+
+    // ⭐ ADD THESE NEW PRIVATE METHODS FOR STOCK MANAGEMENT
+    /**
+     * Deduct stock for all items in an order
+     */
+    private function deductStockFromOrder($orderId)
+    {
+        // Get all order items
+        $orderItems = DB::table('order_item')
+            ->where('order_id', $orderId)
+            ->get();
+
+        foreach ($orderItems as $item) {
+            // Get current product stock
+            $product = DB::table('products')
+                ->where('id', $item->product_id)
+                ->first();
+
+            if ($product) {
+                $newStock = $product->stock - $item->quantity;
+                
+                // Ensure stock doesn't go negative
+                if ($newStock < 0) {
+                    throw new \Exception("Insufficient stock for product: {$product->name}");
+                }
+
+                // Update product stock
+                DB::table('products')
+                    ->where('id', $item->product_id)
+                    ->update(['stock' => $newStock]);
+            }
+        }
+    }
+
+    /**
+     * Restore stock for all items in an order (for refunds/cancellations)
+     */
+    private function restoreStockFromOrder($orderId)
+    {
+        // Get all order items
+        $orderItems = DB::table('order_item')
+            ->where('order_id', $orderId)
+            ->get();
+
+        foreach ($orderItems as $item) {
+            // Restore stock for each product
+            DB::table('products')
+                ->where('id', $item->product_id)
+                ->increment('stock', $item->quantity);
+        }
+    }
+
+    /**
+     * Validate stock before order creation
+     */
+    private function validateOrderStock($orderItems)
+    {
+        foreach ($orderItems as $item) {
+            $product = DB::table('products')->where('id', $item->product_id)->first();
+            
+            if (!$product) {
+                throw new \Exception("Product not found: {$item->product_id}");
+            }
+            
+            if ($product->stock < $item->quantity) {
+                throw new \Exception("Insufficient stock for product: {$product->name}. Available: {$product->stock}, Requested: {$item->quantity}");
+            }
+        }
+        return true;
+    }
+
     // Show unified staff login page
     public function showLogin()
     {
@@ -64,9 +188,13 @@ class AdminController extends Controller
         return redirect()->route('staff.login');
     }
 
-    // Dashboard
+    // Dashboard - ⭐ UPDATED WITH NOTIFICATIONS AND STOCK ALERTS
     public function dashboard()
     {
+        // ⭐ ADD THESE TWO LINES - Get notifications from session
+        $notifications = $this->getAllNotifications();
+        $unreadCount = $this->getUnreadCount();
+
         // Sales Analytics
         $totalSales = DB::table('orders')->where('payment_status', 'Paid')->sum('total');
         $totalOrders = DB::table('orders')->count();
@@ -98,10 +226,54 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
+        // ⭐ ADD LOW STOCK ALERTS
+        $lowStockProducts = DB::table('products')
+            ->where('stock', '<=', 5)
+            ->where('stock', '>', 0)
+            ->orderBy('stock', 'asc')
+            ->limit(10)
+            ->get();
+
+        $outOfStockProducts = DB::table('products')
+            ->where('stock', '<=', 0)
+            ->orderBy('name', 'asc')
+            ->limit(10)
+            ->get();
+
+        // ⭐ ADD 'notifications' and 'unreadCount' to compact()
         return view('admin.dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'totalProducts', 
-            'totalUsers', 'monthlySales', 'recentOrders', 'topProducts'
+            'totalUsers', 'monthlySales', 'recentOrders', 'topProducts',
+            'notifications', 'unreadCount', 'lowStockProducts', 'outOfStockProducts'
         ));
+    }
+
+    // ⭐ ADD THESE NEW PUBLIC METHODS FOR NOTIFICATION ACTIONS
+    /**
+     * Mark a notification as read (AJAX endpoint)
+     */
+    public function markNotificationAsRead($notificationId)
+    {
+        $this->markAsRead($notificationId);
+        return response()->json(['success' => true]);
+    }
+
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllNotificationsAsRead()
+    {
+        $this->markAllRead();
+        return redirect()->back()->with('success', 'All notifications marked as read');
+    }
+
+    /**
+     * Clear all notifications
+     */
+    public function clearAllNotifications()
+    {
+        Session::forget('admin_notifications');
+        return redirect()->back()->with('success', 'All notifications cleared');
     }
 
     // User Management
@@ -129,6 +301,7 @@ class AdminController extends Controller
         return view('admin.products', compact('products', 'categories'));
     }
 
+    // ⭐ FIXED - Changed upload path from 'uploads/products' to 'asset/images'
     public function storeProduct(Request $request)
     {
         $validated = $request->validate([
@@ -141,7 +314,8 @@ class AdminController extends Controller
         ]);
 
         $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
-        $request->file('image')->move(public_path('uploads/products'), $imageName);
+        // ⭐ FIXED: Changed to 'asset/images' to match the HTML view
+        $request->file('image')->move(public_path('asset/images'), $imageName);
 
         DB::table('products')->insert([
             'category_id' => $validated['category_id'],
@@ -156,6 +330,7 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Product added successfully');
     }
 
+    // ⭐ FIXED - Changed upload path and added old image deletion
     public function updateProduct(Request $request, $id)
     {
         $validated = $request->validate([
@@ -176,8 +351,15 @@ class AdminController extends Controller
         ];
 
         if ($request->hasFile('image')) {
+            // ⭐ DELETE OLD IMAGE FIRST (optional but recommended)
+            $oldProduct = DB::table('products')->where('id', $id)->first();
+            if ($oldProduct && $oldProduct->image && file_exists(public_path('asset/images/' . $oldProduct->image))) {
+                unlink(public_path('asset/images/' . $oldProduct->image));
+            }
+
             $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
-            $request->file('image')->move(public_path('uploads/products'), $imageName);
+            // ⭐ FIXED: Changed to 'asset/images' to match the HTML view
+            $request->file('image')->move(public_path('asset/images'), $imageName);
             $updateData['image'] = $imageName;
         }
 
@@ -186,9 +368,24 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Product updated successfully');
     }
 
+    // ⭐ FIXED - Delete Product Method
     public function deleteProduct($id)
     {
+        // Get product details before deletion
+        $product = DB::table('products')->where('id', $id)->first();
+        
+        if (!$product) {
+            return redirect()->back()->withErrors(['error' => 'Product not found']);
+        }
+
+        // Delete the product image file if it exists
+        if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
+            unlink(public_path('asset/images/' . $product->image));
+        }
+
+        // Delete the product from database
         DB::table('products')->where('id', $id)->delete();
+
         return redirect()->back()->with('success', 'Product deleted successfully');
     }
 
@@ -221,17 +418,13 @@ class AdminController extends Controller
 
     public function deleteCategory($id)
     {
-        $productCount = DB::table('products')->where('category_id', $id)->count();
-        
-        if ($productCount > 0) {
-            return redirect()->back()->withErrors(['error' => 'Cannot delete category with existing products.']);
-        }
+        $category = Category::findOrFail($id);
+        $category->delete();
 
-        DB::table('categories')->where('id', $id)->delete();
-        return redirect()->back()->with('success', 'Category deleted successfully');
+        return redirect()->route('admin.products')->with('success', 'Category deleted successfully.');
     }
 
-    // Order Management
+    // Order Management - ⭐ UPDATED WITH STOCK MANAGEMENT
     public function orders()
     {
         $orders = DB::table('orders')->orderBy('created_at', 'desc')->get();
@@ -252,18 +445,67 @@ class AdminController extends Controller
             'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
         ]);
 
-        DB::table('orders')->where('id', $id)->update([
-            'payment_status' => $validated['payment_status'],
-            'delivery_status' => $validated['delivery_status'],
-        ]);
+        // Get the current order status before update
+        $currentOrder = DB::table('orders')->where('id', $id)->first();
+        
+        // Start database transaction for data consistency
+        DB::beginTransaction();
 
-        return redirect()->back()->with('success', 'Order status updated successfully');
+        try {
+            // Update order status
+            DB::table('orders')->where('id', $id)->update([
+                'payment_status' => $validated['payment_status'],
+                'delivery_status' => $validated['delivery_status'],
+            ]);
+
+            // ⭐ ADD STOCK DEDUCTION LOGIC HERE
+            // If payment status is being changed to "Paid", deduct stock
+            if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
+                $this->deductStockFromOrder($id);
+            }
+
+            // ⭐ ADD STOCK RESTORATION LOGIC HERE
+            // If payment status is being changed from "Paid" to something else, restore stock
+            if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
+                $this->restoreStockFromOrder($id);
+            }
+
+            // Commit transaction
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Order status updated successfully');
+
+        } catch (\Exception $e) {
+            // Rollback transaction on error
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
+        }
     }
 
     public function deleteOrder($id)
     {
-        DB::table('orders')->where('id', $id)->delete();
-        return redirect()->back()->with('success', 'Order deleted successfully');
+        // Start transaction for safety
+        DB::beginTransaction();
+
+        try {
+            // Get order details before deletion
+            $order = DB::table('orders')->where('id', $id)->first();
+            
+            // If order was paid, restore stock before deletion
+            if ($order && $order->payment_status === 'Paid') {
+                $this->restoreStockFromOrder($id);
+            }
+
+            // Delete the order
+            DB::table('orders')->where('id', $id)->delete();
+
+            DB::commit();
+            return redirect()->back()->with('success', 'Order deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
+        }
     }
 
     public function assignCoordinator(Request $request, $id)
@@ -401,5 +643,143 @@ class AdminController extends Controller
     {
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->delete();
         return redirect()->back()->with('success', 'Delivery coordinator deleted successfully');
+    }
+
+    // ⭐ GALLERY MANAGEMENT METHODS (Integrated from AdminGalleryController)
+    
+    /**
+     * Display gallery images
+     */
+    public function galleryIndex()
+    {
+        $galleries = GalleryImage::orderBy('display_order', 'asc')->paginate(12);
+        return view('admin.gallery.index', compact('galleries'));
+    }
+
+    /**
+     * Show gallery creation form
+     */
+    public function galleryCreate()
+    {
+        return view('admin.gallery.create');
+    }
+
+    /**
+     * Store new gallery image
+     */
+    public function galleryStore(Request $request)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category' => 'required|in:birthday,casual,tiny,wedding,custom',
+            'display_order' => 'nullable|integer',
+            'is_active' => 'boolean'
+        ]);
+
+        // Handle image upload
+        if ($request->hasFile('image')) {
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('asset/images'), $imageName);
+
+            GalleryImage::create([
+                'title' => $request->title,
+                'description' => $request->description,
+                'image_path' => $imageName,
+                'category' => $request->category,
+                'display_order' => $request->display_order ?? 0,
+                'is_active' => $request->has('is_active') ? 1 : 0,
+                'admin_id' => session('admin_id') // Using session admin_id instead of Auth::guard('admin')->id()
+            ]);
+
+            return redirect()->route('admin.gallery.index')
+                ->with('success', 'Gallery image added successfully!');
+        }
+
+        return back()->with('error', 'Failed to upload image.');
+    }
+
+    /**
+     * Show gallery edit form
+     */
+    public function galleryEdit($id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+        return view('admin.gallery.edit', compact('gallery'));
+    }
+
+    /**
+     * Update gallery image
+     */
+    public function galleryUpdate(Request $request, $id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+
+        $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category' => 'required|in:birthday,casual,tiny,wedding,custom',
+            'display_order' => 'nullable|integer',
+            'is_active' => 'boolean'
+        ]);
+
+        $imageName = $gallery->image_path;
+
+        // Handle new image upload
+        if ($request->hasFile('image')) {
+            // Delete old image
+            if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
+                unlink(public_path('asset/images/' . $gallery->image_path));
+            }
+
+            $image = $request->file('image');
+            $imageName = time() . '_' . $image->getClientOriginalName();
+            $image->move(public_path('asset/images'), $imageName);
+        }
+
+        $gallery->update([
+            'title' => $request->title,
+            'description' => $request->description,
+            'image_path' => $imageName,
+            'category' => $request->category,
+            'display_order' => $request->display_order ?? 0,
+            'is_active' => $request->has('is_active') ? 1 : 0,
+        ]);
+
+        return redirect()->route('admin.gallery.index')
+            ->with('success', 'Gallery image updated successfully!');
+    }
+
+    /**
+     * Delete gallery image
+     */
+    public function galleryDestroy($id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+
+        // Delete image file
+        if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
+            unlink(public_path('asset/images/' . $gallery->image_path));
+        }
+
+        $gallery->delete();
+
+        return redirect()->route('admin.gallery.index')
+            ->with('success', 'Gallery image deleted successfully!');
+    }
+
+    /**
+     * Toggle gallery image status
+     */
+    public function galleryToggleStatus($id)
+    {
+        $gallery = GalleryImage::findOrFail($id);
+        $gallery->is_active = !$gallery->is_active;
+        $gallery->save();
+
+        return back()->with('success', 'Gallery status updated successfully!');
     }
 }

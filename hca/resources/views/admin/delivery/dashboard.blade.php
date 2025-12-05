@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Delivery Dashboard</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -44,9 +45,92 @@
         main {
             margin-left: 250px;
         }
+        .order-card {
+            transition: transform 0.2s;
+        }
+        .order-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        /* Notification Styles */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 8px 15px;
+        }
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .notification-dropdown {
+            position: absolute;
+            right: 80px;
+            top: 100%;
+            width: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            margin-top: 10px;
+        }
+        .notification-dropdown.show {
+            display: block;
+        }
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            color: #333;
+        }
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+        .notification-item.unread {
+            background: #e3f2fd;
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            background: white;
+        }
+        .notification-time {
+            font-size: 11px;
+            color: #999;
+        }
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        .notification-icon.admin {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
         @media (max-width: 768px) {
             main {
                 margin-left: 0;
+            }
+            .notification-dropdown {
+                right: 10px;
+                width: 320px;
             }
         }
     </style>
@@ -57,7 +141,61 @@
         <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{{ route('delivery.dashboard') }}">
             <i class="fas fa-truck me-2"></i>Delivery Portal
         </a>
-        <div class="navbar-nav">
+        <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+            <!-- Notification Bell -->
+            <div class="position-relative me-3">
+                <div class="notification-bell" onclick="toggleNotifications()">
+                    <i class="fas fa-bell fa-lg text-white"></i>
+                    @if(session('delivery_notifications') && count(array_filter(session('delivery_notifications', []), function($n) { return !$n['is_read']; })) > 0)
+                    <span class="notification-badge">
+                        {{ count(array_filter(session('delivery_notifications', []), function($n) { return !$n['is_read']; })) }}
+                    </span>
+                    @endif
+                </div>
+                
+                <!-- Notification Dropdown -->
+                <div class="notification-dropdown" id="notificationDropdown">
+                    <div class="notification-header">
+                        <h6 class="mb-0"><strong>Notifications</strong></h6>
+                        @if(session('delivery_notifications') && count(array_filter(session('delivery_notifications', []), function($n) { return !$n['is_read']; })) > 0)
+                        <a href="#" onclick="markAllAsRead(); return false;" class="btn btn-sm btn-link text-decoration-none">
+                            Mark all read
+                        </a>
+                        @endif
+                    </div>
+                    
+                    <div class="notification-list">
+                        @php
+                            $notifications = session('delivery_notifications', []);
+                        @endphp
+                        
+                        @forelse($notifications as $notification)
+                        <div class="notification-item {{ $notification['is_read'] ? '' : 'unread' }}">
+                            <div class="d-flex">
+                                <div class="notification-icon admin">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="mb-1"><strong>{{ $notification['title'] }}</strong></h6>
+                                    <p class="mb-1 small">{{ $notification['message'] }}</p>
+                                    <span class="notification-time">
+                                        <i class="far fa-clock"></i> 
+                                        {{ \Carbon\Carbon::parse($notification['timestamp'])->diffForHumans() }}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        @empty
+                        <div class="text-center py-5 text-muted">
+                            <i class="far fa-bell-slash fa-3x mb-3"></i>
+                            <p>No notifications yet</p>
+                        </div>
+                        @endforelse
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Logout -->
             <div class="nav-item text-nowrap">
                 <form action="{{ route('delivery.logout') }}" method="POST" class="d-inline">
                     @csrf
@@ -114,6 +252,13 @@
                 @if(session('success'))
                     <div class="alert alert-success alert-dismissible fade show">
                         <i class="fas fa-check-circle me-2"></i>{{ session('success') }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                @endif
+
+                @if(session('error'))
+                    <div class="alert alert-danger alert-dismissible fade show">
+                        <i class="fas fa-exclamation-circle me-2"></i>{{ session('error') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
@@ -175,7 +320,63 @@
                     </div>
                 </div>
 
-                <!-- Recent Deliveries -->
+                <!-- Quick Status Updates Section -->
+                @if($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled')->count() > 0)
+                <div class="card mb-4">
+                    <div class="card-header bg-white">
+                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Quick Status Updates</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            @foreach($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled')->take(6) as $delivery)
+                            <div class="col-md-6 col-lg-4 mb-3">
+                                <div class="card order-card h-100">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0">
+                                                <i class="fas fa-receipt text-primary me-1"></i>
+                                                Order #{{ $delivery->id }}
+                                            </h6>
+                                            @if($delivery->delivery_status == 'Out for Delivery')
+                                                <span class="badge bg-info">Out for Delivery</span>
+                                            @else
+                                                <span class="badge bg-warning text-dark">Pending</span>
+                                            @endif
+                                        </div>
+                                        <p class="mb-1 small"><strong>{{ $delivery->customer_name }}</strong></p>
+                                        <p class="mb-2 small text-muted">
+                                            <i class="fas fa-map-marker-alt me-1"></i>
+                                            {{ Str::limit($delivery->address, 30) }}
+                                        </p>
+                                        
+                                        <form action="{{ route('delivery.updateStatus', $delivery->id) }}" method="POST">
+                                            @csrf
+                                            @method('POST')
+                                            <select name="delivery_status" class="form-select form-select-sm mb-2" required>
+                                                <option value="Pending" {{ $delivery->delivery_status == 'Pending' ? 'selected' : '' }}>Pending</option>
+                                                <option value="Out for Delivery" {{ $delivery->delivery_status == 'Out for Delivery' ? 'selected' : '' }}>Out for Delivery</option>
+                                                <option value="Delivered" {{ $delivery->delivery_status == 'Delivered' ? 'selected' : '' }}>Delivered</option>
+                                                <option value="Cancelled" {{ $delivery->delivery_status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                            </select>
+                                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                                <i class="fas fa-sync-alt me-1"></i>Update
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        </div>
+                        <div class="text-center mt-3">
+                            <a href="{{ route('delivery.deliveries') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-list me-2"></i>View All Deliveries
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                @endif
+
+                <!-- Recent Deliveries Table -->
                 <div class="card">
                     <div class="card-header bg-white">
                         <h5 class="mb-0"><i class="fas fa-list me-2"></i>Recent Deliveries</h5>
@@ -236,6 +437,29 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Notification Toggle
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(event) {
+            const bell = document.querySelector('.notification-bell');
+            const dropdown = document.getElementById('notificationDropdown');
+            
+            if (bell && dropdown && !bell.contains(event.target) && !dropdown.contains(event.target)) {
+                dropdown.classList.remove('show');
+            }
+        });
+
+        // Mark all as read (would need backend route)
+        function markAllAsRead() {
+            // For now, just close dropdown
+            document.getElementById('notificationDropdown').classList.remove('show');
+            // You can add AJAX call here to mark all as read in backend
+        }
+        
         // Delivery Chart
         const ctx = document.getElementById('deliveryChart').getContext('2d');
         const deliveryChart = new Chart(ctx, {

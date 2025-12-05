@@ -7,6 +7,7 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="{{ asset('asset/styleshome.css') }}">
      <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
       
@@ -42,6 +43,16 @@
             @endphp
 
             <ul class="navbar-nav flex-row align-items-center">
+                <!-- Chatbot Icon -->
+                <li class="nav-item me-3">
+                    <a class="nav-link position-relative" href="{{ route('chatbot') }}" title="AI Assistant">
+                        <i class="bi bi-robot fs-5" style="color: #FF69B4;"></i>
+                        <span class="position-absolute top-0 start-100 translate-middle">
+                            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
+                        </span>
+                    </a>
+                </li>
+
                 <!-- Cart -->
                 <li class="nav-item me-3">
                     <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
@@ -109,6 +120,13 @@
         </div>
     </div>
 </nav>
+
+
+<div class="chatbot-float">
+    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+        <i class="bi bi-robot"></i>
+    </a>
+</div>
 
 
 
@@ -244,9 +262,10 @@
             <img src="{{ asset("asset/images/custom{$i}.png") }}" class="img-fluid" style="width:120px; height:120px; object-fit: cover;" alt="Custom Option">
             @endfor
         </div>
-        <a href="{{ route('shop') }}" class="btn btn-pink btn-lg">
-            <i class="bi bi-palette me-2"></i>Customize Now
-        </a>
+      <!-- Make sure this uses the correct product ID -->
+<a href="{{ route('customization.create', ['id' => 1]) }}" class="btn btn-pink btn-lg">
+    <i class="bi bi-palette me-2"></i>Customize Now
+</a>
     </div>
 </section>
 <!-- Product Modal -->
@@ -410,4 +429,4 @@
     });
 </script>
 </body>
-</html>Z
+</html>
