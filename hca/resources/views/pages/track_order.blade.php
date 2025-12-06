@@ -193,6 +193,19 @@
                                                     @endif
                                                 </div>
 
+                                                @if($order->delivery_status === 'Pending')
+                                                    <form method="POST" action="{{ route('orders.cancel', $order->id) }}" class="d-inline">
+                                                        @csrf
+                                                        @method('PATCH')
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to cancel this order?');">
+                                                            <i class="fas fa-times me-1"></i> Cancel Order
+                                                        </button>
+                                                    </form>
+                                                @elseif(!in_array($order->delivery_status, ['Delivered', 'Cancelled']))
+                                                    <button class="btn btn-sm btn-danger" disabled>
+                                                        <i class="fas fa-times me-1"></i> Cancel Order
+                                                    </button>
+                                                @endif
                                                 <button class="btn btn-sm btn-pink" data-bs-toggle="modal" data-bs-target="#trackModal{{ $order->id }}">
                                                     <i class="fas fa-map-marker-alt me-1"></i> Track
                                                 </button>
@@ -303,6 +316,12 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div class="alert alert-success">{{ session('success') }}</div>
+    @endif
+    @if(session('error'))
+        <div class="alert alert-danger">{{ session('error') }}</div>
+    @endif
     
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 

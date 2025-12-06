@@ -59,6 +59,7 @@
         }
     }
   </style>  
+
 </head>
 <body>
 
@@ -66,15 +67,15 @@
 @include('components.signup_modal')
 @include('components.pmodal')
 
-<!-- Toast Container for Messages -->
+<!-- Toast Container -->
 <div class="toast-container">
-    <div id="cartToast" class="toast cart-toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div id="cartToast" class="toast cart-toast" role="alert">
         <div class="toast-body d-flex align-items-center">
             <i class="fas fa-check-circle me-2"></i>
             <span id="toastMessage">Product added to cart!</span>
         </div>
     </div>
-    <div id="errorToast" class="toast error-toast" role="alert" aria-live="assertive" aria-atomic="true">
+    <div id="errorToast" class="toast error-toast" role="alert">
         <div class="toast-body d-flex align-items-center">
             <i class="fas fa-exclamation-circle me-2"></i>
             <span id="errorMessage">Something went wrong!</span>
@@ -127,16 +128,14 @@
                     </a>
                 </li>
 
-                <!-- User -->
                 @if($isLoggedIn)
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle p-0 border-0 bg-transparent d-flex align-items-center" 
-                           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
                             <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
                                  width="40" height="40" class="rounded-circle" style="object-fit: cover; border: 2px solid #FFB6C1;">
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" style="min-width: 250px;">
-                            <!-- User Info Header -->
                             <li class="px-3 py-3 border-bottom">
                                 <div class="d-flex align-items-center">
                                     <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
@@ -147,23 +146,12 @@
                                     </div>
                                 </div>
                             </li>
-
-                            <!-- Menu Items -->
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('profile.index') }}">
-                                    <i class="bi bi-person-circle me-2"></i>My Account
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('profile.purchase-history') }}">
-                                    <i class="bi bi-clock-history me-2"></i>Purchase History
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('profile.track-order') }}">
-                                    <i class="bi bi-truck me-2"></i>Track Order
-                                </a>
-                            </li>
+                            <li><a class="dropdown-item py-2" href="{{ route('profile.index') }}">
+                                <i class="bi bi-person-circle me-2"></i>My Account</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('profile.purchase-history') }}">
+                                <i class="bi bi-clock-history me-2"></i>Purchase History</a></li>
+                            <li><a class="dropdown-item py-2" href="{{ route('profile.track-order') }}">
+                                <i class="bi bi-truck me-2"></i>Track Order</a></li>
                             <li><hr class="dropdown-divider my-2"></li>
                             <li>
                                 <form method="POST" action="{{ route('logout') }}">
@@ -190,198 +178,192 @@
     </a>
 </div>
 
-<!-- Shop Layout -->
-<div class="container-fluid">
-    <div class="row">
-        <!-- Enhanced Sidebar Categories -->
-        <aside class="col-lg-3 col-md-4">
-            <div class="sidebar">
-                <h4><i class="fas fa-list-alt me-2"></i>Categories</h4>
-                <ul class="list-group category-list">
-                    <li class="list-group-item category-item">
-                        <a href="#" onclick="filterProducts('all')" class="category-link">
-                            <i class="fas fa-th-large me-2"></i>All Products
-                        </a>
-                    </li>
-                    @foreach($categories as $cat)
-                    <li class="list-group-item category-item">
-                        <a href="#" onclick="filterProducts('{{ $cat->id }}')" class="category-link">
-                            <i class="fas fa-tag me-2"></i>{{ $cat->name }}
-                        </a>
-                    </li>
-                    @endforeach
-                </ul>
+<!-- Main Content -->
+<div class="container" style="margin-top:20px">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <div class="filter-section">
+            <!-- Search -->
+            <div class="search-wrapper">
+                <div class="filter-label">
+                    <i class="fas fa-search me-1"></i> Search Products
+                </div>
+                <div class="position-relative">
+                    <input type="text" 
+                           class="search-input" 
+                           id="productSearch" 
+                           placeholder="Search for handmade items..."
+                           autocomplete="off">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
             </div>
 
-            <!-- Enhanced Price Filter -->
-            <div class="filter-price">
-                <h5><i class="fas fa-filter me-2"></i>Filter by Price</h5>
-                <div class="price-range-container">
-                    <input type="range" class="form-range" min="20" max="1000" value="1000" id="priceRange">
-                    <div class="d-flex justify-content-between mt-2">
-                        <span class="badge bg-light text-dark">₱20</span>
-                        <span class="badge bg-primary">₱<span id="maxPrice">1000</span></span>
+            <!-- Price Filter -->
+            <div class="filter-group">
+                <div class="filter-label">
+                    <i class="fas fa-dollar-sign me-1"></i> Price Range
+                </div>
+                <div class="price-filter">
+                    <span class="text-muted">₱20</span>
+                    <input type="range" 
+                           class="price-range-slider" 
+                           id="priceRange" 
+                           min="20" 
+                           max="1000" 
+                           value="1000">
+                    <div class="price-display">
+                        ₱<span id="maxPrice">1000</span>
                     </div>
                 </div>
             </div>
-        </aside>
+        </div>
 
-        <!-- Enhanced Product Grid -->
-        <section class="col-lg-9 col-md-8">
-            <!-- Search Bar -->
-            <div class="search-container">
-                <div class="search-input-group">
-                    <input type="text" 
-                           class="form-control search-input" 
-                           id="productSearch" 
-                           placeholder="Search for products..." 
-                           autocomplete="off">
-                    <button class="search-btn" onclick="searchProducts()">
-                        <i class="fas fa-search"></i>
-                    </button>
-                    <button class="search-btn clear-search d-none" id="clearSearch" onclick="clearSearch()">
-                        <i class="fas fa-times"></i>
-                    </button>
+        <!-- Categories -->
+        <div class="mt-4">
+            <div class="filter-label mb-3">
+                <i class="fas fa-tags me-1"></i> Categories
+            </div>
+            <div class="category-pills">
+                <button class="category-pill active" onclick="filterProducts('all')" data-category="all">
+                    <i class="fas fa-th-large me-1"></i> All Products
+                </button>
+                @foreach($categories as $cat)
+                <button class="category-pill" onclick="filterProducts('{{ $cat->id }}')" data-category="{{ $cat->id }}">
+                    <i class="fas fa-tag me-1"></i> {{ $cat->name }}
+                </button>
+                @endforeach
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Info -->
+    <div class="results-info">
+        <div class="results-count">
+            Showing <span id="productCount">{{ $products->count() }}</span> products
+        </div>
+        <select class="sort-dropdown" id="sortSelect">
+            <option value="default">Sort by: Featured</option>
+            <option value="price-low">Price: Low to High</option>
+            <option value="price-high">Price: High to Low</option>
+            <option value="name">Name: A to Z</option>
+        </select>
+    </div>
+
+    <!-- Products Grid -->
+    <div class="products-grid" id="product-list">
+        @forelse($products as $product)
+        <div class="product-item"
+             data-category="{{ $product->category_id }}"
+             data-name="{{ strtolower($product->name) }}"
+             data-price="{{ $product->price }}"
+             data-product-id="{{ $product->id }}"
+             data-product-name="{{ $product->name }}"
+             data-product-image="{{ asset('asset/images/' . $product->image) }}"
+             data-product-description="{{ $product->description ?? 'Beautiful handcrafted crochet item.' }}"
+             data-product-stock="{{ $product->stock }}"
+             data-product-category-name="{{ $product->category->name ?? 'Uncategorized' }}">
+            <div class="product-card" onclick="openProductModal(this.parentElement)">
+                <!-- Category Badge Overlay -->
+                <div class="category-badge-overlay">
+                    {{ $product->category->name ?? 'Uncategorized' }}
                 </div>
-            </div>
 
-            <!-- Search Results Info -->
-            <div class="search-results-info d-none" id="searchResultsInfo">
-                <i class="fas fa-info-circle me-2"></i>
-                <span id="searchResultsText"></span>
-            </div>
+                <!-- Stock Badge -->
+                <div class="stock-badge">
+                    @if($product->stock > 0)
+                        @if($product->stock <= 5)
+                            <span class="badge bg-warning text-dark">
+                                <i class="fas fa-exclamation-triangle me-1"></i>Only {{ $product->stock }} left
+                            </span>
+                        @else
+                            <span class="badge bg-success">
+                                <i class="fas fa-check-circle me-1"></i>In Stock
+                            </span>
+                        @endif
+                    @else
+                        <span class="badge bg-danger">
+                            <i class="fas fa-times-circle me-1"></i>Out of Stock
+                        </span>
+                    @endif
+                </div>
 
-            <div class="row g-4" id="product-list">
-                @forelse($products as $product)
-                <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6 product-item"
-                     data-category="{{ $product->category_id }}"
-                     data-name="{{ strtolower($product->name) }}"
-                     data-price="{{ $product->price }}"
-                     data-product-id="{{ $product->id }}"
-                     data-product-name="{{ $product->name }}"
-                     data-product-image="{{ asset('asset/images/' . $product->image) }}"
-                     data-product-description="{{ $product->description ?? 'Beautiful handcrafted crochet item made with premium materials.' }}"
-                     data-product-stock="{{ $product->stock }}"
-                     data-product-category-name="{{ $product->category->name ?? 'Uncategorized' }}">
-                    <div class="product-card {{ $product->stock <= 0 ? 'out-of-stock' : '' }}" onclick="openProductModal(this.parentElement)">
-                        <!-- Stock Badge -->
-                        <div class="stock-badge">
-                            @if($product->stock > 0)
-                                @if($product->stock <= 5)
-                                    <span class="badge bg-warning text-dark">
-                                        <i class="fas fa-exclamation-triangle me-1"></i>Low Stock: {{ $product->stock }}
-                                    </span>
-                                @else
-                                    <span class="badge bg-success">
-                                        <i class="fas fa-check-circle me-1"></i>{{ $product->stock }} Available
-                                    </span>
-                                @endif
-                            @else
-                                <span class="badge bg-danger">
-                                    <i class="fas fa-times-circle me-1"></i>Out of Stock
-                                </span>
-                            @endif
-                        </div>
+                <!-- Product Image -->
+                <div class="product-image-wrapper">
+                    <img src="{{ asset('asset/images/' . $product->image) }}" 
+                         alt="{{ $product->name }}" 
+                         class="product-image">
+                </div>
 
-                        <!-- Product Image -->
-                        <div class="product-image-container">
-                            <img src="{{ asset('asset/images/' . $product->image) }}" 
-                                 alt="{{ $product->name }}" 
-                                 class="img-fluid">
-                        </div>
-
-                        <!-- Product Info -->
-                        <div class="product-info">
-                            <div>
-                                <h6 class="product-title">{{ $product->name }}</h6>
-                                <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="product-price">₱{{ number_format($product->price, 2) }}</span>
-                                    <span class="badge category-badge">{{ $product->category->name ?? 'Uncategorized' }}</span>
-                                </div>
+                <!-- Product Info -->
+                <div class="product-info">
+                    <h6 class="product-title">{{ $product->name }}</h6>
+                    <span class="product-price">₱{{ number_format($product->price, 2) }}</span>
+                    
+                    @if($product->stock > 0)
+                        <div class="cart-section" onclick="event.stopPropagation();">
+                            <div class="quantity-selector">
+                                <button type="button" class="quantity-btn" onclick="decreaseQuantity({{ $product->id }})">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" 
+                                       id="quantity-{{ $product->id }}" 
+                                       class="quantity-input" 
+                                       value="1" 
+                                       min="1" 
+                                       max="{{ $product->stock }}"
+                                       readonly>
+                                <button type="button" class="quantity-btn" onclick="increaseQuantity({{ $product->id }}, {{ $product->stock }})">
+                                    <i class="fas fa-plus"></i>
+                                </button>
                             </div>
                             
-                            <!-- Enhanced Add to Cart Section -->
-                            @if($product->stock > 0)
-                                <div class="cart-section" onclick="event.stopPropagation();">
-                                    <!-- Quantity Selector -->
-                                    <div class="quantity-selector d-flex align-items-center justify-content-center mb-2">
-                                        <button type="button" class="quantity-btn" onclick="decreaseQuantity({{ $product->id }})">
-                                            <i class="fas fa-minus"></i>
-                                        </button>
-                                        <input type="number" 
-                                               id="quantity-{{ $product->id }}" 
-                                               class="quantity-input" 
-                                               value="1" 
-                                               min="1" 
-                                               max="{{ $product->stock }}"
-                                               readonly>
-                                        <button type="button" class="quantity-btn" onclick="increaseQuantity({{ $product->id }}, {{ $product->stock }})">
-                                            <i class="fas fa-plus"></i>
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Add to Cart Form -->
-                                    @if($isLoggedIn)
-                                        <button type="button" 
-                                                class="btn btn-primary btn-sm w-100 add-to-cart-btn" 
-                                                id="add-btn-{{ $product->id }}"
-                                                onclick="addToCart({{ $product->id }})"
-                                                style="border-radius: 8px; font-weight: 500;">
-                                            <span class="btn-text">
-                                                <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                                            </span>
-                                            <span class="btn-loading d-none">
-                                                <i class="fas fa-spinner fa-spin me-2"></i>Adding...
-                                            </span>
-                                            <span class="btn-success d-none">
-                                                <i class="fas fa-check me-2"></i>Added!
-                                            </span>
-                                        </button>
-                                    @else
-                                        <button type="button" class="btn btn-outline-primary btn-sm w-100" 
-                                                data-bs-toggle="modal" data-bs-target="#loginModal"
-                                                style="border-radius: 8px; font-weight: 500;">
-                                            <i class="fas fa-sign-in-alt me-2"></i>Login to Add
-                                        </button>
-                                    @endif
-                                </div>
+                            @if($isLoggedIn)
+                                <button type="button" 
+                                        class="add-to-cart-btn" 
+                                        id="add-btn-{{ $product->id }}"
+                                        onclick="addToCart({{ $product->id }})">
+                                    <span class="btn-text">
+                                        <i class="fas fa-cart-plus me-2"></i>Add to Cart
+                                    </span>
+                                    <span class="btn-loading d-none">
+                                        <i class="fas fa-spinner fa-spin me-2"></i>Adding...
+                                    </span>
+                                    <span class="btn-success d-none">
+                                        <i class="fas fa-check me-2"></i>Added!
+                                    </span>
+                                </button>
                             @else
-                                <button class="btn btn-secondary btn-sm w-100" disabled
-                                        style="border-radius: 8px; font-weight: 500;">
-                                    <i class="fas fa-ban me-2"></i>Out of Stock
+                                <button type="button" class="add-to-cart-btn" 
+                                        data-bs-toggle="modal" data-bs-target="#loginModal">
+                                    <i class="fas fa-sign-in-alt me-2"></i>Login to Purchase
                                 </button>
                             @endif
                         </div>
-                    </div>
+                    @else
+                        <button class="add-to-cart-btn" disabled style="background: #6c757d;">
+                            <i class="fas fa-ban me-2"></i>Out of Stock
+                        </button>
+                    @endif
                 </div>
-                @empty
-                <div class="col-12">
-                    <div class="empty-state">
-                        <i class="fas fa-box-open fa-4x"></i>
-                        <h4>No products available</h4>
-                        <p class="text-muted">Please check back later or contact us for more information.</p>
-                        <a href="{{ route('contact') }}" class="btn btn-primary">
-                            <i class="fas fa-envelope me-2"></i>Contact Us
-                        </a>
-                    </div>
-                </div>
-                @endforelse
             </div>
-
-            <!-- Load More Button (if pagination needed) -->
-            @if($products->count() >= 12)
-            <div class="text-center mt-5">
-                <button class="btn btn-outline-primary btn-lg" id="loadMoreBtn">
-                    <i class="fas fa-plus me-2"></i>Load More Products
+        </div>
+        @empty
+        <div class="col-12">
+            <div class="empty-state">
+                <i class="fas fa-box-open fa-4x"></i>
+                <h4>No products found</h4>
+                <p class="text-muted">Try adjusting your filters or search terms</p>
+                <button class="btn btn-primary" onclick="resetFilters()">
+                    <i class="fas fa-redo me-2"></i>Reset Filters
                 </button>
             </div>
-            @endif
-        </section>
+        </div>
+        @endforelse
     </div>
 </div>
 
-<!-- Enhanced Footer -->
-<footer class="footer py-4 text-center bg-dark text-white">
+<!-- Footer -->
+<footer class="footer text-white">
     <div class="container">
         <div class="row">
             <div class="col-md-6 text-md-start">
@@ -401,22 +383,26 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Enhanced product filtering and animations
     let currentFilters = {
         category: 'all',
         price: 1000,
-        search: ''
+        search: '',
+        sort: 'default'
     };
 
-    function updateProductCount() {
-        const visibleProducts = document.querySelectorAll('.product-item:not([style*="display: none"])').length;
-        document.getElementById('product-count').textContent = visibleProducts;
+    // Filter Products
+    function filterProducts(category) {
+        currentFilters.category = category;
         
-        // Update the header badge
-        const countBadge = document.querySelector('.count-badge');
-        if (countBadge) {
-            countBadge.innerHTML = `<i class="fas fa-box me-2"></i>${visibleProducts} Products Available`;
-        }
+        // Update active category pill
+        document.querySelectorAll('.category-pill').forEach(pill => {
+            pill.classList.remove('active');
+            if (pill.dataset.category === category) {
+                pill.classList.add('active');
+            }
+        });
+        
+        applyFilters();
     }
 
     function applyFilters() {
@@ -436,71 +422,30 @@
             
             if (shouldShow) {
                 item.style.display = 'block';
-                // Stagger animation for filtered results
-                setTimeout(() => {
-                    item.style.animation = 'fadeInUp 0.4s ease forwards';
-                }, visibleCount * 50);
+                item.style.animationDelay = `${visibleCount * 0.05}s`;
                 visibleCount++;
             } else {
                 item.style.display = 'none';
             }
         });
         
-        setTimeout(updateProductCount, 100);
-        updateSearchResultsInfo();
+        updateProductCount(visibleCount);
+        applySorting();
     }
 
-    function filterProducts(category) {
-        currentFilters.category = category;
-        applyFilters();
-    }
-
-    function searchProducts() {
-        const searchInput = document.getElementById('productSearch');
-        const searchTerm = searchInput.value.trim();
-        
-        currentFilters.search = searchTerm;
-        applyFilters();
-        
-        // Show/hide clear button
-        const clearBtn = document.getElementById('clearSearch');
-        if (searchTerm) {
-            clearBtn.classList.remove('d-none');
-        } else {
-            clearBtn.classList.add('d-none');
+    function updateProductCount(count) {
+        const countElement = document.getElementById('productCount');
+        if (countElement) {
+            countElement.textContent = count !== undefined ? count : document.querySelectorAll('.product-item:not([style*="display: none"])').length;
         }
     }
 
-    function clearSearch() {
-        const searchInput = document.getElementById('productSearch');
-        searchInput.value = '';
-        currentFilters.search = '';
-        
-        document.getElementById('clearSearch').classList.add('d-none');
-        document.getElementById('searchResultsInfo').classList.add('d-none');
-        
-        applyFilters();
-    }
-
-    function updateSearchResultsInfo() {
-        const searchResultsInfo = document.getElementById('searchResultsInfo');
-        const searchResultsText = document.getElementById('searchResultsText');
-        
-        if (currentFilters.search) {
-            const visibleProducts = document.querySelectorAll('.product-item:not([style*="display: none"])').length;
-            searchResultsText.textContent = `Found ${visibleProducts} product(s) matching "${currentFilters.search}"`;
-            searchResultsInfo.classList.remove('d-none');
-        } else {
-            searchResultsInfo.classList.add('d-none');
-        }
-    }
-
-    // Enhanced price filter
+    // Price Range Filter
     const priceSlider = document.getElementById('priceRange');
     const maxPriceText = document.getElementById('maxPrice');
 
     if (priceSlider && maxPriceText) {
-        priceSlider.addEventListener('input', function () {
+        priceSlider.addEventListener('input', function() {
             const maxPrice = parseInt(this.value);
             maxPriceText.textContent = maxPrice;
             currentFilters.price = maxPrice;
@@ -508,26 +453,81 @@
         });
     }
 
-    // Real-time search as user types
+    // Search Functionality
     const searchInput = document.getElementById('productSearch');
     if (searchInput) {
         searchInput.addEventListener('input', function() {
             clearTimeout(this.searchTimeout);
             this.searchTimeout = setTimeout(() => {
-                searchProducts();
-            }, 300); // Debounce search for better performance
+                currentFilters.search = this.value.trim();
+                applyFilters();
+            }, 300);
         });
 
-        // Search on Enter key
         searchInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
-                searchProducts();
+                currentFilters.search = this.value.trim();
+                applyFilters();
             }
         });
     }
 
-    // Quantity control functions
+    // Sorting
+    const sortSelect = document.getElementById('sortSelect');
+    if (sortSelect) {
+        sortSelect.addEventListener('change', function() {
+            currentFilters.sort = this.value;
+            applySorting();
+        });
+    }
+
+    function applySorting() {
+        const container = document.getElementById('product-list');
+        const items = Array.from(document.querySelectorAll('.product-item'));
+        const visibleItems = items.filter(item => item.style.display !== 'none');
+        
+        visibleItems.sort((a, b) => {
+            switch(currentFilters.sort) {
+                case 'price-low':
+                    return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
+                case 'price-high':
+                    return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
+                case 'name':
+                    return a.dataset.name.localeCompare(b.dataset.name);
+                default:
+                    return 0;
+            }
+        });
+        
+        visibleItems.forEach(item => container.appendChild(item));
+    }
+
+    // Reset Filters
+    function resetFilters() {
+        currentFilters = {
+            category: 'all',
+            price: 1000,
+            search: '',
+            sort: 'default'
+        };
+        
+        document.getElementById('productSearch').value = '';
+        document.getElementById('priceRange').value = 1000;
+        document.getElementById('maxPrice').textContent = '1000';
+        document.getElementById('sortSelect').value = 'default';
+        
+        document.querySelectorAll('.category-pill').forEach(pill => {
+            pill.classList.remove('active');
+            if (pill.dataset.category === 'all') {
+                pill.classList.add('active');
+            }
+        });
+        
+        applyFilters();
+    }
+
+    // Quantity Controls
     function decreaseQuantity(productId) {
         const input = document.getElementById(`quantity-${productId}`);
         let currentValue = parseInt(input.value);
@@ -548,7 +548,7 @@
         }
     }
 
-    // Function to show success toast
+    // Toast Functions
     function showSuccessToast(message) {
         const toastElement = document.getElementById('cartToast');
         const toastMessage = document.getElementById('toastMessage');
@@ -563,7 +563,6 @@
         toast.show();
     }
 
-    // Function to show error toast
     function showErrorToast(message) {
         const toastElement = document.getElementById('errorToast');
         const errorMessage = document.getElementById('errorMessage');
@@ -578,41 +577,31 @@
         toast.show();
     }
 
-    // FIXED: Function to update cart count - now targets the correct element
+    // Update Cart Count
     function updateCartCount(newCount) {
         const cartBadge = document.querySelector('.cart-badge');
         if (cartBadge) {
             cartBadge.textContent = newCount;
-            
-            // Add animation to cart badge
-            cartBadge.style.animation = 'none';
-            setTimeout(() => {
-                cartBadge.style.animation = 'pulse 0.6s ease-in-out';
-            }, 10);
+            cartBadge.style.animation = 'pulse 0.6s ease-in-out';
         }
     }
 
-    // Main add to cart function
+    // Add to Cart
     function addToCart(productId) {
         const button = document.getElementById(`add-btn-${productId}`);
         const quantityInput = document.getElementById(`quantity-${productId}`);
         const quantity = parseInt(quantityInput.value);
         
-        // Show loading state
         button.classList.add('loading');
         button.querySelector('.btn-text').classList.add('d-none');
         button.querySelector('.btn-loading').classList.remove('d-none');
         button.disabled = true;
         
-        // Prepare form data
         const formData = new FormData();
         formData.append('product_id', productId);
         formData.append('quantity', quantity);
         formData.append('_token', document.querySelector('meta[name="csrf-token"]').getAttribute('content'));
         
-        console.log('Adding to cart:', { productId, quantity }); // Debug log
-        
-        // Submit via fetch
         fetch('{{ route("cart.add") }}', {
             method: 'POST',
             body: formData,
@@ -622,43 +611,31 @@
         })
         .then(async response => {
             const contentType = response.headers.get('content-type');
-            console.log('Response status:', response.status); // Debug log
-            console.log('Response content-type:', contentType); // Debug log
             
             if (contentType && contentType.includes('application/json')) {
                 return response.json();
             } else {
-                // If response is not JSON, get text for debugging
                 const text = await response.text();
-                console.log('Response text:', text); // Debug log
-                throw new Error('Server returned non-JSON response: ' + text.substring(0, 200));
+                throw new Error('Server returned non-JSON response');
             }
         })
         .then(data => {
-            console.log('Success response:', data); // Debug log
-            
             if (data.success) {
-                // Show success state
                 button.classList.remove('loading');
                 button.classList.add('success');
                 button.querySelector('.btn-loading').classList.add('d-none');
                 button.querySelector('.btn-success').classList.remove('d-none');
                 
-                // Update cart count - THIS IS THE FIX
                 updateCartCount(data.cart_count);
                 
-                // Show success toast
                 const productName = button.closest('.product-item').dataset.productName;
                 showSuccessToast(`${productName} (${quantity}) added to cart!`);
                 
-                // Reset button after 2 seconds
                 setTimeout(() => {
                     button.classList.remove('success');
                     button.querySelector('.btn-success').classList.add('d-none');
                     button.querySelector('.btn-text').classList.remove('d-none');
                     button.disabled = false;
-                    
-                    // Reset quantity to 1
                     quantityInput.value = 1;
                 }, 2000);
             } else {
@@ -666,26 +643,22 @@
             }
         })
         .catch(error => {
-            console.error('Error adding to cart:', error); // Debug log
-            
-            // Reset button state
             button.classList.remove('loading');
             button.querySelector('.btn-loading').classList.add('d-none');
             button.querySelector('.btn-text').classList.remove('d-none');
             button.disabled = false;
             
-            // Show error message
             showErrorToast(error.message || 'Failed to add product to cart. Please try again.');
         });
     }
 
-    // Initialize page
+    // Initialize
     document.addEventListener('DOMContentLoaded', function() {
         updateProductCount();
         
-        // Add smooth scrolling for better UX
+        // Smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
+            anchor.addEventListener('click', function(e) {
                 e.preventDefault();
                 const target = document.querySelector(this.getAttribute('href'));
                 if (target) {
@@ -696,8 +669,6 @@
                 }
             });
         });
-        
-        console.log('Page loaded, CSRF token:', document.querySelector('meta[name="csrf-token"]').getAttribute('content')); // Debug log
     });
 </script>
 

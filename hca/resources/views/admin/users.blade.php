@@ -193,7 +193,7 @@
                         <h5 class="modal-title"><i class="fas fa-user-edit me-2"></i>Edit User</h5>
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
-                    <form method="POST" action="/admin/users/{{ $user->id }}">
+                    <form method="POST" action="{{ route('admin.users.update', $user->id) }}">
                         @csrf
                         @method('PUT')
                         <div class="modal-body">

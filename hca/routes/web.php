@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
 use App\Http\Controllers\ChatbotController;
+use App\Http\Controllers\OrderController;
 
 
 
@@ -89,7 +90,8 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     // User Management
     Route::get('/users', [AdminController::class, 'users'])->name('admin.users');
     Route::delete('/users/{id}', [AdminController::class, 'deleteUser'])->name('admin.users.delete');
-    
+    Route::put('/users/{id}', [AdminController::class, 'updateUser'])->name('admin.users.update');
+
     // Product Management
     Route::get('/products', [AdminController::class, 'products'])->name('admin.products');
     Route::post('/products', [AdminController::class, 'storeProduct'])->name('admin.products.store');
@@ -149,3 +151,8 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
 //chatbot
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
 Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
+
+Route::middleware(['auth'])->group(function () {
+    // ...other user routes...
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+});
