@@ -16,9 +16,10 @@ class Order extends Model
         'address',
         'phone',
         'total',
-        'payment_status'
+        'payment_status',
+        'payment_method', // <-- This must be here!
     ];
-   public $timestamps = false;   // <--- ADD THIS
+    public $timestamps = false;   // <--- ADD THIS
     public function items()
     {
         return $this->hasMany(OrderItem::class, 'order_id');

@@ -152,7 +152,7 @@
         </div>
     @else
     <div class="row">
-        <!-- Customer Form -->
+        <!-- Customer Form (wraps only customer info and payment method) -->
         <div class="col-lg-7">
             <form method="POST" action="{{ route('checkout.store') }}">
                 @csrf
@@ -216,20 +216,34 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold"><i class="bi bi-wallet2 me-1"></i>Payment Method</label>
                             <div class="card p-3" style="background: #e3f2fd;">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="payment_method" value="GCash" checked>
-                                    <label class="form-check-label">
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="radio" name="payment_method" value="GCash" id="paymentGCash" checked>
+                                    <label class="form-check-label" for="paymentGCash">
                                         <strong>GCash (Manual Payment)</strong>
                                         <small class="d-block text-muted">Pay via GCash transfer</small>
+                                    </label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="radio" name="payment_method" value="COD" id="paymentCOD">
+                                    <label class="form-check-label" for="paymentCOD">
+                                        <strong>Cash On Delivery (COD)</strong>
+                                        <small class="d-block text-muted">Pay when your order arrives</small>
                                     </label>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-success btn-lg fw-semibold">
+                        <i class="bi bi-shield-check me-2"></i>Place Order
+                    </button>
+                </div>
+            </form>
         </div>
 
-        <!-- Order Summary -->
+        <!-- Order Summary (outside the checkout form) -->
         <div class="col-lg-5">
             <div class="card">
                 <div class="card-header">
@@ -237,17 +251,26 @@
                 </div>
                 <div class="card-body">
                     @foreach($cartItems as $item)
-                        <div class="product-item">
-                            <div class="d-flex align-items-center">
-                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
-                                     alt="{{ $item->product->name }}" 
-                                     class="product-image me-3">
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1">{{ $item->product->name }}</h6>
-                                    <small class="text-muted">Qty: {{ $item->quantity }} × ₱{{ number_format($item->product->price, 2) }}</small>
-                                </div>
-                                <div><strong class="text-success">₱{{ number_format($item->quantity * $item->product->price, 2) }}</strong></div>
+                        <div class="product-item d-flex align-items-center">
+                            <img src="{{ asset('asset/images/' . $item->product->image) }}" alt="{{ $item->product->name }}" class="product-image me-3">
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1">{{ $item->product->name }}</h6>
+                                <form method="POST" action="{{ route('cart.update', $item->id) }}" class="d-inline">
+                                    @csrf
+                                    <div class="input-group input-group-sm" style="max-width: 120px;">
+                                        <input type="number" name="quantity" class="form-control cart-qty-input" min="1" max="{{ $item->product->stock }}" value="{{ $item->quantity }}" required data-id="{{ $item->id }}">
+                                        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-repeat"></i></button>
+                                    </div>
+                                </form>
+                                <form method="POST" action="{{ route('cart.delete', $item->id) }}" class="d-inline ms-2">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button class="btn btn-danger btn-sm" type="submit"><i class="bi bi-trash"></i></button>
+                                </form>
+                                <small class="text-muted">Stock: {{ $item->product->stock }}</small>
                             </div>
+                            <div><strong class="text-success">₱{{ number_format($item->quantity * $item->product->price, 2) }}</strong></div>
+                            <span class="product-price d-none">{{ $item->product->price }}</span>
                         </div>
                     @endforeach
 
@@ -256,9 +279,6 @@
                     </div>
 
                     <div class="d-grid gap-2 mt-4">
-                        <button type="submit" class="btn btn-success btn-lg fw-semibold">
-                            <i class="bi bi-shield-check me-2"></i>Place Order
-                        </button>
                         <a href="{{ route('cart.index') }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left me-2"></i>Back to Cart
                         </a>
@@ -266,7 +286,6 @@
                 </div>
             </div>
         </div>
-        </form>
     </div>
     @endif
 </div>
@@ -422,6 +441,72 @@
             }
         );
     }
+
+    // Auto-update total when quantity changes
+document.querySelectorAll('input[name="quantity"]').forEach(function(input) {
+    input.addEventListener('input', function() {
+        let parent = input.closest('.product-item');
+        let price = parseFloat(parent.querySelector('.text-success').textContent.replace(/[^\d.]/g, '')) / input.value;
+        let newTotal = price * input.value;
+        parent.querySelector('.text-success').textContent = '₱' + newTotal.toFixed(2);
+
+        // Recalculate grand total
+        let grandTotal = 0;
+        document.querySelectorAll('.product-item').forEach(function(item) {
+            let qty = parseInt(item.querySelector('input[name="quantity"]').value);
+            let priceEach = parseFloat(item.querySelector('.text-success').textContent.replace(/[^\d.]/g, '')) / qty;
+            grandTotal += priceEach * qty;
+        });
+        document.querySelector('.total-highlight h5').textContent = 'Total: ₱' + grandTotal.toFixed(2);
+    });
+});
+
+document.querySelectorAll('.cart-qty-input').forEach(function(input) {
+    input.addEventListener('change', function() {
+        let cartItemId = input.getAttribute('data-id');
+        let newQty = input.value;
+        let maxStock = input.getAttribute('max');
+        if (parseInt(newQty) < 1 || parseInt(newQty) > parseInt(maxStock)) {
+            alert('Invalid quantity!');
+            input.value = maxStock;
+            newQty = maxStock;
+        }
+
+        fetch("{{ url('/cart/update') }}/" + cartItemId, {
+            method: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({ quantity: newQty })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update item total
+                let parent = input.closest('.product-item');
+                let priceEach = parseFloat(parent.querySelector('.product-price').textContent.replace(/[^\d.]/g, ''));
+                let newTotal = priceEach * newQty;
+                parent.querySelector('.text-success').textContent = '₱' + newTotal.toFixed(2);
+
+                // Recalculate grand total
+                let grandTotal = 0;
+                document.querySelectorAll('.product-item').forEach(function(item) {
+                    let qty = parseInt(item.querySelector('.cart-qty-input').value);
+                    let priceEach = parseFloat(item.querySelector('.product-price').textContent.replace(/[^\d.]/g, ''));
+                    grandTotal += priceEach * qty;
+                });
+                document.querySelector('.total-highlight h5').textContent = 'Total: ₱' + grandTotal.toFixed(2);
+            } else {
+                alert(data.message || 'Error updating quantity');
+            }
+        })
+        .catch(() => {
+            alert('Error updating quantity');
+        });
+    });
+});
 </script>
 </body>
 </html>

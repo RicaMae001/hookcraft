@@ -159,63 +159,26 @@ class CartController extends Controller
 }
     public function update(Request $request, $id)
     {
-        try {
-            $item = CartItem::findOrFail($id);
-            
-            // Verify ownership
-            if ($item->cart->user_id !== Auth::id()) {
-                return back()->with('error', 'Unauthorized action.');
-            }
-            
-            $quantity = max(1, (int) $request->quantity);
+        $cartItem = CartItem::findOrFail($id);
+        $maxStock = $cartItem->product->stock;
 
-            // Check stock availability
-            if ($item->product->stock < $quantity) {
-                return back()->with('error', 'Insufficient stock available. Only ' . $item->product->stock . ' items left.');
-            }
+        $quantity = $request->get('quantity');
 
-            $item->update([
-                'quantity' => $quantity,
-                'subtotal' => $item->price * $quantity
-            ]);
+        $request->validate([
+            'quantity' => "required|integer|min:1|max:$maxStock"
+        ]);
 
-            // Update session cart count
-            $cartCount = CartItem::whereHas('cart', function($query) {
-                $query->where('user_id', Auth::id());
-            })->sum('quantity');
-            session(['cart_count' => $cartCount]);
+        $cartItem->quantity = $quantity;
+        $cartItem->save();
 
-            return back()->with('success', 'Cart updated successfully.');
-            
-        } catch (\Exception $e) {
-            Log::error('Cart update error: ' . $e->getMessage());
-            return back()->with('error', 'Failed to update cart.');
-        }
+        return response()->json(['success' => true]);
     }
 
-    public function remove($id)
+    public function delete($id)
     {
-        try {
-            $item = CartItem::findOrFail($id);
-            
-            // Verify ownership
-            if ($item->cart->user_id !== Auth::id()) {
-                return back()->with('error', 'Unauthorized action.');
-            }
-            
-            $item->delete();
+        $cartItem = CartItem::findOrFail($id);
+        $cartItem->delete();
 
-            // Update session cart count
-            $cartCount = CartItem::whereHas('cart', function($query) {
-                $query->where('user_id', Auth::id());
-            })->sum('quantity');
-            session(['cart_count' => $cartCount]);
-
-            return back()->with('success', 'Item removed from cart.');
-            
-        } catch (\Exception $e) {
-            Log::error('Cart remove error: ' . $e->getMessage());
-            return back()->with('error', 'Failed to remove item from cart.');
-        }
+        return back()->with('success', 'Item removed!');
     }
 }

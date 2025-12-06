@@ -70,6 +70,7 @@ class CheckoutController extends Controller
             'phone'         => $request->phone,
             'total'         => $total,
             'payment_status'=> 'Pending',
+            'payment_method'=> $request->payment_method, // <-- Add this line
         ]);
 
         // Create order items

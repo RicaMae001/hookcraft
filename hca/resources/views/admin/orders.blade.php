@@ -176,6 +176,7 @@
                                 <th>Phone</th>
                                 <th>Total</th>
                                 <th>Payment</th>
+                                <th>Payment Method</th> <!-- Added column -->
                                 <th>Delivery</th>
                                 <th>Coordinator</th>
                                 <th>Date</th>
@@ -203,6 +204,11 @@
                                         @else
                                             <span class="badge bg-secondary">{{ $order->payment_status }}</span>
                                         @endif
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-info text-dark">
+                                            {{ $order->payment_method ?? '-' }}
+                                        </span>
                                     </td>
                                     <td>
                                         @if($order->delivery_status == 'Delivered')

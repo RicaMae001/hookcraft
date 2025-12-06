@@ -454,7 +454,7 @@
 
                             <!-- Remove Button -->
                             <div class="col-md-1 text-center">
-                                <form action="{{ route('cart.remove', $item->id) }}" method="POST" class="remove-form">
+                                <form action="{{ route('cart.delete', $item->id) }}" method="POST" class="remove-form">
                                     @csrf @method('DELETE')
                                     <button class="btn remove-btn" type="button" onclick="confirmRemove(this)" title="Remove item">
                                         <i class="bi bi-trash"></i>
