@@ -259,7 +259,6 @@
                                     @csrf
                                     <div class="input-group input-group-sm" style="max-width: 120px;">
                                         <input type="number" name="quantity" class="form-control cart-qty-input" min="1" max="{{ $item->product->stock }}" value="{{ $item->quantity }}" required data-id="{{ $item->id }}">
-                                        <button class="btn btn-primary" type="submit"><i class="bi bi-arrow-repeat"></i></button>
                                     </div>
                                 </form>
                                 <form method="POST" action="{{ route('cart.delete', $item->id) }}" class="d-inline ms-2">
