@@ -8,8 +8,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use App\Models\GalleryImage;
-use App\Models\Category; // Add this line
-use App\Models\User; // Add this line
+use App\Models\Category;
+use App\Models\User;
+use App\Models\Product; // Added this
 
 class AdminController extends Controller
 {
@@ -76,10 +77,8 @@ class AdminController extends Controller
             ->get();
 
         foreach ($orderItems as $item) {
-            // Get current product stock
-            $product = DB::table('products')
-                ->where('id', $item->product_id)
-                ->first();
+            // Get current product using Eloquent
+            $product = Product::find($item->product_id);
 
             if ($product) {
                 $newStock = $product->stock - $item->quantity;
@@ -90,9 +89,7 @@ class AdminController extends Controller
                 }
 
                 // Update product stock
-                DB::table('products')
-                    ->where('id', $item->product_id)
-                    ->update(['stock' => $newStock]);
+                $product->update(['stock' => $newStock]);
             }
         }
     }
@@ -108,10 +105,11 @@ class AdminController extends Controller
             ->get();
 
         foreach ($orderItems as $item) {
-            // Restore stock for each product
-            DB::table('products')
-                ->where('id', $item->product_id)
-                ->increment('stock', $item->quantity);
+            // Restore stock using Eloquent
+            $product = Product::find($item->product_id);
+            if ($product) {
+                $product->increment('stock', $item->quantity);
+            }
         }
     }
 
@@ -121,7 +119,7 @@ class AdminController extends Controller
     private function validateOrderStock($orderItems)
     {
         foreach ($orderItems as $item) {
-            $product = DB::table('products')->where('id', $item->product_id)->first();
+            $product = Product::find($item->product_id);
             
             if (!$product) {
                 throw new \Exception("Product not found: {$item->product_id}");
@@ -200,8 +198,8 @@ class AdminController extends Controller
         $totalSales = DB::table('orders')->where('payment_status', 'Paid')->sum('total');
         $totalOrders = DB::table('orders')->count();
         $pendingOrders = DB::table('orders')->where('delivery_status', 'Pending')->count();
-        $totalProducts = DB::table('products')->count();
-        $totalUsers = DB::table('users')->count();
+        $totalProducts = Product::count(); // Changed to Eloquent
+        $totalUsers = User::count(); // Changed to Eloquent
 
         // Monthly Sales (last 6 months)
         $monthlySales = DB::table('orders')
@@ -227,16 +225,14 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
-        // ⭐ ADD LOW STOCK ALERTS
-        $lowStockProducts = DB::table('products')
-            ->where('stock', '<=', 5)
+        // ⭐ ADD LOW STOCK ALERTS - Using Eloquent
+        $lowStockProducts = Product::where('stock', '<=', 5)
             ->where('stock', '>', 0)
             ->orderBy('stock', 'asc')
             ->limit(10)
             ->get();
 
-        $outOfStockProducts = DB::table('products')
-            ->where('stock', '<=', 0)
+        $outOfStockProducts = Product::where('stock', '<=', 0)
             ->orderBy('name', 'asc')
             ->limit(10)
             ->get();
@@ -280,13 +276,14 @@ class AdminController extends Controller
     // User Management
     public function users()
     {
-        $users = DB::table('users')->orderBy('created_at', 'desc')->get();
+        $users = User::orderBy('created_at', 'desc')->get(); // Changed to Eloquent
         return view('admin.users', compact('users'));
     }
 
     public function deleteUser($id)
     {
-        DB::table('users')->where('id', $id)->delete();
+        $user = User::findOrFail($id);
+        $user->delete();
         return redirect()->back()->with('success', 'User deleted successfully');
     }
 
@@ -303,19 +300,21 @@ class AdminController extends Controller
         return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
 
-    // Product Management
+    // ============================================
+    // PRODUCT MANAGEMENT - FIXED WITH ELOQUENT
+    // ============================================
     public function products()
     {
-        $products = DB::table('products')
-            ->join('categories', 'products.category_id', '=', 'categories.id')
-            ->select('products.*', 'categories.name as category_name')
-            ->orderBy('products.id', 'desc')
+        // Use Eloquent instead of DB::table()
+        $products = Product::with('category')
+            ->orderBy('id', 'desc')
             ->get();
-        $categories = DB::table('categories')->get();
+        
+        $categories = Category::orderBy('name')->get();
+        
         return view('admin.products', compact('products', 'categories'));
     }
 
-    // ⭐ FIXED - Changed upload path from 'uploads/products' to 'asset/images'
     public function storeProduct(Request $request)
     {
         $validated = $request->validate([
@@ -328,10 +327,10 @@ class AdminController extends Controller
         ]);
 
         $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
-        // ⭐ FIXED: Changed to 'asset/images' to match the HTML view
         $request->file('image')->move(public_path('asset/images'), $imageName);
 
-        DB::table('products')->insert([
+        // Use Eloquent Model instead of DB::table()
+        Product::create([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
             'price' => $validated['price'],
@@ -341,10 +340,13 @@ class AdminController extends Controller
             'admin_id' => session('admin_id'),
         ]);
 
+        // Clear any cache
+        cache()->forget('products');
+        cache()->forget('categories');
+
         return redirect()->back()->with('success', 'Product added successfully');
     }
 
-    // ⭐ FIXED - Changed upload path and added old image deletion
     public function updateProduct(Request $request, $id)
     {
         $validated = $request->validate([
@@ -356,6 +358,9 @@ class AdminController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
+        // Use Eloquent Model
+        $product = Product::findOrFail($id);
+
         $updateData = [
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
@@ -365,55 +370,61 @@ class AdminController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            // ⭐ DELETE OLD IMAGE FIRST (optional but recommended)
-            $oldProduct = DB::table('products')->where('id', $id)->first();
-            if ($oldProduct && $oldProduct->image && file_exists(public_path('asset/images/' . $oldProduct->image))) {
-                unlink(public_path('asset/images/' . $oldProduct->image));
+            // Delete old image
+            if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
+                unlink(public_path('asset/images/' . $product->image));
             }
 
             $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
-            // ⭐ FIXED: Changed to 'asset/images' to match the HTML view
             $request->file('image')->move(public_path('asset/images'), $imageName);
             $updateData['image'] = $imageName;
         }
 
-        DB::table('products')->where('id', $id)->update($updateData);
+        $product->update($updateData);
+
+        // Clear cache
+        cache()->forget('products');
+        cache()->forget('categories');
 
         return redirect()->back()->with('success', 'Product updated successfully');
     }
 
-    // ⭐ FIXED - Delete Product Method
     public function deleteProduct($id)
     {
-        // Get product details before deletion
-        $product = DB::table('products')->where('id', $id)->first();
+        $product = Product::findOrFail($id);
         
-        if (!$product) {
-            return redirect()->back()->withErrors(['error' => 'Product not found']);
-        }
-
         // Delete the product image file if it exists
         if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
             unlink(public_path('asset/images/' . $product->image));
         }
 
-        // Delete the product from database
-        DB::table('products')->where('id', $id)->delete();
+        $product->delete();
+
+        // Clear cache
+        cache()->forget('products');
+        cache()->forget('categories');
 
         return redirect()->back()->with('success', 'Product deleted successfully');
     }
 
-    // Category Management
+    // ============================================
+    // CATEGORY MANAGEMENT - FIXED WITH ELOQUENT
+    // ============================================
     public function storeCategory(Request $request)
     {
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:categories,name',
         ]);
 
-        DB::table('categories')->insert([
+        // Use Eloquent Model
+        Category::create([
             'name' => $validated['name'],
-            'limited_edition' => $request->has('limited_edition') ? 1 : 0, // <-- Add this line
+            'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
+
+        // Clear cache
+        cache()->forget('categories');
+        cache()->forget('products');
 
         return redirect()->back()->with('success', 'Category added successfully');
     }
@@ -424,10 +435,17 @@ class AdminController extends Controller
             'name' => 'required|string|max:100|unique:categories,name,' . $id,
         ]);
 
-        DB::table('categories')->where('id', $id)->update([
+        // Use Eloquent Model
+        $category = Category::findOrFail($id);
+        
+        $category->update([
             'name' => $validated['name'],
-            'limited_edition' => $request->has('limited_edition') ? 1 : 0, // <-- Add this line
+            'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
+
+        // Clear cache
+        cache()->forget('categories');
+        cache()->forget('products');
 
         return redirect()->route('admin.products')->with('success', 'Category updated successfully.');
     }
@@ -435,12 +453,26 @@ class AdminController extends Controller
     public function deleteCategory($id)
     {
         $category = Category::findOrFail($id);
+        
+        // Check if category has products
+        if ($category->products()->count() > 0) {
+            return redirect()->back()->withErrors([
+                'error' => 'Cannot delete category with existing products. Please reassign or delete the products first.'
+            ]);
+        }
+        
         $category->delete();
 
-        return redirect('/')->with('success', 'Category deleted successfully');
+        // Clear cache
+        cache()->forget('categories');
+        cache()->forget('products');
+
+        return redirect()->back()->with('success', 'Category deleted successfully');
     }
 
-    // Order Management - ⭐ UPDATED WITH STOCK MANAGEMENT
+    // ============================================
+    // ORDER MANAGEMENT - UPDATED WITH STOCK MANAGEMENT
+    // ============================================
     public function orders()
     {
         $orders = DB::table('orders')->orderBy('created_at', 'desc')->get();
@@ -540,7 +572,9 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
     }
 
-    // Staff Management - Admin Accounts
+    // ============================================
+    // STAFF MANAGEMENT - ADMIN ACCOUNTS
+    // ============================================
     public function staffAdmins()
     {
         $admins = DB::table('admin')->orderBy('id', 'desc')->get();
@@ -600,7 +634,9 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Admin account deleted successfully');
     }
 
-    // Staff Management - Delivery Coordinators
+    // ============================================
+    // STAFF MANAGEMENT - DELIVERY COORDINATORS
+    // ============================================
     public function staffDelivery()
     {
         $coordinators = DB::table('delivery_coordinator')->orderBy('created_at', 'desc')->get();
@@ -661,7 +697,9 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Delivery coordinator deleted successfully');
     }
 
-    // ⭐ GALLERY MANAGEMENT METHODS (Integrated from AdminGalleryController)
+    // ============================================
+    // GALLERY MANAGEMENT METHODS
+    // ============================================
     
     /**
      * Display gallery images
@@ -707,7 +745,7 @@ class AdminController extends Controller
                 'category' => $request->category,
                 'display_order' => $request->display_order ?? 0,
                 'is_active' => $request->has('is_active') ? 1 : 0,
-                'admin_id' => session('admin_id') // Using session admin_id instead of Auth::guard('admin')->id()
+                'admin_id' => session('admin_id')
             ]);
 
             return redirect()->route('admin.gallery.index')

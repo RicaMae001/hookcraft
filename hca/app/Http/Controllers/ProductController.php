@@ -40,10 +40,8 @@ class ProductController extends Controller
      */
     public function shop()
     {
-        // Fetch all products
+        
         $products = Product::with('category')->get();
-
-        // Fetch all categories
         $categories = Category::orderByDesc('limited_edition')->orderBy('name')->get(); // Limited Edition first
         
         $cartCount = $this->getCartCount();

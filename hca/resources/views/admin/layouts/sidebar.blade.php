@@ -24,7 +24,7 @@
             <!-- Gallery Management -->
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}" href="{{ route('admin.gallery.index') }}">
-                    <i class="fas fa-images me-2"></i>Gallery Management
+                    <i class="fas fa-images me-2"></i>Gallery 
                 </a>
             </li>
         </ul>
