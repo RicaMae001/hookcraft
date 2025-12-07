@@ -412,6 +412,7 @@ class AdminController extends Controller
 
         DB::table('categories')->insert([
             'name' => $validated['name'],
+            'limited_edition' => $request->has('limited_edition') ? 1 : 0, // <-- Add this line
         ]);
 
         return redirect()->back()->with('success', 'Category added successfully');
@@ -425,9 +426,10 @@ class AdminController extends Controller
 
         DB::table('categories')->where('id', $id)->update([
             'name' => $validated['name'],
+            'limited_edition' => $request->has('limited_edition') ? 1 : 0, // <-- Add this line
         ]);
 
-        return redirect()->back()->with('success', 'Category updated successfully');
+        return redirect()->route('admin.products')->with('success', 'Category updated successfully.');
     }
 
     public function deleteCategory($id)
@@ -435,7 +437,7 @@ class AdminController extends Controller
         $category = Category::findOrFail($id);
         $category->delete();
 
-        return redirect()->route('admin.products')->with('success', 'Category deleted successfully.');
+        return redirect('/')->with('success', 'Category deleted successfully');
     }
 
     // Order Management - ⭐ UPDATED WITH STOCK MANAGEMENT

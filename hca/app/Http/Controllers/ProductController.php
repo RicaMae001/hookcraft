@@ -28,11 +28,11 @@ class ProductController extends Controller
      */
     public function index()
     {
-        // Fetch first 4 products as featured
-        $products = Product::take(4)->get();
+        $categories = Category::orderByDesc('limited_edition')->orderBy('name')->get();
+        $products = Product::all();
         $cartCount = $this->getCartCount();
         
-        return view('index', compact('products', 'cartCount'));
+        return view('index', compact('categories', 'products', 'cartCount'));
     }
 
     /**
@@ -44,7 +44,7 @@ class ProductController extends Controller
         $products = Product::with('category')->get();
 
         // Fetch all categories
-        $categories = Category::orderBy('name')->get();
+        $categories = Category::orderByDesc('limited_edition')->orderBy('name')->get(); // Limited Edition first
         
         $cartCount = $this->getCartCount();
 
@@ -90,5 +90,34 @@ class ProductController extends Controller
         $cartCount = $this->getCartCount();
         
         return view('pages.contact', compact('cartCount'));
+    }
+
+    /**
+     * Store a newly created category in storage.
+     */
+    public function store(Request $request)
+    {
+        // Validate the request...
+        
+        $data = $request->all();
+        $data['limited_edition'] = $request->has('limited_edition') ? 1 : 0;
+        Category::create($data);
+
+        return redirect()->back()->with('success', 'Category created successfully.');
+    }
+
+    /**
+     * Update the specified category in storage.
+     */
+    public function update(Request $request, $id)
+    {
+        // Validate the request...
+
+        $category = Category::findOrFail($id);
+        $data = $request->all();
+        $data['limited_edition'] = $request->has('limited_edition') ? 1 : 0;
+        $category->update($data);
+
+        return redirect()->route('admin.products')->with('success', 'Category updated successfully.');
     }
 }

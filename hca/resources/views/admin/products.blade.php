@@ -328,8 +328,11 @@
                                 <input type="text" name="name" class="form-control" value="{{ $category->name }}" required>
                             </div>
                             <div class="mb-3">
-                              
-                                
+                                <label class="form-label"><i class="fas fa-star me-2"></i>Limited Edition</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="limited_edition" value="1" {{ $category->limited_edition ? 'checked' : '' }}>
+                                    <label class="form-check-label">Display as Limited Edition</label>
+                                </div>
                             </div>
                         </div>
                         <div class="modal-footer">
@@ -366,32 +369,37 @@
             </div>
         </div>
     </div>
-
-    <!-- Add Category Modal -->
-    <div class="modal fade" id="addCategoryModal" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <form method="POST" action="{{ route('admin.categories.store') }}">
-                    @csrf
-                    <div class="modal-header bg-info text-white">
-                        <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>Add New Category</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('admin.categories.store') }}">
+                @csrf
+                <div class="modal-header bg-info text-white">
+                    <h5 class="modal-title"><i class="fas fa-folder-plus me-2"></i>Add New Category</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-tag me-2"></i>Category Name *</label>
+                        <input type="text" name="name" class="form-control" placeholder="Enter category name" required>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-tag me-2"></i>Category Name *</label>
-                            <input type="text" name="name" class="form-control" placeholder="Enter category name" required>
+                    <div class="mb-3">
+                        <label class="form-label"><i class="fas fa-star me-2"></i>Limited Edition</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="limited_edition" value="1">
+                            <label class="form-check-label">Display as Limited Edition</label>
                         </div>
-                        
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="submit" class="btn btn-info"><i class="fas fa-plus me-2"></i>Add Category</button>
-                    </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-info"><i class="fas fa-plus me-2"></i>Add Category</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
 
     <!-- Add Product Modal -->
     <div class="modal fade" id="addProductModal" tabindex="-1">

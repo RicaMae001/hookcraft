@@ -11,9 +11,7 @@ class Category extends Model
 
     protected $table = 'categories';
 
-    protected $fillable = [
-        'name',
-    ];
+    protected $fillable = ['name', 'description', 'limited_edition'];
 
     public $timestamps = false;
 
