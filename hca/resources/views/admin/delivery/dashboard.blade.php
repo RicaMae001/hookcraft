@@ -47,6 +47,7 @@
         }
         .order-card {
             transition: transform 0.2s;
+            border-left: 4px solid #667eea;
         }
         .order-card:hover {
             transform: translateY(-5px);
@@ -324,53 +325,59 @@
                 @if($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled')->count() > 0)
                 <div class="card mb-4">
                     <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-tasks me-2"></i>Quick Status Updates</h5>
+                        <h5 class="mb-0"><i class="fas fa-bolt me-2"></i>Quick Status Updates</h5>
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            @foreach($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled')->take(6) as $delivery)
-                            <div class="col-md-6 col-lg-4 mb-3">
-                                <div class="card order-card h-100">
-                                    <div class="card-body">
-                                        <div class="d-flex justify-content-between align-items-start mb-2">
-                                            <h6 class="mb-0">
-                                                <i class="fas fa-receipt text-primary me-1"></i>
-                                                Order #{{ $delivery->id }}
+                            @foreach($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled') as $delivery)
+                                <div class="col-md-6 mb-3">
+                                    <div class="card order-card">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <span class="badge bg-secondary">#{{ $delivery->id }}</span>
+                                                {{ $delivery->customer_name }}
                                             </h6>
-                                            @if($delivery->delivery_status == 'Out for Delivery')
-                                                <span class="badge bg-info">Out for Delivery</span>
-                                            @else
-                                                <span class="badge bg-warning text-dark">Pending</span>
-                                            @endif
+                                            <p class="card-text small mb-2">
+                                                <i class="fas fa-map-marker-alt text-danger me-1"></i>
+                                                {{ Str::limit($delivery->address, 50) }}
+                                            </p>
+                                            <p class="mb-2">
+                                                <strong>Status:</strong> 
+                                                @if($delivery->delivery_status == 'Out for Delivery')
+                                                    <span class="badge bg-info">Out for Delivery</span>
+                                                @else
+                                                    <span class="badge bg-warning text-dark">Pending</span>
+                                                @endif
+                                            </p>
+
+                                            @php
+                                                $status = $delivery->delivery_status;
+                                            @endphp
+
+                                            <div class="d-flex flex-column gap-2">
+                                                @if($status === 'Pending')
+                                                    <button class="btn btn-info btn-sm text-white fw-bold"
+                                                        onclick="confirmStatus('{{ $delivery->id }}', '{{ $delivery->customer_name }}', 'Out for Delivery')">
+                                                        <i class="fas fa-shipping-fast me-1"></i> Out for Delivery
+                                                    </button>
+
+                                                    <button class="btn btn-danger btn-sm fw-bold"
+                                                        onclick="confirmStatus('{{ $delivery->id }}', '{{ $delivery->customer_name }}', 'Cancelled')">
+                                                        <i class="fas fa-times-circle me-1"></i> Cancel Order
+                                                    </button>
+                                                @endif
+
+                                                @if($status === 'Out for Delivery')
+                                                    <button class="btn btn-success btn-sm fw-bold"
+                                                        onclick="confirmStatus('{{ $delivery->id }}', '{{ $delivery->customer_name }}', 'Delivered')">
+                                                        <i class="fas fa-check-circle me-1"></i> Mark as Delivered
+                                                    </button>
+                                                @endif
+                                            </div>
                                         </div>
-                                        <p class="mb-1 small"><strong>{{ $delivery->customer_name }}</strong></p>
-                                        <p class="mb-2 small text-muted">
-                                            <i class="fas fa-map-marker-alt me-1"></i>
-                                            {{ Str::limit($delivery->address, 30) }}
-                                        </p>
-                                        
-                                        <form action="{{ route('delivery.updateStatus', $delivery->id) }}" method="POST">
-                                            @csrf
-                                            @method('POST')
-                                            <select name="delivery_status" class="form-select form-select-sm mb-2" required>
-                                                <option value="Pending" {{ $delivery->delivery_status == 'Pending' ? 'selected' : '' }}>Pending</option>
-                                                <option value="Out for Delivery" {{ $delivery->delivery_status == 'Out for Delivery' ? 'selected' : '' }}>Out for Delivery</option>
-                                                <option value="Delivered" {{ $delivery->delivery_status == 'Delivered' ? 'selected' : '' }}>Delivered</option>
-                                                <option value="Cancelled" {{ $delivery->delivery_status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
-                                            </select>
-                                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                                <i class="fas fa-sync-alt me-1"></i>Update
-                                            </button>
-                                        </form>
                                     </div>
                                 </div>
-                            </div>
                             @endforeach
-                        </div>
-                        <div class="text-center mt-3">
-                            <a href="{{ route('delivery.deliveries') }}" class="btn btn-outline-primary">
-                                <i class="fas fa-list me-2"></i>View All Deliveries
-                            </a>
                         </div>
                     </div>
                 </div>
@@ -435,6 +442,41 @@
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-circle me-2"></i>Confirm Status Update</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="confirmStatusForm" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="modal-body">
+                        <p class="fw-bold mb-1">Order ID:</p>
+                        <p id="confirmOrderId"></p>
+
+                        <p class="fw-bold mb-1">Customer:</p>
+                        <p id="confirmCustomerName"></p>
+
+                        <p class="fw-bold mb-1">Change status to:</p>
+                        <p class="text-primary fw-bold" id="confirmNewStatus"></p>
+
+                        <input type="hidden" name="delivery_status" id="hiddenStatusValue">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                        <button type="submit" class="btn btn-primary">Yes, Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // Notification Toggle
@@ -453,11 +495,23 @@
             }
         });
 
-        // Mark all as read (would need backend route)
+        // Mark all as read
         function markAllAsRead() {
-            // For now, just close dropdown
             document.getElementById('notificationDropdown').classList.remove('show');
-            // You can add AJAX call here to mark all as read in backend
+            // Add AJAX call here to mark all as read in backend
+        }
+
+        // Status Update Confirmation
+        function confirmStatus(orderId, customerName, newStatus) {
+            document.getElementById('confirmOrderId').innerText = '#' + orderId;
+            document.getElementById('confirmCustomerName').innerText = customerName;
+            document.getElementById('confirmNewStatus').innerText = newStatus;
+            document.getElementById('hiddenStatusValue').value = newStatus;
+
+            document.getElementById('confirmStatusForm').action =
+                '/delivery/deliveries/' + orderId + '/status';
+
+            new bootstrap.Modal(document.getElementById('confirmModal')).show();
         }
         
         // Delivery Chart
