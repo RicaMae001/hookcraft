@@ -94,6 +94,35 @@
             border-radius: 8px;
             margin-top: 15px;
         }
+        .payment-method-badge {
+            display: inline-block;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        .payment-method-cod {
+            background: #ffc107;
+            color: #000;
+        }
+        .payment-method-gcash {
+            background: #007bff;
+            color: #fff;
+        }
+        .gcash-upload-section {
+            background: #e7f3ff;
+            border: 2px dashed #007bff;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+        .payment-proof-preview {
+            max-width: 100%;
+            max-height: 300px;
+            border-radius: 8px;
+            border: 2px solid #007bff;
+            cursor: pointer;
+        }
         
         /* Image Modal Styles */
         .image-modal {
@@ -271,6 +300,24 @@
                                         @endif
                                     </div>
 
+                                    <!-- Payment Method -->
+                                    <div class="mb-3">
+                                        <div class="info-label">
+                                            <i class="fas fa-credit-card text-info me-2"></i>Payment Method
+                                        </div>
+                                        @if($delivery->payment_method === 'COD')
+                                            <span class="payment-method-badge payment-method-cod">
+                                                <i class="fas fa-money-bill-wave me-2"></i>Cash on Delivery (COD)
+                                            </span>
+                                        @elseif($delivery->payment_method === 'GCash')
+                                            <span class="payment-method-badge payment-method-gcash">
+                                                <i class="fas fa-mobile-alt me-2"></i>GCash
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ $delivery->payment_method ?? 'Not Specified' }}</span>
+                                        @endif
+                                    </div>
+
                                     <!-- Customer Information -->
                                     <div class="mb-3">
                                         <div class="info-label">
@@ -302,7 +349,6 @@
                                         </div>
 
                                         @php
-                                            // Get order items with product details
                                             $orderItems = DB::table('order_item')
                                                 ->join('products', 'order_item.product_id', '=', 'products.id')
                                                 ->where('order_item.order_id', $delivery->id)
@@ -359,6 +405,62 @@
                                             <h4 class="mb-0">₱{{ number_format($delivery->total, 2) }}</h4>
                                         </div>
                                     </div>
+
+                                    <!-- GCash Payment Proof Section -->
+                                    @if($delivery->payment_method === 'GCash')
+                                        <div class="section-divider"></div>
+                                        
+                                        @if($delivery->payment_proof)
+                                            <!-- Show existing proof -->
+                                            <div class="mb-3">
+                                                <div class="info-label">
+                                                    <i class="fas fa-check-circle text-success me-2"></i>GCash Payment Proof Uploaded
+                                                </div>
+                                                <div class="text-center mt-2">
+                                                    <img src="{{ asset('uploads/payments/' . $delivery->payment_proof) }}" 
+                                                         alt="Payment Proof" 
+                                                         class="payment-proof-preview"
+                                                         onclick="openImageModal(this)"
+                                                         title="Click to view full size">
+                                                </div>
+                                                <div class="alert alert-success mt-3 mb-0">
+                                                    <i class="fas fa-info-circle me-2"></i>
+                                                    Payment proof has been submitted and verified.
+                                                </div>
+                                            </div>
+                                        @elseif($delivery->payment_status !== 'Paid')
+                                            <!-- Upload form for GCash proof -->
+                                            <div class="gcash-upload-section">
+                                                <h6 class="text-primary mb-3">
+                                                    <i class="fas fa-upload me-2"></i>Upload GCash Payment Proof
+                                                </h6>
+                                                <form action="{{ route('delivery.upload-payment-proof', $delivery->id) }}" 
+                                                      method="POST" 
+                                                      enctype="multipart/form-data"
+                                                      id="uploadForm{{ $delivery->id }}">
+                                                    @csrf
+                                                    <div class="mb-3">
+                                                        <input type="file" 
+                                                               class="form-control" 
+                                                               name="payment_proof" 
+                                                               accept="image/*" 
+                                                               required
+                                                               onchange="previewImage(this, {{ $delivery->id }})">
+                                                        <small class="form-text text-muted">
+                                                            <i class="fas fa-info-circle me-1"></i>
+                                                            Please upload a clear screenshot of your GCash payment receipt
+                                                        </small>
+                                                    </div>
+                                                    <div id="imagePreview{{ $delivery->id }}" class="mb-3 text-center" style="display: none;">
+                                                        <img id="preview{{ $delivery->id }}" class="img-fluid" style="max-height: 200px; border-radius: 8px;">
+                                                    </div>
+                                                    <button type="submit" class="btn btn-primary w-100">
+                                                        <i class="fas fa-cloud-upload-alt me-2"></i>Submit Payment Proof
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        @endif
+                                    @endif
 
                                     <div class="section-divider"></div>
 
@@ -460,6 +562,18 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+        // Image preview function
+        function previewImage(input, orderId) {
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('imagePreview' + orderId).style.display = 'block';
+                    document.getElementById('preview' + orderId).src = e.target.result;
+                };
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         // Image Modal Functions
         function openImageModal(imgElement) {
             const modal = document.getElementById('imageModal');
@@ -470,26 +584,21 @@
             modalImg.src = imgElement.src;
             caption.textContent = imgElement.alt;
             
-            // Prevent body scroll when modal is open
             document.body.style.overflow = 'hidden';
         }
         
         function closeImageModal() {
             const modal = document.getElementById('imageModal');
             modal.classList.remove('show');
-            
-            // Restore body scroll
             document.body.style.overflow = 'auto';
         }
         
-        // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape') {
                 closeImageModal();
             }
         });
         
-        // Prevent modal close when clicking on image
         document.getElementById('modalImage').addEventListener('click', function(event) {
             event.stopPropagation();
         });

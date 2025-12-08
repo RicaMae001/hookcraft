@@ -72,7 +72,7 @@ class GalleryController extends Controller
                 'category_id' => $request->category_id,
                 'display_order' => $request->display_order,
                 'is_active' => $request->has('is_active') ? 1 : 0,
-                'admin_id' => auth()->id(),
+                'admin_id' => auth()->id(), 
             ];
 
             \Log::info('Creating gallery item with data:', $galleryData);

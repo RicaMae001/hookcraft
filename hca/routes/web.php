@@ -8,7 +8,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\DeliveryController;
 use App\Http\Controllers\CustomizationController;
-use App\Http\Controllers\GalleryController; // ADD THIS LINE
+use App\Http\Controllers\GalleryController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
@@ -23,7 +23,7 @@ Route::get('/', [ProductController::class, 'index'])->name('home');
 // Shop, About, Gallery, Contact
 Route::get('/shop', [ProductController::class, 'shop'])->name('shop');
 Route::get('/about', [ProductController::class, 'about'])->name('about');
-Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery'); // CHANGED TO GalleryController
+Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
 Route::get('/contact', [ProductController::class, 'contact'])->name('contact');
 
 // Product Details
@@ -71,6 +71,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/customization/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
     Route::put('/customization/{id}', [CustomizationController::class, 'update'])->name('customization.update');
     Route::delete('/customization/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
+    
+    // Order Management
+    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 });
 
 // Unified Staff Login (Admin & Delivery)
@@ -121,7 +124,7 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
     Route::put('/staff/delivery/{id}', [AdminController::class, 'updateDelivery'])->name('admin.staff.delivery.update');
     Route::delete('/staff/delivery/{id}', [AdminController::class, 'deleteDelivery'])->name('admin.staff.delivery.delete');
     
-    // ⭐ GALLERY MANAGEMENT ROUTES (UPDATED TO USE GalleryController)
+    // Gallery Management Routes
     Route::prefix('gallery')->name('admin.gallery.')->group(function () {
         Route::get('/', [GalleryController::class, 'adminIndex'])->name('index');
         Route::get('/create', [GalleryController::class, 'create'])->name('create');
@@ -144,15 +147,13 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
     Route::put('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
     Route::post('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
     
+    // ⭐ NEW: Payment Proof Upload Route
+    Route::post('/deliveries/{id}/upload-payment-proof', [DeliveryController::class, 'uploadPaymentProof'])->name('delivery.upload-payment-proof');
+    
     // Delivery History
     Route::get('/history', [DeliveryController::class, 'history'])->name('delivery.history');
 });
 
-//chatbot
+// Chatbot
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
 Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
-
-Route::middleware(['auth'])->group(function () {
-    // ...other user routes...
-    Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
-});

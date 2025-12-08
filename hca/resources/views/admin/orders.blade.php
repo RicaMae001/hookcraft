@@ -55,6 +55,100 @@
             border-bottom: 3px solid #FFB6C1;
             color: #FFB6C1;
         }
+        .payment-proof-thumb {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+            border-radius: 8px;
+            cursor: pointer;
+            border: 2px solid #007bff;
+            transition: all 0.3s ease;
+        }
+        .payment-proof-thumb:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .payment-method-badge {
+            padding: 5px 12px;
+            border-radius: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .payment-method-cod {
+            background: #ffc107;
+            color: #000;
+        }
+        .payment-method-gcash {
+            background: #007bff;
+            color: #fff;
+        }
+        
+        /* Image Modal Styles */
+        .image-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.9);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .image-modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .image-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+            animation: zoomIn 0.3s ease;
+        }
+        
+        .image-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 35px;
+            color: #fff;
+            font-size: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+            z-index: 10000;
+        }
+        
+        .image-modal-close:hover {
+            color: #bbb;
+        }
+        
+        .image-modal-caption {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #fff;
+            text-align: center;
+            padding: 10px 20px;
+            background: rgba(0, 0, 0, 0.7);
+            border-radius: 8px;
+            font-size: 16px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes zoomIn {
+            from { transform: scale(0.5); }
+            to { transform: scale(1); }
+        }
+        
         @media (max-width: 768px) {
             .content-wrapper {
                 margin-left: 0;
@@ -176,7 +270,8 @@
                                 <th>Phone</th>
                                 <th>Total</th>
                                 <th>Payment</th>
-                                <th>Payment Method</th> <!-- Added column -->
+                                <th>Payment Method</th>
+                                <th>Payment Proof</th>
                                 <th>Delivery</th>
                                 <th>Coordinator</th>
                                 <th>Date</th>
@@ -206,9 +301,34 @@
                                         @endif
                                     </td>
                                     <td>
-                                        <span class="badge bg-info text-dark">
-                                            {{ $order->payment_method ?? '-' }}
-                                        </span>
+                                        @if($order->payment_method === 'COD')
+                                            <span class="payment-method-badge payment-method-cod">
+                                                <i class="fas fa-money-bill-wave me-1"></i>COD
+                                            </span>
+                                        @elseif($order->payment_method === 'GCash')
+                                            <span class="payment-method-badge payment-method-gcash">
+                                                <i class="fas fa-mobile-alt me-1"></i>GCash
+                                            </span>
+                                        @else
+                                            <span class="badge bg-secondary">{{ $order->payment_method ?? '-' }}</span>
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @if($order->payment_proof)
+                                            <img src="{{ asset('uploads/payments/' . $order->payment_proof) }}" 
+                                                 alt="Payment Proof" 
+                                                 class="payment-proof-thumb"
+                                                 onclick="openImageModal(this, 'Order #{{ $order->id }} - Payment Proof')"
+                                                 title="Click to view full size">
+                                        @else
+                                            <small class="text-muted">
+                                                @if($order->payment_method === 'GCash')
+                                                    <i class="fas fa-hourglass-half me-1"></i>Awaiting
+                                                @else
+                                                    <i class="fas fa-minus me-1"></i>N/A
+                                                @endif
+                                            </small>
+                                        @endif
                                     </td>
                                     <td>
                                         @if($order->delivery_status == 'Delivered')
@@ -264,6 +384,13 @@
                 </div>
             </div>
         </div>
+    </div>
+
+    <!-- Image Zoom Modal -->
+    <div class="image-modal" id="imageModal" onclick="closeImageModal()">
+        <span class="image-modal-close" onclick="closeImageModal()">&times;</span>
+        <img class="image-modal-content" id="modalImage" alt="Payment Proof">
+        <div class="image-modal-caption" id="modalCaption"></div>
     </div>
 
     <!-- Modals -->
@@ -351,11 +478,27 @@
                                 <h6 class="text-pink"><i class="fas fa-info-circle me-2"></i>Order Information</h6>
                                 <table class="table table-sm table-borderless">
                                     <tr>
-                                        <td width="120"><strong>Order Date:</strong></td>
+                                        <td width="140"><strong>Order Date:</strong></td>
                                         <td>{{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y h:i A') }}</td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Payment:</strong></td>
+                                        <td><strong>Payment Method:</strong></td>
+                                        <td>
+                                            @if($order->payment_method === 'COD')
+                                                <span class="payment-method-badge payment-method-cod">
+                                                    <i class="fas fa-money-bill-wave me-1"></i>Cash on Delivery
+                                                </span>
+                                            @elseif($order->payment_method === 'GCash')
+                                                <span class="payment-method-badge payment-method-gcash">
+                                                    <i class="fas fa-mobile-alt me-1"></i>GCash
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary">{{ $order->payment_method ?? 'Not Specified' }}</span>
+                                            @endif
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Payment Status:</strong></td>
                                         <td>
                                             <span class="badge bg-{{ $order->payment_status == 'Paid' ? 'success' : 'warning' }}">
                                                 {{ $order->payment_status }}
@@ -363,7 +506,7 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td><strong>Delivery:</strong></td>
+                                        <td><strong>Delivery Status:</strong></td>
                                         <td>
                                             <span class="badge bg-info">{{ $order->delivery_status }}</span>
                                         </td>
@@ -431,9 +574,18 @@
                         </div>
 
                         @if($order->payment_proof)
-                            <h6 class="text-pink mt-3"><i class="fas fa-file-image me-2"></i>Payment Proof</h6>
+                            <h6 class="text-pink mt-3"><i class="fas fa-file-image me-2"></i>GCash Payment Proof</h6>
                             <div class="text-center">
-                                <img src="{{ asset('uploads/payments/' . $order->payment_proof) }}" class="img-fluid rounded border" style="max-height: 300px;">
+                                <img src="{{ asset('uploads/payments/' . $order->payment_proof) }}" 
+                                     class="img-fluid rounded border" 
+                                     style="max-height: 400px; cursor: pointer;"
+                                     onclick="openImageModal(this, 'Order #{{ $order->id }} - Payment Proof')">
+                                <p class="text-muted mt-2 mb-0"><small><i class="fas fa-info-circle me-1"></i>Click to view full size</small></p>
+                            </div>
+                        @elseif($order->payment_method === 'GCash')
+                            <div class="alert alert-warning mt-3">
+                                <i class="fas fa-hourglass-half me-2"></i>
+                                <strong>Awaiting Payment Proof</strong> - Customer hasn't uploaded GCash payment proof yet.
                             </div>
                         @endif
                     </div>
@@ -518,6 +670,35 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Image Modal Functions
+        function openImageModal(imgElement, caption) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImage');
+            const captionText = document.getElementById('modalCaption');
+            
+            modal.classList.add('show');
+            modalImg.src = imgElement.src;
+            captionText.textContent = caption || imgElement.alt;
+            
+            document.body.style.overflow = 'hidden';
+        }
+        
+        function closeImageModal() {
+            const modal = document.getElementById('imageModal');
+            modal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+        
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeImageModal();
+            }
+        });
+        
+        document.getElementById('modalImage').addEventListener('click', function(event) {
+            event.stopPropagation();
+        });
+
         function confirmDeleteOrder(orderId, orderNumber, deleteUrl) {
             document.getElementById('deleteOrderNumber').textContent = orderNumber;
             document.getElementById('deleteOrderForm').action = deleteUrl;
