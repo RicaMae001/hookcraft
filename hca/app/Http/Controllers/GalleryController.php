@@ -80,6 +80,7 @@ class GalleryController extends Controller
             $galleryImage = GalleryImage::create($galleryData);
             \Log::info('Gallery item created successfully with ID: ' . $galleryImage->id);
 
+            // return ($galleryImage );
             return redirect()->route('admin.gallery.index')
                 ->with('success', 'Gallery item created successfully.');
 
