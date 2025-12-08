@@ -5,11 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Session; // ⭐ ADD THIS LINE
+use Illuminate\Support\Facades\Session;
 
 class DeliveryController extends Controller
 {
-    // ⭐ ADD THIS NEW METHOD - Add notification to admin session
+    // Add notification to admin session
     private function addAdminNotification($orderId, $coordinatorName, $customerName, $oldStatus, $newStatus)
     {
         $notifications = Session::get('admin_notifications', []);
@@ -70,7 +70,7 @@ class DeliveryController extends Controller
             ->limit(10)
             ->get();
 
-        // ⭐ ADD THIS - All Deliveries for grid view
+        // All Deliveries for grid view
         $deliveries = DB::table('orders')
             ->where('coordinator_id', $coordinatorId)
             ->orderBy('created_at', 'desc')
@@ -85,7 +85,6 @@ class DeliveryController extends Controller
             ->orderBy('date', 'asc')
             ->get();
 
-        // ⭐ ADD 'deliveries' to compact()
         return view('admin.delivery.dashboard', compact(
             'totalDeliveries', 'pendingDeliveries', 'outForDelivery', 
             'completedDeliveries', 'recentDeliveries', 'dailyDeliveries', 'deliveries'
@@ -105,7 +104,7 @@ class DeliveryController extends Controller
         return view('admin.delivery.deliveries', compact('deliveries'));
     }
 
-    // Update Delivery Status - ⭐ UPDATED WITH NOTIFICATION
+    // Update Delivery Status
     public function updateStatus(Request $request, $id)
     {
         $validated = $request->validate([
@@ -113,20 +112,19 @@ class DeliveryController extends Controller
         ]);
 
         $coordinatorId = session('coordinator_id');
-        $coordinatorName = session('coordinator_name'); // ⭐ ADD THIS LINE
+        $coordinatorName = session('coordinator_name');
         
         // Get old status for logging
         $order = DB::table('orders')->where('id', $id)->first();
         
-        // ⭐ ADD THIS CHECK
         if (!$order) {
             return redirect()->back()->with('error', 'Order not found');
         }
 
-        $oldStatus = $order->delivery_status; // ⭐ STORE OLD STATUS
-        $newStatus = $validated['delivery_status']; // ⭐ STORE NEW STATUS
+        $oldStatus = $order->delivery_status;
+        $newStatus = $validated['delivery_status'];
 
-        // ⭐ ADD THIS CHECK - Don't update if status is the same
+        // Don't update if status is the same
         if ($oldStatus === $newStatus) {
             return redirect()->back()->with('info', 'Status unchanged');
         }
@@ -140,12 +138,12 @@ class DeliveryController extends Controller
         DB::table('delivery_logs')->insert([
             'order_id' => $id,
             'coordinator_id' => $coordinatorId,
-            'old_status' => $oldStatus, // ⭐ CHANGED FROM $order->delivery_status
-            'new_status' => $newStatus, // ⭐ CHANGED FROM $validated['delivery_status']
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus,
             'updated_at' => now(),
         ]);
 
-        // ⭐ ADD THIS - Create notification for admin
+        // Create notification for admin
         $this->addAdminNotification(
             $id,
             $coordinatorName,
@@ -154,8 +152,116 @@ class DeliveryController extends Controller
             $newStatus
         );
 
-        // ⭐ UPDATED MESSAGE
         return redirect()->back()->with('success', 'Delivery status updated successfully. Admin has been notified.');
+    }
+
+    // ⭐ FIXED METHOD - Upload GCash Payment Proof
+    public function uploadPaymentProof(Request $request, $id)
+    {
+        // Validate the uploaded file
+        $request->validate([
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
+        ]);
+
+        try {
+            $coordinatorId = session('coordinator_id');
+            $coordinatorName = session('coordinator_name');
+            
+            // Check if order exists and is assigned to this coordinator
+            $order = DB::table('orders')
+                ->where('id', $id)
+                ->where('coordinator_id', $coordinatorId)
+                ->first();
+            
+            if (!$order) {
+                return back()->with('error', 'Order not found or not assigned to you');
+            }
+
+            // Verify it's a GCash order
+            if ($order->payment_method !== 'GCash') {
+                return back()->with('error', 'This order is not a GCash payment');
+            }
+
+            // Check if already paid
+            if ($order->payment_status === 'Paid' && $order->payment_proof) {
+                return back()->with('info', 'Payment proof already uploaded and marked as paid');
+            }
+
+            // Handle file upload
+            if ($request->hasFile('payment_proof')) {
+                $file = $request->file('payment_proof');
+                $filename = 'gcash_proof_order_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+                
+                // Create uploads/payments directory if it doesn't exist
+                $uploadPath = public_path('uploads/payments');
+                if (!file_exists($uploadPath)) {
+                    mkdir($uploadPath, 0755, true);
+                }
+                
+                // Delete old payment proof if exists
+                if ($order->payment_proof) {
+                    $oldFilePath = $uploadPath . '/' . $order->payment_proof;
+                    if (file_exists($oldFilePath)) {
+                        unlink($oldFilePath);
+                    }
+                }
+                
+                // Move file to public/uploads/payments
+                $file->move($uploadPath, $filename);
+                
+                // ⭐ CRITICAL FIX: Update order with payment proof AND set payment status to Paid
+                $updated = DB::table('orders')
+                    ->where('id', $id)
+                    ->update([
+                        'payment_proof' => $filename,
+                        'payment_status' => 'Paid'
+                    ]);
+                
+                // ⭐ DEBUG: Log the update result
+                if ($updated) {
+                    \Log::info("Payment proof updated for Order #{$id}", [
+                        'filename' => $filename,
+                        'payment_status' => 'Paid',
+                        'coordinator_id' => $coordinatorId
+                    ]);
+                } else {
+                    \Log::error("Failed to update payment proof for Order #{$id}");
+                }
+                
+                // Create notification for admin about payment proof upload
+                $notifications = Session::get('admin_notifications', []);
+                
+                $notification = [
+                    'id' => uniqid(),
+                    'type' => 'payment_proof_uploaded',
+                    'title' => "GCash Payment Proof Uploaded - Order #{$id}",
+                    'message' => "{$coordinatorName} uploaded GCash payment proof for Order #{$id} (Customer: {$order->customer_name}). Payment status automatically updated to 'Paid'.",
+                    'order_id' => $id,
+                    'coordinator_name' => $coordinatorName,
+                    'timestamp' => now()->format('Y-m-d H:i:s'),
+                    'is_read' => false
+                ];
+                
+                array_unshift($notifications, $notification);
+                $notifications = array_slice($notifications, 0, 50);
+                Session::put('admin_notifications', $notifications);
+                
+                // ⭐ VERIFY the update was successful
+                $verifyOrder = DB::table('orders')->where('id', $id)->first();
+                
+                if ($verifyOrder->payment_proof === $filename && $verifyOrder->payment_status === 'Paid') {
+                    return back()->with('success', 'Payment proof uploaded successfully! Payment status updated to Paid. Admin has been notified.');
+                } else {
+                    return back()->with('error', 'File uploaded but database update failed. Please contact administrator.');
+                }
+            }
+            
+            return back()->with('error', 'No file was uploaded. Please try again.');
+            
+        } catch (\Exception $e) {
+            \Log::error("Payment proof upload error for Order #{$id}: " . $e->getMessage());
+            return back()->with('error', 'Error uploading payment proof: ' . $e->getMessage());
+        }
     }
 
     // Delivery History/Logs
