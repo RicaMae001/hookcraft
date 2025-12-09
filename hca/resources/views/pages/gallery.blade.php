@@ -81,8 +81,8 @@
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
             margin-top: 30px;
         }
 
@@ -431,14 +431,7 @@
 <div class="gallery-container">
     <div class="container">
         <!-- Filter Buttons -->
-        <div class="filter-section text-center">
-            <button class="filter-btn active" data-filter="all">All Collections</button>
-            <button class="filter-btn" data-filter="birthday">Birthday Bouquets</button>
-            <button class="filter-btn" data-filter="casual">Casual Bouquets</button>
-            <button class="filter-btn" data-filter="tiny">Tiny Bouquets</button>
-            <button class="filter-btn" data-filter="wedding">Wedding Arrangements</button>
-            <button class="filter-btn" data-filter="custom">Custom Creations</button>
-        </div>
+     
 
         <!-- Gallery Grid -->
         @if($galleryItems->count() > 0)

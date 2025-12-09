@@ -278,7 +278,7 @@
 </section>
 
 <!-- Gallery Section -->
-<section class="gallery">
+<!-- <section class="gallery">
     <div class="container">
         <h2>Our Beautiful Creations</h2>
         <div class="row g-3">
@@ -296,7 +296,7 @@
             </a>
         </div>
     </div>
-</section>
+</section> -->
 
 <!-- Customize Section -->
 <section class="customize text-center">
