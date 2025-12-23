@@ -15,8 +15,8 @@
         body { background-color: #f8f9fa; }
         .card { border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); border-radius: 12px; }
         .card-header { background: linear-gradient(135deg, #007bff, #0056b3); color: white; border-radius: 12px 12px 0 0 !important; }
-        .form-control { border-radius: 8px; border: 2px solid #e9ecef; }
-        .form-control:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25); }
+        .form-control, .form-select { border-radius: 8px; border: 2px solid #e9ecef; }
+        .form-control:focus, .form-select:focus { border-color: #007bff; box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25); }
         .btn { border-radius: 8px; }
         .product-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
         .total-highlight { background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 10px; }
@@ -52,6 +52,10 @@
         }
         .location-info.active {
             display: block;
+        }
+        .form-select:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
         }
     </style>
 </head>
@@ -90,7 +94,7 @@
                     <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
                         <i class="bi bi-cart fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
-                            {{ $cartCount }}
+                            {{ $cartCount ?? 0 }}
                         </span>
                     </a>
                 </li>
@@ -138,10 +142,16 @@
     </div>
 
     @if(session('error'))
-        <div class="alert alert-danger">{{ session('error') }}</div>
+        <div class="alert alert-danger alert-dismissible fade show">
+            {{ session('error') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
     @if(session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
+        <div class="alert alert-success alert-dismissible fade show">
+            {{ session('success') }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        </div>
     @endif
 
     @if($cartItems->isEmpty())
@@ -152,9 +162,9 @@
         </div>
     @else
     <div class="row">
-        <!-- Customer Form (wraps only customer info and payment method) -->
+        <!-- Customer Form -->
         <div class="col-lg-7">
-            <form method="POST" action="{{ route('checkout.store') }}">
+            <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm">
                 @csrf
                 <div class="card mb-4">
                     <div class="card-header">
@@ -186,19 +196,27 @@
                                 </div>
                             </div>
 
-                            <!-- Address Fields -->
+                            <!-- Address Dropdowns -->
                             <div class="row g-2">
                                 <div class="col-md-4">
-                                    <input type="text" class="form-control" name="region" id="region" placeholder="Region" required>
+                                    <select class="form-select" name="region_id" id="regionSelect" required>
+                                        <option value="">Select Region</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <input type="text" class="form-control" name="province" id="province" placeholder="Province" required>
+                                    <select class="form-select" name="province_id" id="provinceSelect" disabled required>
+                                        <option value="">Select Province</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-4">
-                                    <input type="text" class="form-control" name="city" id="city" placeholder="City" required>
+                                    <select class="form-select" name="city_id" id="citySelect" disabled required>
+                                        <option value="">Select City</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
-                                    <input type="text" class="form-control" name="barangay" id="barangay" placeholder="Barangay" required>
+                                    <select class="form-select" name="barangay_id" id="barangaySelect" disabled required>
+                                        <option value="">Select Barangay</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <input type="text" class="form-control" name="street" id="street" placeholder="Street / House No." required>
@@ -243,7 +261,7 @@
             </form>
         </div>
 
-        <!-- Order Summary (outside the checkout form) -->
+        <!-- Order Summary (Read-only, no edit/remove buttons) -->
         <div class="col-lg-5">
             <div class="card">
                 <div class="card-header">
@@ -255,21 +273,11 @@
                             <img src="{{ asset('asset/images/' . $item->product->image) }}" alt="{{ $item->product->name }}" class="product-image me-3">
                             <div class="flex-grow-1">
                                 <h6 class="mb-1">{{ $item->product->name }}</h6>
-                                <form method="POST" action="{{ route('cart.update', $item->id) }}" class="d-inline">
-                                    @csrf
-                                    <div class="input-group input-group-sm" style="max-width: 120px;">
-                                        <input type="number" name="quantity" class="form-control cart-qty-input" min="1" max="{{ $item->product->stock }}" value="{{ $item->quantity }}" required data-id="{{ $item->id }}">
-                                    </div>
-                                </form>
-                                <form method="POST" action="{{ route('cart.delete', $item->id) }}" class="d-inline ms-2">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button class="btn btn-danger btn-sm" type="submit"><i class="bi bi-trash"></i></button>
-                                </form>
-                                <small class="text-muted">Stock: {{ $item->product->stock }}</small>
+                                <small class="text-muted">Quantity: {{ $item->quantity }}</small>
                             </div>
-                            <div><strong class="text-success">₱{{ number_format($item->quantity * $item->product->price, 2) }}</strong></div>
-                            <span class="product-price d-none">{{ $item->product->price }}</span>
+                            <div>
+                                <strong class="text-success">₱{{ number_format($item->quantity * $item->product->price, 2) }}</strong>
+                            </div>
                         </div>
                     @endforeach
 
@@ -277,10 +285,9 @@
                         <h5 class="mb-0">Total: ₱{{ number_format($total, 2) }}</h5>
                     </div>
 
-                    <div class="d-grid gap-2 mt-4">
-                        <a href="{{ route('cart.index') }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-2"></i>Back to Cart
-                        </a>
+                    <div class="alert alert-info mt-3 text-center">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <small>Need to edit items? <a href="{{ route('cart.index') }}" class="fw-bold">Go back to cart</a></small>
                     </div>
                 </div>
             </div>
@@ -310,10 +317,96 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // Initialize map centered on Cebu City, Philippines
+    // ==========================================
+    // LOCATION DROPDOWN CASCADE
+    // ==========================================
+    const regionSelect = document.getElementById('regionSelect');
+    const provinceSelect = document.getElementById('provinceSelect');
+    const citySelect = document.getElementById('citySelect');
+    const barangaySelect = document.getElementById('barangaySelect');
+
+    // Load regions on page load
+    fetch('/api/locations/regions')
+        .then(res => res.json())
+        .then(data => {
+            data.forEach(region => {
+                const option = new Option(region.region_name, region.id);
+                regionSelect.add(option);
+            });
+        })
+        .catch(err => console.error('Error loading regions:', err));
+
+    // Region change - load provinces
+    regionSelect.addEventListener('change', function() {
+        const regionId = this.value;
+        
+        provinceSelect.innerHTML = '<option value="">Select Province</option>';
+        citySelect.innerHTML = '<option value="">Select City</option>';
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        provinceSelect.disabled = !regionId;
+        citySelect.disabled = true;
+        barangaySelect.disabled = true;
+
+        if (regionId) {
+            fetch(`/api/locations/provinces/${regionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(province => {
+                        const option = new Option(province.province_name, province.id);
+                        provinceSelect.add(option);
+                    });
+                })
+                .catch(err => console.error('Error loading provinces:', err));
+        }
+    });
+
+    // Province change - load cities
+    provinceSelect.addEventListener('change', function() {
+        const provinceId = this.value;
+        
+        citySelect.innerHTML = '<option value="">Select City</option>';
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        citySelect.disabled = !provinceId;
+        barangaySelect.disabled = true;
+
+        if (provinceId) {
+            fetch(`/api/locations/cities/${provinceId}`)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(city => {
+                        const option = new Option(city.city_name, city.id);
+                        citySelect.add(option);
+                    });
+                })
+                .catch(err => console.error('Error loading cities:', err));
+        }
+    });
+
+    // City change - load barangays
+    citySelect.addEventListener('change', function() {
+        const cityId = this.value;
+        
+        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
+        barangaySelect.disabled = !cityId;
+
+        if (cityId) {
+            fetch(`/api/locations/barangays/${cityId}`)
+                .then(res => res.json())
+                .then(data => {
+                    data.forEach(barangay => {
+                        const option = new Option(barangay.barangay_name, barangay.id);
+                        barangaySelect.add(option);
+                    });
+                })
+                .catch(err => console.error('Error loading barangays:', err));
+        }
+    });
+
+    // ==========================================
+    // MAP FUNCTIONALITY
+    // ==========================================
     const map = L.map('map').setView([10.3157, 123.8854], 13);
     
-    // Add OpenStreetMap tiles
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
         maxZoom: 19
@@ -321,7 +414,6 @@
     
     let marker = null;
     
-    // Function to reverse geocode (get address from coordinates)
     async function reverseGeocode(lat, lng) {
         try {
             const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
@@ -333,57 +425,39 @@
         }
     }
     
-    // Function to fill address fields
     function fillAddressFields(address) {
         if (!address) return;
         
         const locationInfo = document.getElementById('locationInfo');
         const selectedLocation = document.getElementById('selectedLocation');
         
-        // Extract address components
         const street = address.road || address.suburb || '';
-        const barangay = address.suburb || address.village || address.neighbourhood || '';
-        const city = address.city || address.town || address.municipality || '';
-        const province = address.state || address.province || '';
-        const region = address.region || 'Region VII';
-        
-        // Fill form fields
         document.getElementById('street').value = street;
-        document.getElementById('barangay').value = barangay;
-        document.getElementById('city').value = city;
-        document.getElementById('province').value = province;
-        document.getElementById('region').value = region;
         
-        // Show location info
         selectedLocation.textContent = address.display_name || 'Location selected';
         locationInfo.classList.add('active');
     }
     
-    // Handle map clicks
     map.on('click', async function(e) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         
-        // Store coordinates
         document.getElementById('latitude').value = lat;
         document.getElementById('longitude').value = lng;
         
-        // Remove existing marker
         if (marker) {
             map.removeLayer(marker);
         }
         
-        // Add new marker
         marker = L.marker([lat, lng]).addTo(map);
         
-        // Get address and fill fields
         const data = await reverseGeocode(lat, lng);
         if (data && data.address) {
             fillAddressFields(data.address);
         }
     });
     
-    // Search functionality
+    // Map Search
     const searchInput = document.getElementById('mapSearch');
     let searchTimeout;
     
@@ -403,20 +477,16 @@
                     const lat = parseFloat(result.lat);
                     const lng = parseFloat(result.lon);
                     
-                    // Remove existing marker
                     if (marker) {
                         map.removeLayer(marker);
                     }
                     
-                    // Add marker and center map
                     marker = L.marker([lat, lng]).addTo(map);
                     map.setView([lat, lng], 15);
                     
-                    // Store coordinates
                     document.getElementById('latitude').value = lat;
                     document.getElementById('longitude').value = lng;
                     
-                    // Fill address fields
                     if (result.address) {
                         fillAddressFields(result.address);
                     }
@@ -427,7 +497,7 @@
         }, 500);
     });
     
-    // Try to get user's current location
+    // Try to get user's location
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
@@ -436,76 +506,10 @@
                 map.setView([lat, lng], 15);
             },
             function(error) {
-                console.log('Location access denied or unavailable');
+                console.log('Location access denied');
             }
         );
     }
-
-    // Auto-update total when quantity changes
-document.querySelectorAll('input[name="quantity"]').forEach(function(input) {
-    input.addEventListener('input', function() {
-        let parent = input.closest('.product-item');
-        let price = parseFloat(parent.querySelector('.text-success').textContent.replace(/[^\d.]/g, '')) / input.value;
-        let newTotal = price * input.value;
-        parent.querySelector('.text-success').textContent = '₱' + newTotal.toFixed(2);
-
-        // Recalculate grand total
-        let grandTotal = 0;
-        document.querySelectorAll('.product-item').forEach(function(item) {
-            let qty = parseInt(item.querySelector('input[name="quantity"]').value);
-            let priceEach = parseFloat(item.querySelector('.text-success').textContent.replace(/[^\d.]/g, '')) / qty;
-            grandTotal += priceEach * qty;
-        });
-        document.querySelector('.total-highlight h5').textContent = 'Total: ₱' + grandTotal.toFixed(2);
-    });
-});
-
-document.querySelectorAll('.cart-qty-input').forEach(function(input) {
-    input.addEventListener('change', function() {
-        let cartItemId = input.getAttribute('data-id');
-        let newQty = input.value;
-        let maxStock = input.getAttribute('max');
-        if (parseInt(newQty) < 1 || parseInt(newQty) > parseInt(maxStock)) {
-            alert('Invalid quantity!');
-            input.value = maxStock;
-            newQty = maxStock;
-        }
-
-        fetch("{{ url('/cart/update') }}/" + cartItemId, {
-            method: 'POST',
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            },
-            body: new URLSearchParams({ quantity: newQty })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update item total
-                let parent = input.closest('.product-item');
-                let priceEach = parseFloat(parent.querySelector('.product-price').textContent.replace(/[^\d.]/g, ''));
-                let newTotal = priceEach * newQty;
-                parent.querySelector('.text-success').textContent = '₱' + newTotal.toFixed(2);
-
-                // Recalculate grand total
-                let grandTotal = 0;
-                document.querySelectorAll('.product-item').forEach(function(item) {
-                    let qty = parseInt(item.querySelector('.cart-qty-input').value);
-                    let priceEach = parseFloat(item.querySelector('.product-price').textContent.replace(/[^\d.]/g, ''));
-                    grandTotal += priceEach * qty;
-                });
-                document.querySelector('.total-highlight h5').textContent = 'Total: ₱' + grandTotal.toFixed(2);
-            } else {
-                alert(data.message || 'Error updating quantity');
-            }
-        })
-        .catch(() => {
-            alert('Error updating quantity');
-        });
-    });
-});
 </script>
 </body>
 </html>

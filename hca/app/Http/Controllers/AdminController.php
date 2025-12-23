@@ -7,25 +7,102 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 use App\Models\GalleryImage;
 use App\Models\Category;
 use App\Models\User;
-use App\Models\Product; // Added this
+use App\Models\Product;
 
 class AdminController extends Controller
 {
-    // ⭐ ADD THESE NEW METHODS FOR NOTIFICATIONS
+    // ============================================
+    // ROLE-BASED AUTHORIZATION HELPERS
+    // ============================================
+    
     /**
-     * Get all notifications from session
+     * Check if user is logged in as admin
      */
+    private function checkAdminAuth()
+    {
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
+
+        $admin = DB::table('admin')->where('id', session('admin_id'))->first();
+        
+        if (!$admin) {
+            session()->forget(['admin_id', 'admin_name', 'admin_role', 'user_type']);
+            return redirect()->route('staff.login')->with('error', 'Session expired. Please login again.');
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if admin is SuperAdmin
+     */
+    private function isSuperAdmin()
+    {
+        return session('admin_role') === 'SuperAdmin';
+    }
+
+    /**
+     * Check if admin is Staff
+     */
+    private function isStaff()
+    {
+        return session('admin_role') === 'Staff';
+    }
+
+    /**
+     * Require SuperAdmin role - Block Staff from accessing
+     */
+    private function requireSuperAdmin()
+    {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        if (!$this->isSuperAdmin()) {
+            Log::warning('Staff attempted to access SuperAdmin-only resource', [
+                'admin_id' => session('admin_id'),
+                'role' => session('admin_role')
+            ]);
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Access denied. This section is only accessible by SuperAdmin.');
+        }
+
+        return null;
+    }
+
+    /**
+     * Require Staff role - Block SuperAdmin from modifying
+     */
+    private function requireStaffForModification()
+    {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        if ($this->isSuperAdmin()) {
+            Log::warning('SuperAdmin attempted to modify protected resource', [
+                'admin_id' => session('admin_id'),
+                'role' => session('admin_role')
+            ]);
+            return redirect()->back()
+                ->with('error', 'Access denied. SuperAdmin can only view this section. Contact Staff for modifications.');
+        }
+
+        return null;
+    }
+
+    // ============================================
+    // NOTIFICATION METHODS
+    // ============================================
+    
     private function getAllNotifications()
     {
         return Session::get('admin_notifications', []);
     }
 
-    /**
-     * Get unread notifications count
-     */
     private function getUnreadCount()
     {
         $notifications = $this->getAllNotifications();
@@ -34,9 +111,6 @@ class AdminController extends Controller
         }));
     }
 
-    /**
-     * Mark notification as read
-     */
     private function markAsRead($notificationId)
     {
         $notifications = $this->getAllNotifications();
@@ -51,9 +125,6 @@ class AdminController extends Controller
         Session::put('admin_notifications', $notifications);
     }
 
-    /**
-     * Mark all notifications as read
-     */
     private function markAllRead()
     {
         $notifications = $this->getAllNotifications();
@@ -65,47 +136,34 @@ class AdminController extends Controller
         Session::put('admin_notifications', $notifications);
     }
 
-    // ⭐ ADD THESE NEW PRIVATE METHODS FOR STOCK MANAGEMENT
-    /**
-     * Deduct stock for all items in an order
-     */
+    // ============================================
+    // STOCK MANAGEMENT METHODS
+    // ============================================
+    
     private function deductStockFromOrder($orderId)
     {
-        // Get all order items
-        $orderItems = DB::table('order_item')
-            ->where('order_id', $orderId)
-            ->get();
+        $orderItems = DB::table('order_item')->where('order_id', $orderId)->get();
 
         foreach ($orderItems as $item) {
-            // Get current product using Eloquent
             $product = Product::find($item->product_id);
 
             if ($product) {
                 $newStock = $product->stock - $item->quantity;
                 
-                // Ensure stock doesn't go negative
                 if ($newStock < 0) {
                     throw new \Exception("Insufficient stock for product: {$product->name}");
                 }
 
-                // Update product stock
                 $product->update(['stock' => $newStock]);
             }
         }
     }
 
-    /**
-     * Restore stock for all items in an order (for refunds/cancellations)
-     */
     private function restoreStockFromOrder($orderId)
     {
-        // Get all order items
-        $orderItems = DB::table('order_item')
-            ->where('order_id', $orderId)
-            ->get();
+        $orderItems = DB::table('order_item')->where('order_id', $orderId)->get();
 
         foreach ($orderItems as $item) {
-            // Restore stock using Eloquent
             $product = Product::find($item->product_id);
             if ($product) {
                 $product->increment('stock', $item->quantity);
@@ -113,9 +171,6 @@ class AdminController extends Controller
         }
     }
 
-    /**
-     * Validate stock before order creation
-     */
     private function validateOrderStock($orderItems)
     {
         foreach ($orderItems as $item) {
@@ -132,13 +187,15 @@ class AdminController extends Controller
         return true;
     }
 
-    // Show unified staff login page
+    // ============================================
+    // LOGIN & AUTHENTICATION
+    // ============================================
+    
     public function showLogin()
     {
         return view('admin.login');
     }
 
-    // Unified Staff Login (Admin & Delivery)
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -156,14 +213,19 @@ class AdminController extends Controller
                 'admin_role' => $admin->role,
                 'user_type' => 'admin'
             ]);
-            return redirect()->route('admin.dashboard');
+
+            Log::info('Admin logged in', [
+                'admin_id' => $admin->id,
+                'role' => $admin->role
+            ]);
+
+            return redirect()->route('admin.dashboard')->with('success', 'Welcome back, ' . $admin->name);
         }
 
         // Try Delivery Coordinator Login
         $coordinator = DB::table('delivery_coordinator')->where('email', $credentials['email'])->first();
 
         if ($coordinator && Hash::check($credentials['password'], $coordinator->password)) {
-            // Check if coordinator is active
             if ($coordinator->status !== 'Active') {
                 return back()->withErrors(['email' => 'Your account has been deactivated. Please contact admin.']);
             }
@@ -174,23 +236,40 @@ class AdminController extends Controller
                 'coordinator_email' => $coordinator->email,
                 'user_type' => 'delivery'
             ]);
-            return redirect()->route('delivery.dashboard');
+
+            Log::info('Delivery coordinator logged in', [
+                'coordinator_id' => $coordinator->coordinator_id
+            ]);
+
+            return redirect()->route('delivery.dashboard')->with('success', 'Welcome back, ' . $coordinator->name);
         }
 
+        Log::warning('Failed login attempt', ['email' => $credentials['email']]);
         return back()->withErrors(['email' => 'Invalid credentials']);
     }
 
-    // Admin logout
     public function logout()
     {
+        Log::info('Admin logging out', [
+            'admin_id' => session('admin_id'),
+            'role' => session('admin_role')
+        ]);
+
         session()->forget(['admin_id', 'admin_name', 'admin_role', 'user_type']);
-        return redirect()->route('staff.login');
+        session()->regenerate();
+        
+        return redirect()->route('staff.login')->with('success', 'Logged out successfully');
     }
 
-    // Dashboard - ⭐ UPDATED WITH NOTIFICATIONS AND STOCK ALERTS
+    // ============================================
+    // DASHBOARD - VIEW ONLY FOR SUPERADMIN
+    // ============================================
+    
     public function dashboard()
     {
-        // ⭐ ADD THESE TWO LINES - Get notifications from session
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
         $notifications = $this->getAllNotifications();
         $unreadCount = $this->getUnreadCount();
 
@@ -198,8 +277,8 @@ class AdminController extends Controller
         $totalSales = DB::table('orders')->where('payment_status', 'Paid')->sum('total');
         $totalOrders = DB::table('orders')->count();
         $pendingOrders = DB::table('orders')->where('delivery_status', 'Pending')->count();
-        $totalProducts = Product::count(); // Changed to Eloquent
-        $totalUsers = User::count(); // Changed to Eloquent
+        $totalProducts = Product::count();
+        $totalUsers = User::count();
 
         // Monthly Sales (last 6 months)
         $monthlySales = DB::table('orders')
@@ -225,7 +304,6 @@ class AdminController extends Controller
             ->limit(5)
             ->get();
 
-        // ⭐ ADD LOW STOCK ALERTS - Using Eloquent
         $lowStockProducts = Product::where('stock', '<=', 5)
             ->where('stock', '>', 0)
             ->orderBy('stock', 'asc')
@@ -237,58 +315,80 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        // ⭐ ADD 'notifications' and 'unreadCount' to compact()
+        // Add role information for view
+        $canModify = $this->isStaff();
+        $isSuperAdmin = $this->isSuperAdmin();
+
         return view('admin.dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'totalProducts', 
             'totalUsers', 'monthlySales', 'recentOrders', 'topProducts',
-            'notifications', 'unreadCount', 'lowStockProducts', 'outOfStockProducts'
+            'notifications', 'unreadCount', 'lowStockProducts', 'outOfStockProducts',
+            'canModify', 'isSuperAdmin'
         ));
     }
 
-    // ⭐ ADD THESE NEW PUBLIC METHODS FOR NOTIFICATION ACTIONS
-    /**
-     * Mark a notification as read (AJAX endpoint)
-     */
+    // ============================================
+    // NOTIFICATION ACTIONS
+    // ============================================
+    
     public function markNotificationAsRead($notificationId)
     {
         $this->markAsRead($notificationId);
         return response()->json(['success' => true]);
     }
 
-    /**
-     * Mark all notifications as read
-     */
     public function markAllNotificationsAsRead()
     {
         $this->markAllRead();
         return redirect()->back()->with('success', 'All notifications marked as read');
     }
 
-    /**
-     * Clear all notifications
-     */
     public function clearAllNotifications()
     {
         Session::forget('admin_notifications');
         return redirect()->back()->with('success', 'All notifications cleared');
     }
 
-    // User Management
+    // ============================================
+    // USER MANAGEMENT - BOTH ROLES CAN ACCESS
+    // ============================================
+    
     public function users()
     {
-        $users = User::orderBy('created_at', 'desc')->get(); // Changed to Eloquent
-        return view('admin.users', compact('users'));
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        $users = User::orderBy('created_at', 'desc')->get();
+        $canModify = true; // Both SuperAdmin and Staff can manage users
+        $isSuperAdmin = $this->isSuperAdmin();
+        
+        return view('admin.users', compact('users', 'canModify', 'isSuperAdmin'));
     }
 
     public function deleteUser($id)
     {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        // Both roles can delete users
         $user = User::findOrFail($id);
         $user->delete();
+
+        Log::info('User deleted', [
+            'user_id' => $id,
+            'admin_id' => session('admin_id'),
+            'admin_role' => session('admin_role')
+        ]);
+
         return redirect()->back()->with('success', 'User deleted successfully');
     }
 
     public function updateUser(Request $request, $id)
     {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        // Both roles can update users
         $user = User::findOrFail($id);
         $user->name = $request->input('name');
         $user->email = $request->input('email');
@@ -297,26 +397,39 @@ class AdminController extends Controller
         }
         $user->save();
 
+        Log::info('User updated', [
+            'user_id' => $id,
+            'admin_id' => session('admin_id'),
+            'admin_role' => session('admin_role')
+        ]);
+
         return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
 
     // ============================================
-    // PRODUCT MANAGEMENT - FIXED WITH ELOQUENT
+    // PRODUCT MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
     // ============================================
+    
     public function products()
     {
-        // Use Eloquent instead of DB::table()
-        $products = Product::with('category')
-            ->orderBy('id', 'desc')
-            ->get();
-        
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        $products = Product::with('category')->orderBy('id', 'desc')->get();
         $categories = Category::orderBy('name')->get();
         
-        return view('admin.products', compact('products', 'categories'));
+        $canModify = $this->isStaff(); // Only Staff can modify
+        $isSuperAdmin = $this->isSuperAdmin();
+        
+        return view('admin.products', compact('products', 'categories', 'canModify', 'isSuperAdmin'));
     }
 
     public function storeProduct(Request $request)
     {
+        // Only Staff can add products
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:255',
@@ -329,7 +442,6 @@ class AdminController extends Controller
         $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
         $request->file('image')->move(public_path('asset/images'), $imageName);
 
-        // Use Eloquent Model instead of DB::table()
         Product::create([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
@@ -340,7 +452,11 @@ class AdminController extends Controller
             'admin_id' => session('admin_id'),
         ]);
 
-        // Clear any cache
+        Log::info('Product created', [
+            'product_name' => $validated['name'],
+            'admin_id' => session('admin_id')
+        ]);
+
         cache()->forget('products');
         cache()->forget('categories');
 
@@ -349,6 +465,10 @@ class AdminController extends Controller
 
     public function updateProduct(Request $request, $id)
     {
+        // Only Staff can update products
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
             'name' => 'required|string|max:255',
@@ -358,7 +478,6 @@ class AdminController extends Controller
             'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        // Use Eloquent Model
         $product = Product::findOrFail($id);
 
         $updateData = [
@@ -370,7 +489,6 @@ class AdminController extends Controller
         ];
 
         if ($request->hasFile('image')) {
-            // Delete old image
             if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
                 unlink(public_path('asset/images/' . $product->image));
             }
@@ -382,7 +500,11 @@ class AdminController extends Controller
 
         $product->update($updateData);
 
-        // Clear cache
+        Log::info('Product updated', [
+            'product_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
         cache()->forget('products');
         cache()->forget('categories');
 
@@ -391,16 +513,23 @@ class AdminController extends Controller
 
     public function deleteProduct($id)
     {
+        // Only Staff can delete products
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $product = Product::findOrFail($id);
         
-        // Delete the product image file if it exists
         if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
             unlink(public_path('asset/images/' . $product->image));
         }
 
         $product->delete();
 
-        // Clear cache
+        Log::info('Product deleted', [
+            'product_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
         cache()->forget('products');
         cache()->forget('categories');
 
@@ -408,21 +537,29 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // CATEGORY MANAGEMENT - FIXED WITH ELOQUENT
+    // CATEGORY MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
     // ============================================
+    
     public function storeCategory(Request $request)
     {
+        // Only Staff can add categories
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:categories,name',
         ]);
 
-        // Use Eloquent Model
         Category::create([
             'name' => $validated['name'],
             'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
 
-        // Clear cache
+        Log::info('Category created', [
+            'category_name' => $validated['name'],
+            'admin_id' => session('admin_id')
+        ]);
+
         cache()->forget('categories');
         cache()->forget('products');
 
@@ -431,11 +568,14 @@ class AdminController extends Controller
 
     public function updateCategory(Request $request, $id)
     {
+        // Only Staff can update categories
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:categories,name,' . $id,
         ]);
 
-        // Use Eloquent Model
         $category = Category::findOrFail($id);
         
         $category->update([
@@ -443,7 +583,11 @@ class AdminController extends Controller
             'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
 
-        // Clear cache
+        Log::info('Category updated', [
+            'category_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
         cache()->forget('categories');
         cache()->forget('products');
 
@@ -452,9 +596,12 @@ class AdminController extends Controller
 
     public function deleteCategory($id)
     {
+        // Only Staff can delete categories
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $category = Category::findOrFail($id);
         
-        // Check if category has products
         if ($category->products()->count() > 0) {
             return redirect()->back()->withErrors([
                 'error' => 'Cannot delete category with existing products. Please reassign or delete the products first.'
@@ -463,7 +610,11 @@ class AdminController extends Controller
         
         $category->delete();
 
-        // Clear cache
+        Log::info('Category deleted', [
+            'category_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
         cache()->forget('categories');
         cache()->forget('products');
 
@@ -471,93 +622,117 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // ORDER MANAGEMENT - UPDATED WITH STOCK MANAGEMENT
+    // ORDER MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
     // ============================================
+    
     public function orders()
     {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
         $orders = DB::table('orders')->orderBy('created_at', 'desc')->get();
         
-        // Fetch all active delivery coordinators
         $coordinators = DB::table('delivery_coordinator')
             ->where('status', 'Active')
             ->orderBy('name', 'asc')
             ->get();
         
-        return view('admin.orders', compact('orders', 'coordinators'));
+        $canModify = $this->isStaff();
+        $isSuperAdmin = $this->isSuperAdmin();
+        
+        return view('admin.orders', compact('orders', 'coordinators', 'canModify', 'isSuperAdmin'));
     }
 
     public function updateOrderStatus(Request $request, $id)
     {
+        // Only Staff can update order status
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
             'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
         ]);
 
-        // Get the current order status before update
         $currentOrder = DB::table('orders')->where('id', $id)->first();
         
-        // Start database transaction for data consistency
         DB::beginTransaction();
 
         try {
-            // Update order status
             DB::table('orders')->where('id', $id)->update([
                 'payment_status' => $validated['payment_status'],
                 'delivery_status' => $validated['delivery_status'],
             ]);
 
-            // ⭐ ADD STOCK DEDUCTION LOGIC HERE
-            // If payment status is being changed to "Paid", deduct stock
             if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
                 $this->deductStockFromOrder($id);
             }
 
-            // ⭐ ADD STOCK RESTORATION LOGIC HERE
-            // If payment status is being changed from "Paid" to something else, restore stock
             if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
                 $this->restoreStockFromOrder($id);
             }
 
-            // Commit transaction
             DB::commit();
+
+            Log::info('Order status updated', [
+                'order_id' => $id,
+                'admin_id' => session('admin_id')
+            ]);
 
             return redirect()->back()->with('success', 'Order status updated successfully');
 
         } catch (\Exception $e) {
-            // Rollback transaction on error
             DB::rollBack();
+            Log::error('Order update failed', [
+                'order_id' => $id,
+                'error' => $e->getMessage()
+            ]);
             return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
         }
     }
 
     public function deleteOrder($id)
     {
-        // Start transaction for safety
+        // Only Staff can delete orders
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         DB::beginTransaction();
 
         try {
-            // Get order details before deletion
             $order = DB::table('orders')->where('id', $id)->first();
             
-            // If order was paid, restore stock before deletion
             if ($order && $order->payment_status === 'Paid') {
                 $this->restoreStockFromOrder($id);
             }
 
-            // Delete the order
             DB::table('orders')->where('id', $id)->delete();
 
             DB::commit();
+
+            Log::info('Order deleted', [
+                'order_id' => $id,
+                'admin_id' => session('admin_id')
+            ]);
+
             return redirect()->back()->with('success', 'Order deleted successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Order deletion failed', [
+                'order_id' => $id,
+                'error' => $e->getMessage()
+            ]);
             return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
         }
     }
 
     public function assignCoordinator(Request $request, $id)
     {
+        // Only Staff can assign coordinators
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
         ]);
@@ -569,20 +744,35 @@ class AdminController extends Controller
                 'admin_id' => session('admin_id')
             ]);
 
+        Log::info('Coordinator assigned', [
+            'order_id' => $id,
+            'coordinator_id' => $validated['coordinator_id'],
+            'admin_id' => session('admin_id')
+        ]);
+
         return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
     }
 
     // ============================================
-    // STAFF MANAGEMENT - ADMIN ACCOUNTS
+    // STAFF MANAGEMENT - SUPERADMIN ONLY
     // ============================================
+    
     public function staffAdmins()
     {
+        // Only SuperAdmin can access staff admin management
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         $admins = DB::table('admin')->orderBy('id', 'desc')->get();
         return view('admin.staff-admins', compact('admins'));
     }
 
     public function storeAdmin(Request $request)
     {
+        // Only SuperAdmin can create admin accounts
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin,email',
@@ -597,11 +787,21 @@ class AdminController extends Controller
             'role' => $validated['role'],
         ]);
 
+        Log::info('Admin account created', [
+            'created_email' => $validated['email'],
+            'created_role' => $validated['role'],
+            'by_admin_id' => session('admin_id')
+        ]);
+
         return redirect()->back()->with('success', 'Admin account created successfully');
     }
 
     public function updateAdmin(Request $request, $id)
     {
+        // Only SuperAdmin can update admin accounts
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin,email,' . $id,
@@ -621,30 +821,54 @@ class AdminController extends Controller
 
         DB::table('admin')->where('id', $id)->update($updateData);
 
+        Log::info('Admin account updated', [
+            'updated_admin_id' => $id,
+            'by_admin_id' => session('admin_id')
+        ]);
+
         return redirect()->back()->with('success', 'Admin account updated successfully');
     }
 
     public function deleteAdmin($id)
     {
+        // Only SuperAdmin can delete admin accounts
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         if ($id == session('admin_id')) {
             return redirect()->back()->withErrors(['error' => 'You cannot delete your own account']);
         }
 
         DB::table('admin')->where('id', $id)->delete();
+
+        Log::info('Admin account deleted', [
+            'deleted_admin_id' => $id,
+            'by_admin_id' => session('admin_id')
+        ]);
+
         return redirect()->back()->with('success', 'Admin account deleted successfully');
     }
 
     // ============================================
-    // STAFF MANAGEMENT - DELIVERY COORDINATORS
+    // DELIVERY COORDINATOR MANAGEMENT - SUPERADMIN ONLY
     // ============================================
+    
     public function staffDelivery()
     {
+        // Only SuperAdmin can access delivery coordinator management
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         $coordinators = DB::table('delivery_coordinator')->orderBy('created_at', 'desc')->get();
         return view('admin.staff-delivery', compact('coordinators'));
     }
 
     public function storeDelivery(Request $request)
     {
+        // Only SuperAdmin can create delivery accounts
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:delivery_coordinator,email',
@@ -659,7 +883,13 @@ class AdminController extends Controller
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'],
             'status' => $validated['status'],
+            'role' => 'Delivery', // Set role
             'created_at' => now(),
+        ]);
+
+        Log::info('Delivery coordinator created', [
+            'created_email' => $validated['email'],
+            'by_admin_id' => session('admin_id')
         ]);
 
         return redirect()->back()->with('success', 'Delivery coordinator created successfully');
@@ -667,6 +897,10 @@ class AdminController extends Controller
 
     public function updateDelivery(Request $request, $id)
     {
+        // Only SuperAdmin can update delivery accounts
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'name' => 'required|string|max:100',
             'email' => 'required|email|unique:delivery_coordinator,email,' . $id . ',coordinator_id',
@@ -688,41 +922,62 @@ class AdminController extends Controller
 
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->update($updateData);
 
+        Log::info('Delivery coordinator updated', [
+            'updated_coordinator_id' => $id,
+            'by_admin_id' => session('admin_id')
+        ]);
+
         return redirect()->back()->with('success', 'Delivery coordinator updated successfully');
     }
 
     public function deleteDelivery($id)
     {
+        // Only SuperAdmin can delete delivery accounts
+        $roleCheck = $this->requireSuperAdmin();
+        if ($roleCheck) return $roleCheck;
+
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->delete();
+
+        Log::info('Delivery coordinator deleted', [
+            'deleted_coordinator_id' => $id,
+            'by_admin_id' => session('admin_id')
+        ]);
+
         return redirect()->back()->with('success', 'Delivery coordinator deleted successfully');
     }
 
     // ============================================
-    // GALLERY MANAGEMENT METHODS
+    // GALLERY MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
     // ============================================
     
-    /**
-     * Display gallery images
-     */
     public function galleryIndex()
     {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
         $galleries = GalleryImage::orderBy('display_order', 'asc')->paginate(12);
-        return view('admin.gallery.index', compact('galleries'));
+        
+        $canModify = $this->isStaff();
+        $isSuperAdmin = $this->isSuperAdmin();
+        
+        return view('admin.gallery.index', compact('galleries', 'canModify', 'isSuperAdmin'));
     }
 
-    /**
-     * Show gallery creation form
-     */
     public function galleryCreate()
     {
+        // Only Staff can create gallery images
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         return view('admin.gallery.create');
     }
 
-    /**
-     * Store new gallery image
-     */
     public function galleryStore(Request $request)
     {
+        // Only Staff can store gallery images
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
@@ -732,7 +987,6 @@ class AdminController extends Controller
             'is_active' => 'boolean'
         ]);
 
-        // Handle image upload
         if ($request->hasFile('image')) {
             $image = $request->file('image');
             $imageName = time() . '_' . $image->getClientOriginalName();
@@ -748,6 +1002,11 @@ class AdminController extends Controller
                 'admin_id' => session('admin_id')
             ]);
 
+            Log::info('Gallery image created', [
+                'title' => $request->title,
+                'admin_id' => session('admin_id')
+            ]);
+
             return redirect()->route('admin.gallery.index')
                 ->with('success', 'Gallery image added successfully!');
         }
@@ -755,20 +1014,22 @@ class AdminController extends Controller
         return back()->with('error', 'Failed to upload image.');
     }
 
-    /**
-     * Show gallery edit form
-     */
     public function galleryEdit($id)
     {
+        // Only Staff can edit gallery images
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $gallery = GalleryImage::findOrFail($id);
         return view('admin.gallery.edit', compact('gallery'));
     }
 
-    /**
-     * Update gallery image
-     */
     public function galleryUpdate(Request $request, $id)
     {
+        // Only Staff can update gallery images
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $gallery = GalleryImage::findOrFail($id);
 
         $request->validate([
@@ -782,9 +1043,7 @@ class AdminController extends Controller
 
         $imageName = $gallery->image_path;
 
-        // Handle new image upload
         if ($request->hasFile('image')) {
-            // Delete old image
             if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
                 unlink(public_path('asset/images/' . $gallery->image_path));
             }
@@ -803,36 +1062,53 @@ class AdminController extends Controller
             'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
+        Log::info('Gallery image updated', [
+            'gallery_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
         return redirect()->route('admin.gallery.index')
             ->with('success', 'Gallery image updated successfully!');
     }
 
-    /**
-     * Delete gallery image
-     */
     public function galleryDestroy($id)
     {
+        // Only Staff can delete gallery images
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $gallery = GalleryImage::findOrFail($id);
 
-        // Delete image file
         if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
             unlink(public_path('asset/images/' . $gallery->image_path));
         }
 
         $gallery->delete();
 
+        Log::info('Gallery image deleted', [
+            'gallery_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
         return redirect()->route('admin.gallery.index')
             ->with('success', 'Gallery image deleted successfully!');
     }
 
-    /**
-     * Toggle gallery image status
-     */
     public function galleryToggleStatus($id)
     {
+        // Only Staff can toggle gallery status
+        $roleCheck = $this->requireStaffForModification();
+        if ($roleCheck) return $roleCheck;
+
         $gallery = GalleryImage::findOrFail($id);
         $gallery->is_active = !$gallery->is_active;
         $gallery->save();
+
+        Log::info('Gallery status toggled', [
+            'gallery_id' => $id,
+            'new_status' => $gallery->is_active,
+            'admin_id' => session('admin_id')
+        ]);
 
         return back()->with('success', 'Gallery status updated successfully!');
     }

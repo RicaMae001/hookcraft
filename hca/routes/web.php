@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\CartItem;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\OrderController;
-
-
+use App\Http\Controllers\LocationController;
 
 // Home
 Route::get('/', [ProductController::class, 'index'])->name('home');
@@ -39,6 +38,7 @@ Route::middleware('auth')->group(function () {
     // Cart Routes
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
+    Route::post('/cart/buy-now', [CartController::class, 'buyNow'])->name('cart.buy-now'); // ✨ NEW
     Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/delete/{id}', [CartController::class, 'delete'])->name('cart.delete');
 
@@ -147,7 +147,7 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
     Route::put('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.update-status');
     Route::post('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('delivery.updateStatus');
     
-    // ⭐ NEW: Payment Proof Upload Route
+    // Payment Proof Upload Route
     Route::post('/deliveries/{id}/upload-payment-proof', [DeliveryController::class, 'uploadPaymentProof'])->name('delivery.upload-payment-proof');
     
     // Delivery History
@@ -157,3 +157,12 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
 // Chatbot
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
 Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
+
+// Location API Routes
+Route::prefix('api/locations')->group(function () {
+    Route::get('/regions', [LocationController::class, 'getRegions']);
+    Route::get('/provinces/{regionId}', [LocationController::class, 'getProvinces']);
+    Route::get('/cities/{provinceId}', [LocationController::class, 'getCities']);
+    Route::get('/barangays/{cityId}', [LocationController::class, 'getBarangays']);
+    Route::get('/address/{barangayId}', [LocationController::class, 'getCompleteAddress']);
+});
