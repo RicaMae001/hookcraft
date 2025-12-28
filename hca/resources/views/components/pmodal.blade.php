@@ -310,7 +310,7 @@
             body: JSON.stringify({
                 product_id: currentProduct.id,
                 quantity: qty,
-                selected_addons: selectedAddOns  // Include selected add-ons
+                selected_addons: selectedAddOns
             })
         })
         .then(res => res.json())
@@ -318,14 +318,12 @@
             if (data.success) {
                 updateCartCount(data.cart_count);
                 
-                // Build toast message
                 let message = `${currentProduct.name} (${qty}) added to cart!`;
                 if (selectedAddOns.length > 0) {
                     message += ` with ${selectedAddOns.length} add-on(s)`;
                 }
                 showToast(message);
                 
-                // Close modal after successful add
                 setTimeout(() => {
                     if (modalInstance) {
                         modalInstance.hide();
@@ -340,14 +338,13 @@
             showToast("Error adding to cart", true);
         })
         .finally(() => {
-            // Re-enable button
             button.disabled = false;
             button.innerHTML = originalHTML;
         });
     }
 
     /**
-     * Buy now from modal
+     * Buy now from modal - UPDATED: Direct to checkout WITHOUT adding to cart first
      */
     function modalBuyNow() {
         if (!currentProduct) {
@@ -358,12 +355,23 @@
         const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
         const button = document.getElementById('modalBuyNow');
         
+        // Check if user is logged in
+        const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+        if (!isLoggedIn) {
+            showToast("Please login to continue", true);
+            setTimeout(() => {
+                window.location.href = "{{ route('login') }}";
+            }, 1500);
+            return;
+        }
+        
         // Disable button and show loading
         button.disabled = true;
         const originalHTML = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
 
-        fetch("{{ route('cart.add') }}", {
+        // ✅ Use buy-now route that clears cart and adds single item
+        fetch("/cart/buy-now", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
@@ -373,14 +381,19 @@
             body: JSON.stringify({
                 product_id: currentProduct.id,
                 quantity: qty,
-                selected_addons: selectedAddOns  // Include selected add-ons
+                selected_addons: selectedAddOns
             })
         })
-        .then(res => res.json())
+        .then(res => {
+            if (!res.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return res.json();
+        })
         .then(data => {
             if (data.success) {
-                // Redirect to checkout
-                window.location.href = "{{ route('checkout.index') }}";
+                // Redirect directly to checkout
+                window.location.href = "/checkout";
             } else {
                 showToast(data.message || "Failed to process order", true);
                 button.disabled = false;

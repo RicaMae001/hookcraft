@@ -513,22 +513,7 @@
 </div>
 
 <!-- Footer -->
-<footer class="footer py-4 text-center mt-5">
-    <div class="container">
-        <div class="row">
-            <div class="col-md-6 text-md-start">
-                <p class="mb-0">&copy; 2025 Hookcraft Avenue. All rights reserved.</p>
-            </div>
-            <div class="col-md-6 text-md-end">
-                <div class="social-links">
-                    <a href="#" class="text-white me-3"><i class="bi bi-facebook"></i></a>
-                    <a href="#" class="text-white me-3"><i class="bi bi-instagram"></i></a>
-                    <a href="#" class="text-white"><i class="bi bi-twitter"></i></a>
-                </div>
-            </div>
-        </div>
-    </div>
-</footer>
+@include('components.footer')
 
 <!-- Loading overlay for better UX -->
 <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999;">

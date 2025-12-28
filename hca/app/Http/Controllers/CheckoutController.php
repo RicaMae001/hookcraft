@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -22,7 +23,8 @@ class CheckoutController extends Controller
         if (!$cart) {
             return view('pages.checkout', [
                 'cartItems' => collect(),
-                'total' => 0
+                'total' => 0,
+                'cartCount' => 0
             ]);
         }
 
@@ -32,20 +34,23 @@ class CheckoutController extends Controller
 
         $total = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
 
-        return view('pages.checkout', compact('cartItems', 'total'));
+        // Get cart count for navbar
+        $cartCount = $cartItems->sum('quantity');
+
+        return view('pages.checkout', compact('cartItems', 'total', 'cartCount'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name'    => 'required|string|max:255',
-            'region'  => 'required|string|max:255',
-            'province'=> 'required|string|max:255',
-            'city'    => 'required|string|max:255',
-            'barangay'=> 'required|string|max:255',
-            'street'  => 'required|string|max:255',
-            'phone'   => 'required|string|max:20',
-            'payment_method' => 'required|string',
+            'name'        => 'required|string|max:255',
+            'region_id'   => 'required|integer|exists:regions,id',
+            'province_id' => 'required|integer|exists:provinces,id',
+            'city_id'     => 'required|integer|exists:cities,id',
+            'barangay_id' => 'required|integer|exists:barangays,id',
+            'street'      => 'required|string|max:255',
+            'phone'       => 'required|string|max:20',
+            'payment_method' => 'required|string|in:GCash,COD',
         ]);
 
         $cart = Cart::where('user_id', Auth::id())->latest()->first();
@@ -60,20 +65,44 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
+        // Validate stock availability
+        foreach ($cartItems as $item) {
+            if ($item->quantity > $item->product->stock) {
+                return redirect()->back()->with('error', "Insufficient stock for {$item->product->name}");
+            }
+        }
+
         $total = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
+
+        // Get location details
+        $region = DB::table('regions')->where('id', $request->region_id)->value('region_name');
+        $province = DB::table('provinces')->where('id', $request->province_id)->value('province_name');
+        $city = DB::table('cities')->where('id', $request->city_id)->value('city_name');
+        $barangay = DB::table('barangays')->where('id', $request->barangay_id)->value('barangay_name');
+
+        // Format complete address
+        $fullAddress = sprintf(
+            '%s, %s, %s, %s, %s',
+            $region,
+            $province,
+            $city,
+            $barangay,
+            $request->street
+        );
 
         // Create order
         $order = Order::create([
-            'user_id'       => Auth::id(),
-            'customer_name' => $request->name,
-            'address'       => $request->region . ', ' . $request->province . ', ' . $request->city . ', ' . $request->barangay . ', ' . $request->street,
-            'phone'         => $request->phone,
-            'total'         => $total,
-            'payment_status'=> 'Pending',
-            'payment_method'=> $request->payment_method, // <-- Add this line
+            'user_id'        => Auth::id(),
+            'customer_name'  => $request->name,
+            'address'        => $fullAddress,
+            'phone'          => $request->phone,
+            'total'          => $total,
+            'payment_status' => 'Pending',
+            'payment_method' => $request->payment_method,
+            'delivery_status'=> 'Pending',
         ]);
 
-        // Create order items
+        // Create order items and reduce stock
         foreach ($cartItems as $item) {
             OrderItem::create([
                 'order_id'    => $order->id,
@@ -82,12 +111,16 @@ class CheckoutController extends Controller
                 'quantity'    => $item->quantity,
                 'price'       => $item->product->price,
             ]);
+
+            // Reduce product stock
+            $item->product->decrement('stock', $item->quantity);
         }
 
         // Clear cart
         $cart->delete();
 
-        // ✅ Redirect to thankyou page
-        return redirect()->route('thankyou', ['order_id' => $order->id]);
+        // Redirect to thank you page
+        return redirect()->route('thankyou', ['order_id' => $order->id])
+            ->with('success', 'Order placed successfully!');
     }
 }

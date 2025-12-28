@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Log;
 
 class DeliveryController extends Controller
 {
@@ -31,16 +32,128 @@ class DeliveryController extends Controller
         Session::put('admin_notifications', $notifications);
     }
 
-    // Delivery logout
+    // Login with role-based verification
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required',
+        ]);
+
+        // Check if delivery coordinator exists
+        $coordinator = DB::table('delivery_coordinator')
+            ->where('email', $credentials['email'])
+            ->first();
+        
+        if ($coordinator) {
+            // Verify it's a Delivery role
+            if ($coordinator->role !== 'Delivery') {
+                Log::warning('Invalid delivery coordinator role attempting login', [
+                    'email' => $credentials['email'],
+                    'role' => $coordinator->role
+                ]);
+                return back()->withErrors(['email' => 'Invalid credentials']);
+            }
+
+            // Check if account is active
+            if ($coordinator->status !== 'Active') {
+                Log::warning('Inactive delivery coordinator attempted login', [
+                    'email' => $credentials['email'],
+                    'coordinator_id' => $coordinator->coordinator_id
+                ]);
+                return back()->withErrors(['email' => 'Your account is inactive. Please contact the administrator.']);
+            }
+
+            // Verify password
+            if (Hash::check($credentials['password'], $coordinator->password)) {
+                // Set session for delivery coordinator
+                session([
+                    'coordinator_id' => $coordinator->coordinator_id,
+                    'coordinator_name' => $coordinator->name,
+                    'coordinator_email' => $coordinator->email,
+                    'user_type' => 'Delivery',
+                    'coordinator_role' => $coordinator->role
+                ]);
+
+                Log::info('Delivery coordinator logged in successfully', [
+                    'coordinator_id' => $coordinator->coordinator_id,
+                    'role' => 'Delivery'
+                ]);
+
+                $request->session()->regenerate();
+                return redirect()->route('delivery.dashboard')->with('success', 'Welcome back, ' . $coordinator->name);
+            }
+        }
+
+        // Check if it's a regular user trying to login here
+        $user = DB::table('users')
+            ->where('email', $credentials['email'])
+            ->first();
+        
+        if ($user) {
+            Log::warning('Regular user attempted delivery login', [
+                'email' => $credentials['email']
+            ]);
+            return back()->withErrors([
+                'email' => 'Please use the customer login page.'
+            ]);
+        }
+
+        Log::warning('Failed delivery login attempt', ['email' => $credentials['email']]);
+        return back()->withErrors(['email' => 'Invalid credentials']);
+    }
+
+    // Delivery logout with role logging
     public function logout()
     {
-        session()->forget(['coordinator_id', 'coordinator_name', 'coordinator_email', 'user_type']);
-        return redirect()->route('staff.login');
+        $coordinatorId = session('coordinator_id');
+        $coordinatorName = session('coordinator_name');
+        $userType = session('user_type');
+
+        Log::info('Delivery coordinator logging out', [
+            'coordinator_id' => $coordinatorId,
+            'coordinator_name' => $coordinatorName,
+            'role' => $userType
+        ]);
+
+        session()->forget(['coordinator_id', 'coordinator_name', 'coordinator_email', 'user_type', 'coordinator_role']);
+        session()->regenerate();
+        
+        return redirect()->route('staff.login')->with('success', 'Logged out successfully');
+    }
+
+    // Middleware helper: Check if user has 'Delivery' role
+    private function checkDeliveryRole()
+    {
+        if (!session('coordinator_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
+
+        $coordinator = DB::table('delivery_coordinator')
+            ->where('coordinator_id', session('coordinator_id'))
+            ->first();
+
+        if (!$coordinator || $coordinator->role !== 'Delivery') {
+            session()->forget(['coordinator_id', 'coordinator_name', 'coordinator_email', 'user_type', 'coordinator_role']);
+            return redirect()->route('staff.login')->with('error', 'Unauthorized access');
+        }
+
+        // Check if account is still active
+        if ($coordinator->status !== 'Active') {
+            session()->forget(['coordinator_id', 'coordinator_name', 'coordinator_email', 'user_type', 'coordinator_role']);
+            return redirect()->route('staff.login')->with('error', 'Your account has been deactivated');
+        }
+
+        return null; // Continue
     }
 
     // Dashboard
     public function dashboard()
     {
+        // Check role authorization
+        $roleCheck = $this->checkDeliveryRole();
+        if ($roleCheck) return $roleCheck;
+
         $coordinatorId = session('coordinator_id');
 
         // Statistics
@@ -94,6 +207,10 @@ class DeliveryController extends Controller
     // All Deliveries
     public function deliveries()
     {
+        // Check role authorization
+        $roleCheck = $this->checkDeliveryRole();
+        if ($roleCheck) return $roleCheck;
+
         $coordinatorId = session('coordinator_id');
         
         $deliveries = DB::table('orders')
@@ -107,6 +224,10 @@ class DeliveryController extends Controller
     // Update Delivery Status
     public function updateStatus(Request $request, $id)
     {
+        // Check role authorization
+        $roleCheck = $this->checkDeliveryRole();
+        if ($roleCheck) return $roleCheck;
+
         $validated = $request->validate([
             'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
         ]);
@@ -115,10 +236,17 @@ class DeliveryController extends Controller
         $coordinatorName = session('coordinator_name');
         
         // Get old status for logging
-        $order = DB::table('orders')->where('id', $id)->first();
+        $order = DB::table('orders')
+            ->where('id', $id)
+            ->where('coordinator_id', $coordinatorId) // Verify ownership
+            ->first();
         
         if (!$order) {
-            return redirect()->back()->with('error', 'Order not found');
+            Log::warning('Unauthorized delivery status update attempt', [
+                'coordinator_id' => $coordinatorId,
+                'order_id' => $id
+            ]);
+            return redirect()->back()->with('error', 'Order not found or not assigned to you');
         }
 
         $oldStatus = $order->delivery_status;
@@ -143,6 +271,13 @@ class DeliveryController extends Controller
             'updated_at' => now(),
         ]);
 
+        Log::info('Delivery status updated', [
+            'order_id' => $id,
+            'coordinator_id' => $coordinatorId,
+            'old_status' => $oldStatus,
+            'new_status' => $newStatus
+        ]);
+
         // Create notification for admin
         $this->addAdminNotification(
             $id,
@@ -155,9 +290,13 @@ class DeliveryController extends Controller
         return redirect()->back()->with('success', 'Delivery status updated successfully. Admin has been notified.');
     }
 
-    // ⭐ FIXED METHOD - Upload GCash Payment Proof
+    // Upload GCash Payment Proof
     public function uploadPaymentProof(Request $request, $id)
     {
+        // Check role authorization
+        $roleCheck = $this->checkDeliveryRole();
+        if ($roleCheck) return $roleCheck;
+
         // Validate the uploaded file
         $request->validate([
             'payment_proof' => 'required|image|mimes:jpeg,png,jpg,gif|max:5120', // 5MB max
@@ -174,6 +313,10 @@ class DeliveryController extends Controller
                 ->first();
             
             if (!$order) {
+                Log::warning('Unauthorized payment proof upload attempt', [
+                    'coordinator_id' => $coordinatorId,
+                    'order_id' => $id
+                ]);
                 return back()->with('error', 'Order not found or not assigned to you');
             }
 
@@ -209,7 +352,7 @@ class DeliveryController extends Controller
                 // Move file to public/uploads/payments
                 $file->move($uploadPath, $filename);
                 
-                // ⭐ CRITICAL FIX: Update order with payment proof AND set payment status to Paid
+                // Update order with payment proof AND set payment status to Paid
                 $updated = DB::table('orders')
                     ->where('id', $id)
                     ->update([
@@ -217,15 +360,16 @@ class DeliveryController extends Controller
                         'payment_status' => 'Paid'
                     ]);
                 
-                // ⭐ DEBUG: Log the update result
+                // Log the update result
                 if ($updated) {
-                    \Log::info("Payment proof updated for Order #{$id}", [
+                    Log::info("Payment proof updated for Order #{$id}", [
                         'filename' => $filename,
                         'payment_status' => 'Paid',
-                        'coordinator_id' => $coordinatorId
+                        'coordinator_id' => $coordinatorId,
+                        'role' => 'Delivery'
                     ]);
                 } else {
-                    \Log::error("Failed to update payment proof for Order #{$id}");
+                    Log::error("Failed to update payment proof for Order #{$id}");
                 }
                 
                 // Create notification for admin about payment proof upload
@@ -246,7 +390,7 @@ class DeliveryController extends Controller
                 $notifications = array_slice($notifications, 0, 50);
                 Session::put('admin_notifications', $notifications);
                 
-                // ⭐ VERIFY the update was successful
+                // Verify the update was successful
                 $verifyOrder = DB::table('orders')->where('id', $id)->first();
                 
                 if ($verifyOrder->payment_proof === $filename && $verifyOrder->payment_status === 'Paid') {
@@ -259,7 +403,10 @@ class DeliveryController extends Controller
             return back()->with('error', 'No file was uploaded. Please try again.');
             
         } catch (\Exception $e) {
-            \Log::error("Payment proof upload error for Order #{$id}: " . $e->getMessage());
+            Log::error("Payment proof upload error for Order #{$id}: " . $e->getMessage(), [
+                'coordinator_id' => $coordinatorId,
+                'role' => 'Delivery'
+            ]);
             return back()->with('error', 'Error uploading payment proof: ' . $e->getMessage());
         }
     }
@@ -267,6 +414,10 @@ class DeliveryController extends Controller
     // Delivery History/Logs
     public function history()
     {
+        // Check role authorization
+        $roleCheck = $this->checkDeliveryRole();
+        if ($roleCheck) return $roleCheck;
+
         $coordinatorId = session('coordinator_id');
         
         $logs = DB::table('delivery_logs')
