@@ -27,13 +27,14 @@ class AppServiceProvider extends ServiceProvider
             $cartCount = 0;
 
             if (Auth::check()) {
-                // Get the user's latest cart id (table: cart -> id, user_id)
+                // ✅ FIXED: Only get REGULAR cart (is_buy_now = 0), not buy-now carts
                 $cartId = DB::table('cart')
                     ->where('user_id', Auth::id())
-                    ->orderByDesc('id')          // in case multiple carts exist
+                    ->where('is_buy_now', 0)  // ← Only regular carts
+                    ->orderByDesc('id')
                     ->value('id');
 
-                // Sum quantities from cart_item for that cart (table: cart_item -> cart_id, quantity)
+                // Sum quantities from cart_item for that cart
                 if ($cartId) {
                     $cartCount = (int) DB::table('cart_item')
                         ->where('cart_id', $cartId)
