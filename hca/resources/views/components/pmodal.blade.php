@@ -344,7 +344,7 @@
     }
 
     /**
-     * Buy now from modal - UPDATED: Direct to checkout WITHOUT adding to cart first
+     * Buy now from modal - FIXED VERSION
      */
     function modalBuyNow() {
         if (!currentProduct) {
@@ -370,39 +370,79 @@
         const originalHTML = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
 
-        // ✅ Use buy-now route that clears cart and adds single item
-        fetch("/cart/buy-now", {
+        console.log('Buy Now - Starting request for product:', currentProduct.id);
+
+        // Make AJAX request to buy-now endpoint
+        fetch("{{ route('cart.buy-now') }}", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
                 "X-CSRF-TOKEN": document.querySelector('meta[name="csrf-token"]').content,
+                "Accept": "application/json",
                 "X-Requested-With": "XMLHttpRequest"
             },
             body: JSON.stringify({
                 product_id: currentProduct.id,
                 quantity: qty,
-                selected_addons: selectedAddOns
+                selected_addons: selectedAddOns || []
             })
         })
-        .then(res => {
-            if (!res.ok) {
-                throw new Error('Network response was not ok');
+        .then(response => {
+            console.log('Buy Now - Response received, status:', response.status);
+            console.log('Buy Now - Response OK:', response.ok);
+            
+            // Check if response is OK (status 200-299)
+            if (!response.ok) {
+                // Try to parse error response
+                return response.json().then(errorData => {
+                    console.error('Buy Now - Server error:', errorData);
+                    throw new Error(errorData.message || `Server error: ${response.status}`);
+                }).catch(parseError => {
+                    // If JSON parsing fails, throw generic error
+                    console.error('Buy Now - Failed to parse error response:', parseError);
+                    throw new Error(`Server error: ${response.status}`);
+                });
             }
-            return res.json();
+            
+            // Parse successful response
+            return response.json();
         })
         .then(data => {
+            console.log('Buy Now - Success data:', data);
+            
             if (data.success) {
-                // Redirect directly to checkout
-                window.location.href = "/checkout";
+                console.log('Buy Now - Success! Redirecting to checkout...');
+                
+                showToast("Redirecting to checkout...");
+                
+                // Close modal immediately
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                
+                // Get redirect URL from response or use default
+                const checkoutUrl = data.redirect_url || "{{ route('checkout.index') }}";
+                console.log('Buy Now - Final redirect URL:', checkoutUrl);
+                
+                // Force redirect after short delay
+                setTimeout(() => {
+                    console.log('Buy Now - Executing redirect NOW');
+                    window.location.href = checkoutUrl;
+                }, 300);
+                
             } else {
+                // Server returned success:false
+                console.error('Buy Now - Server returned success:false', data);
                 showToast(data.message || "Failed to process order", true);
                 button.disabled = false;
                 button.innerHTML = originalHTML;
             }
         })
         .catch(error => {
-            console.error('Error processing order:', error);
-            showToast("Error processing order", true);
+            console.error('Buy Now - Fetch error:', error);
+            console.error('Buy Now - Error stack:', error.stack);
+            
+            showToast(error.message || "Error processing order. Please try again.", true);
             button.disabled = false;
             button.innerHTML = originalHTML;
         });
@@ -451,6 +491,8 @@
      */
     document.addEventListener("DOMContentLoaded", () => {
         console.log('Initializing modal event listeners');
+        console.log('Buy Now route:', "{{ route('cart.buy-now') }}");
+        console.log('Checkout route:', "{{ route('checkout.index') }}");
         
         // Quantity buttons
         const decreaseBtn = document.getElementById("modalDecreaseBtn");
@@ -469,11 +511,17 @@
         const buyNowBtn = document.getElementById("modalBuyNow");
         
         if (addToCartBtn) {
+            console.log('Add to Cart button found, binding click event');
             addToCartBtn.addEventListener("click", modalAddToCart);
+        } else {
+            console.error('Add to Cart button NOT found!');
         }
         
         if (buyNowBtn) {
+            console.log('Buy Now button found, binding click event');
             buyNowBtn.addEventListener("click", modalBuyNow);
+        } else {
+            console.error('Buy Now button NOT found!');
         }
         
         console.log('Modal event listeners initialized');

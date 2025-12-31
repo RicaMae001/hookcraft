@@ -39,15 +39,15 @@ class AdminController extends Controller
     }
 
     /**
-     * Check if admin is SuperAdmin
+     * Check if admin is Admin (full access)
      */
-    private function isSuperAdmin()
+    private function isAdmin()
     {
-        return session('admin_role') === 'SuperAdmin';
+        return session('admin_role') === 'Admin';
     }
 
     /**
-     * Check if admin is Staff
+     * Check if admin is Staff (limited access)
      */
     private function isStaff()
     {
@@ -55,40 +55,34 @@ class AdminController extends Controller
     }
 
     /**
-     * Require SuperAdmin role - Block Staff from accessing
+     * Require Admin role - Block Staff from accessing
      */
-    private function requireSuperAdmin()
+    private function requireAdmin()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        if (!$this->isSuperAdmin()) {
-            Log::warning('Staff attempted to access SuperAdmin-only resource', [
+        if (!$this->isAdmin()) {
+            Log::warning('Staff attempted to access Admin-only resource', [
                 'admin_id' => session('admin_id'),
-                'role' => session('admin_role')
+                'role' => session('admin_role'),
+                'url' => request()->url()
             ]);
+            
+            // Return JSON for AJAX requests
+            if (request()->ajax()) {
+                return response()->json([
+                    'error' => true,
+                    'title' => 'Access Denied',
+                    'message' => 'Only Admin can access this section.'
+                ], 403);
+            }
+            
             return redirect()->route('admin.dashboard')
-                ->with('error', 'Access denied. This section is only accessible by SuperAdmin.');
-        }
-
-        return null;
-    }
-
-    /**
-     * Require Staff role - Block SuperAdmin from modifying
-     */
-    private function requireStaffForModification()
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
-
-        if ($this->isSuperAdmin()) {
-            Log::warning('SuperAdmin attempted to modify protected resource', [
-                'admin_id' => session('admin_id'),
-                'role' => session('admin_role')
-            ]);
-            return redirect()->back()
-                ->with('error', 'Access denied. SuperAdmin can only view this section. Contact Staff for modifications.');
+                ->with('error_modal', [
+                    'title' => 'Access Denied',
+                    'message' => 'Only Admin can access this section.'
+                ]);
         }
 
         return null;
@@ -262,7 +256,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // DASHBOARD - VIEW ONLY FOR SUPERADMIN
+    // DASHBOARD - ACCESSIBLE TO ALL
     // ============================================
     
     public function dashboard()
@@ -316,14 +310,14 @@ class AdminController extends Controller
             ->get();
 
         // Add role information for view
-        $canModify = $this->isStaff();
-        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdmin = $this->isAdmin();
+        $isStaff = $this->isStaff();
 
         return view('admin.dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'totalProducts', 
             'totalUsers', 'monthlySales', 'recentOrders', 'topProducts',
             'notifications', 'unreadCount', 'lowStockProducts', 'outOfStockProducts',
-            'canModify', 'isSuperAdmin'
+            'isAdmin', 'isStaff'
         ));
     }
 
@@ -350,7 +344,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // USER MANAGEMENT - BOTH ROLES CAN ACCESS
+    // USER MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
     public function users()
@@ -359,10 +353,10 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         $users = User::orderBy('created_at', 'desc')->get();
-        $canModify = true; // Both SuperAdmin and Staff can manage users
-        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdmin = $this->isAdmin();
+        $isStaff = $this->isStaff();
         
-        return view('admin.users', compact('users', 'canModify', 'isSuperAdmin'));
+        return view('admin.users', compact('users', 'isAdmin', 'isStaff'));
     }
 
     public function deleteUser($id)
@@ -370,7 +364,6 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        // Both roles can delete users
         $user = User::findOrFail($id);
         $user->delete();
 
@@ -388,7 +381,6 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        // Both roles can update users
         $user = User::findOrFail($id);
         $user->name = $request->input('name');
         $user->email = $request->input('email');
@@ -407,7 +399,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // PRODUCT MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
+    // PRODUCT MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
     public function products()
@@ -418,17 +410,16 @@ class AdminController extends Controller
         $products = Product::with('category')->orderBy('id', 'desc')->get();
         $categories = Category::orderBy('name')->get();
         
-        $canModify = $this->isStaff(); // Only Staff can modify
-        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdmin = $this->isAdmin();
+        $isStaff = $this->isStaff();
         
-        return view('admin.products', compact('products', 'categories', 'canModify', 'isSuperAdmin'));
+        return view('admin.products', compact('products', 'categories', 'isAdmin', 'isStaff'));
     }
 
     public function storeProduct(Request $request)
     {
-        // Only Staff can add products
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -465,9 +456,8 @@ class AdminController extends Controller
 
     public function updateProduct(Request $request, $id)
     {
-        // Only Staff can update products
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
@@ -513,9 +503,8 @@ class AdminController extends Controller
 
     public function deleteProduct($id)
     {
-        // Only Staff can delete products
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $product = Product::findOrFail($id);
         
@@ -537,14 +526,13 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // CATEGORY MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
+    // CATEGORY MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
     public function storeCategory(Request $request)
     {
-        // Only Staff can add categories
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:categories,name',
@@ -568,9 +556,8 @@ class AdminController extends Controller
 
     public function updateCategory(Request $request, $id)
     {
-        // Only Staff can update categories
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
             'name' => 'required|string|max:100|unique:categories,name,' . $id,
@@ -596,9 +583,8 @@ class AdminController extends Controller
 
     public function deleteCategory($id)
     {
-        // Only Staff can delete categories
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $category = Category::findOrFail($id);
         
@@ -622,7 +608,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // ORDER MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
+    // ORDER MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
     public function orders()
@@ -637,17 +623,16 @@ class AdminController extends Controller
             ->orderBy('name', 'asc')
             ->get();
         
-        $canModify = $this->isStaff();
-        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdmin = $this->isAdmin();
+        $isStaff = $this->isStaff();
         
-        return view('admin.orders', compact('orders', 'coordinators', 'canModify', 'isSuperAdmin'));
+        return view('admin.orders', compact('orders', 'coordinators', 'isAdmin', 'isStaff'));
     }
 
     public function updateOrderStatus(Request $request, $id)
     {
-        // Only Staff can update order status
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
             'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
@@ -693,9 +678,8 @@ class AdminController extends Controller
 
     public function deleteOrder($id)
     {
-        // Only Staff can delete orders
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         DB::beginTransaction();
 
@@ -729,9 +713,8 @@ class AdminController extends Controller
 
     public function assignCoordinator(Request $request, $id)
     {
-        // Only Staff can assign coordinators
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
             'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
@@ -754,13 +737,13 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // STAFF MANAGEMENT - SUPERADMIN ONLY
+    // STAFF MANAGEMENT - ADMIN ONLY
     // ============================================
     
     public function staffAdmins()
     {
-        // Only SuperAdmin can access staff admin management
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can access staff management
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $admins = DB::table('admin')->orderBy('id', 'desc')->get();
@@ -769,15 +752,15 @@ class AdminController extends Controller
 
     public function storeAdmin(Request $request)
     {
-        // Only SuperAdmin can create admin accounts
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can create admin accounts
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin,email',
             'password' => 'required|min:6',
-            'role' => 'required|in:SuperAdmin,Staff',
+            'role' => 'required|in:Admin,Staff',
         ]);
 
         DB::table('admin')->insert([
@@ -798,14 +781,14 @@ class AdminController extends Controller
 
     public function updateAdmin(Request $request, $id)
     {
-        // Only SuperAdmin can update admin accounts
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can update admin accounts
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin,email,' . $id,
-            'role' => 'required|in:SuperAdmin,Staff',
+            'role' => 'required|in:Admin,Staff',
             'password' => 'nullable|min:6',
         ]);
 
@@ -831,8 +814,8 @@ class AdminController extends Controller
 
     public function deleteAdmin($id)
     {
-        // Only SuperAdmin can delete admin accounts
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can delete admin accounts
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         if ($id == session('admin_id')) {
@@ -850,13 +833,13 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // DELIVERY COORDINATOR MANAGEMENT - SUPERADMIN ONLY
+    // DELIVERY COORDINATOR MANAGEMENT - ADMIN ONLY
     // ============================================
     
     public function staffDelivery()
     {
-        // Only SuperAdmin can access delivery coordinator management
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can access delivery coordinator management
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $coordinators = DB::table('delivery_coordinator')->orderBy('created_at', 'desc')->get();
@@ -865,8 +848,8 @@ class AdminController extends Controller
 
     public function storeDelivery(Request $request)
     {
-        // Only SuperAdmin can create delivery accounts
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can create delivery accounts
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
@@ -883,7 +866,7 @@ class AdminController extends Controller
             'password' => Hash::make($validated['password']),
             'phone' => $validated['phone'],
             'status' => $validated['status'],
-            'role' => 'Delivery', // Set role
+            'role' => 'Delivery',
             'created_at' => now(),
         ]);
 
@@ -897,8 +880,8 @@ class AdminController extends Controller
 
     public function updateDelivery(Request $request, $id)
     {
-        // Only SuperAdmin can update delivery accounts
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can update delivery accounts
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
@@ -932,8 +915,8 @@ class AdminController extends Controller
 
     public function deleteDelivery($id)
     {
-        // Only SuperAdmin can delete delivery accounts
-        $roleCheck = $this->requireSuperAdmin();
+        // Only Admin can delete delivery accounts
+        $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->delete();
@@ -947,7 +930,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // GALLERY MANAGEMENT - STAFF ONLY FOR MODIFICATIONS
+    // GALLERY MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
     public function galleryIndex()
@@ -957,26 +940,24 @@ class AdminController extends Controller
 
         $galleries = GalleryImage::orderBy('display_order', 'asc')->paginate(12);
         
-        $canModify = $this->isStaff();
-        $isSuperAdmin = $this->isSuperAdmin();
+        $isAdmin = $this->isAdmin();
+        $isStaff = $this->isStaff();
         
-        return view('admin.gallery.index', compact('galleries', 'canModify', 'isSuperAdmin'));
+        return view('admin.gallery.index', compact('galleries', 'isAdmin', 'isStaff'));
     }
 
     public function galleryCreate()
     {
-        // Only Staff can create gallery images
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         return view('admin.gallery.create');
     }
 
     public function galleryStore(Request $request)
     {
-        // Only Staff can store gallery images
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $request->validate([
             'title' => 'required|string|max:255',
@@ -1016,9 +997,8 @@ class AdminController extends Controller
 
     public function galleryEdit($id)
     {
-        // Only Staff can edit gallery images
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $gallery = GalleryImage::findOrFail($id);
         return view('admin.gallery.edit', compact('gallery'));
@@ -1026,9 +1006,8 @@ class AdminController extends Controller
 
     public function galleryUpdate(Request $request, $id)
     {
-        // Only Staff can update gallery images
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $gallery = GalleryImage::findOrFail($id);
 
@@ -1073,9 +1052,8 @@ class AdminController extends Controller
 
     public function galleryDestroy($id)
     {
-        // Only Staff can delete gallery images
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $gallery = GalleryImage::findOrFail($id);
 
@@ -1096,9 +1074,8 @@ class AdminController extends Controller
 
     public function galleryToggleStatus($id)
     {
-        // Only Staff can toggle gallery status
-        $roleCheck = $this->requireStaffForModification();
-        if ($roleCheck) return $roleCheck;
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
         $gallery = GalleryImage::findOrFail($id);
         $gallery->is_active = !$gallery->is_active;

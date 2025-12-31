@@ -14,14 +14,18 @@ class CartController extends Controller
 {
     public function index()
     {
-        $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
-        $cartItems = $cart->items()->with(['product.category'])->get();
+        // Only get regular cart items (not buy-now items)
+        $cart = Cart::where('user_id', Auth::id())
+                    ->where('is_buy_now', 0)
+                    ->first();
+        
+        $cartItems = $cart ? $cart->items()->with(['product.category'])->get() : collect();
 
         return view('pages.cart', compact('cartItems'));
     }
 
     /**
-     * Add product to cart - FIXED VERSION
+     * Add product to cart
      */
     public function add(Request $request)
     {
@@ -60,8 +64,11 @@ class CartController extends Controller
                 return back()->with('error', 'Insufficient stock available. Only ' . $product->stock . ' items left.');
             }
 
-            // Get or create cart for user
-            $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
+            // Get or create REGULAR cart for user (is_buy_now = 0)
+            $cart = Cart::firstOrCreate(
+                ['user_id' => Auth::id(), 'is_buy_now' => 0]
+            );
+            
             Log::info('Cart found/created', ['cart_id' => $cart->id, 'user_id' => Auth::id()]);
 
             // Check if item already exists in cart
@@ -105,9 +112,10 @@ class CartController extends Controller
                 Log::info('New cart item created', ['item_id' => $cartItem->id]);
             }
 
-            // Calculate total cart count
+            // Calculate total cart count (only regular cart items)
             $cartCount = CartItem::whereHas('cart', function($query) {
-                $query->where('user_id', Auth::id());
+                $query->where('user_id', Auth::id())
+                      ->where('is_buy_now', 0);
             })->sum('quantity');
             
             // Update session cart count
@@ -160,14 +168,23 @@ class CartController extends Controller
     }
 
     /**
-     * ✨ NEW: Buy Now - Clear cart and add single item for immediate checkout
+     * ✨ Buy Now - Debug Version with Extra Logging
      */
     public function buyNow(Request $request)
     {
+        Log::info('=== BUY NOW START ===', [
+            'user_id' => Auth::id(),
+            'request_data' => $request->all(),
+            'is_ajax' => $request->ajax(),
+            'wants_json' => $request->wantsJson()
+        ]);
+
         try {
             // Check if user is authenticated
             if (!Auth::check()) {
-                if ($request->ajax()) {
+                Log::warning('Buy Now - User not authenticated');
+                
+                if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Please login to continue'
@@ -182,14 +199,25 @@ class CartController extends Controller
                 'quantity' => 'required|integer|min:1|max:99'
             ]);
 
-            Log::info('Buy Now request', $validated);
+            Log::info('Buy Now - Validation passed', $validated);
 
             // Get product with category
             $product = Product::with('category')->findOrFail($validated['product_id']);
             
+            Log::info('Buy Now - Product found', [
+                'product_id' => $product->id,
+                'product_name' => $product->name,
+                'stock' => $product->stock
+            ]);
+            
             // Check if product is in stock
             if ($product->stock < $validated['quantity']) {
-                if ($request->ajax()) {
+                Log::warning('Buy Now - Insufficient stock', [
+                    'requested' => $validated['quantity'],
+                    'available' => $product->stock
+                ]);
+                
+                if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => false,
                         'message' => 'Insufficient stock available. Only ' . $product->stock . ' items left.'
@@ -202,17 +230,28 @@ class CartController extends Controller
             DB::beginTransaction();
 
             try {
-                // Get or create cart for user
-                $cart = Cart::firstOrCreate(['user_id' => Auth::id()]);
+                // Delete any existing "buy now" cart for this user
+                $deletedCount = Cart::where('user_id', Auth::id())
+                    ->where('is_buy_now', 1)
+                    ->delete();
                 
-                // ✅ CLEAR ALL EXISTING CART ITEMS (Buy Now replaces cart)
-                CartItem::where('cart_id', $cart->id)->delete();
+                Log::info('Buy Now - Deleted old buy-now carts', ['count' => $deletedCount]);
                 
-                Log::info('Cart cleared for Buy Now');
+                // Create NEW "buy now" cart (separate from regular cart)
+                $buyNowCart = Cart::create([
+                    'user_id' => Auth::id(),
+                    'is_buy_now' => 1  // ✅ Now this will work because it's in fillable
+                ]);
+                
+                Log::info('Buy Now - Created new cart', [
+                    'cart_id' => $buyNowCart->id,
+                    'is_buy_now' => $buyNowCart->is_buy_now,
+                    'is_buy_now_from_db' => $buyNowCart->fresh()->is_buy_now
+                ]);
 
-                // Create new cart item with the product
+                // Create cart item in the buy-now cart
                 $cartItem = CartItem::create([
-                    'cart_id' => $cart->id,
+                    'cart_id' => $buyNowCart->id,
                     'product_id' => $validated['product_id'],
                     'category_id' => $product->category_id,
                     'quantity' => $validated['quantity'],
@@ -220,33 +259,55 @@ class CartController extends Controller
                     'subtotal' => $validated['quantity'] * $product->price
                 ]);
                 
-                Log::info('Buy Now cart item created', ['item_id' => $cartItem->id]);
+                Log::info('Buy Now - Created cart item', [
+                    'item_id' => $cartItem->id,
+                    'product_id' => $cartItem->product_id,
+                    'quantity' => $cartItem->quantity
+                ]);
 
                 DB::commit();
+                
+                Log::info('Buy Now - Transaction committed');
 
-                // Calculate cart count (should be just this one item)
-                $cartCount = $validated['quantity'];
-                session(['cart_count' => $cartCount]);
+                // Store buy-now flag in session
+                session(['is_buy_now_checkout' => true]);
+                
+                Log::info('Buy Now - Session set', [
+                    'is_buy_now_checkout' => session('is_buy_now_checkout'),
+                    'session_id' => session()->getId()
+                ]);
 
-                if ($request->ajax()) {
+                $redirectUrl = route('checkout.index');
+                
+                Log::info('=== BUY NOW SUCCESS ===', [
+                    'redirect_url' => $redirectUrl,
+                    'will_return_json' => ($request->ajax() || $request->wantsJson())
+                ]);
+
+                if ($request->ajax() || $request->wantsJson()) {
                     return response()->json([
                         'success' => true,
                         'message' => 'Proceeding to checkout...',
-                        'cart_count' => $cartCount
-                    ]);
+                        'redirect_url' => $redirectUrl,
+                        'cart_id' => $buyNowCart->id
+                    ], 200);
                 }
 
                 return redirect()->route('checkout.index');
 
             } catch (\Exception $e) {
                 DB::rollBack();
+                Log::error('Buy Now - Transaction failed', [
+                    'error' => $e->getMessage(),
+                    'trace' => $e->getTraceAsString()
+                ]);
                 throw $e;
             }
 
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation error in buy now', ['errors' => $e->errors()]);
+            Log::error('Buy Now - Validation error', ['errors' => $e->errors()]);
             
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Invalid input'
@@ -256,15 +317,16 @@ class CartController extends Controller
             return back()->withErrors($e->errors())->withInput();
             
         } catch (\Exception $e) {
-            Log::error('Buy Now error', [
+            Log::error('=== BUY NOW ERROR ===', [
                 'message' => $e->getMessage(),
                 'file' => $e->getFile(),
                 'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
                 'user_id' => Auth::id(),
                 'product_id' => $request->product_id ?? 'unknown'
             ]);
             
-            if ($request->ajax()) {
+            if ($request->ajax() || $request->wantsJson()) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Something went wrong. Please try again.'
