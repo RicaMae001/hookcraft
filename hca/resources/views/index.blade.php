@@ -7,90 +7,569 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <link rel="stylesheet" href="{{ asset('asset/styleshome.css') }}">
-     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
-     <style>
-        
-    .chatbot-float {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 1000;
-    }
-    
-    .chatbot-float a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-        border-radius: 50%;
-        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
-        color: white;
-        text-decoration: none;
-        transition: all 0.3s ease;
-    }
-    
-    .chatbot-float a:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(255, 105, 180, 0.6);
-    }
-    
-    .chatbot-float i {
-        font-size: 28px;
-    }
+    <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
-    .chatbot-pulse {
-        animation: pulse 2s infinite;
-    }
+        :root {
+            --pastel-pink: #f4d7e0;
+            --pastel-rose: #e8b9cb;
+            --pastel-light: #faf0f3;
+            --pastel-bg: #fdfbfc;
+            --pastel-white: #ffffff;
+            --text-primary: #5a5a5a;
+            --text-secondary: #8a8a8a;
+            --shadow-soft: 0 10px 40px rgba(232, 185, 203, 0.12);
+            --shadow-medium: 0 15px 50px rgba(232, 185, 203, 0.15);
+        }
 
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        50% {
-            box-shadow: 0 4px 30px rgba(255, 105, 180, 0.7);
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--pastel-bg);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
         }
-        100% {
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+
+        /* Hero Section - New Split Design */
+        .hero {
+            min-height: 90vh;
+            display: flex;
+            align-items: center;
+            /* padding: 80px 0 60px; */
+            /* margin-top: px; */
+            background: linear-gradient(135deg, var(--pastel-light) 0%, var(--pastel-white) 100%);
+            position: relative;
         }
-    }
-     </style>   
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 50%;
+            height: 100%;
+            background: var(--pastel-pink);
+            opacity: 0.1;
+            clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(126, 82, 99, 0.15);
+            color: #5a5a5a;
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 2rem;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            letter-spacing: -1px;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: var(--text-secondary);
+            margin-bottom: 2.5rem;
+            max-width: 500px;
+            font-weight: 300;
+        }
+
+        .btn-primary-custom {
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
+            color: #5a5a5a;
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(232, 185, 203, 0.3);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-primary-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(232, 185, 203, 0.4);
+            color: white;
+        }
+
+        .hero-image-wrapper {
+            position: relative;
+            z-index: 1.5;
+        }
+
+        .hero-image-wrapper img {
+            width: 80%;
+            height: auto;
+            border-radius: 30px;
+            box-shadow: var(--shadow-medium);
+        }
+
+        /* Categories Section - Card Grid */
+        .categories {
+            padding: 100px 0;
+            background: var(--pastel-white);
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 4rem;
+        }
+
+        .section-label {
+            display: inline-block;
+            color: var(--pastel-rose);
+            font-size: 0.9rem;
+            font-weight: 600;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--text-primary);
+            font-weight: 700;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            color: var(--text-secondary);
+            font-size: 1.15rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .category-card {
+            position: relative;
+            border-radius: 25px;
+            overflow: hidden;
+            height: 400px;
+            cursor: pointer;
+            box-shadow: var(--shadow-soft);
+            transition: all 0.4s ease;
+        }
+
+        .category-card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .category-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .category-card:hover img {
+            transform: scale(1.08);
+        }
+
+        .category-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            padding: 2.5rem 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .category-card:hover .category-overlay {
+            padding-bottom: 3rem;
+        }
+
+        .category-overlay h3 {
+            color: white;
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        /* About Section - Two Column Layout */
+        .about {
+            padding: 100px 0;
+            background: var(--pastel-bg);
+        }
+
+        .about-content {
+            padding-right: 3rem;
+        }
+
+        .about-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: var(--text-primary);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .about-content p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            line-height: 1.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .feature-box {
+            background: var(--pastel-white);
+            padding: 2rem;
+            border-radius: 20px;
+            border-left: 4px solid var(--pastel-rose);
+            box-shadow: var(--shadow-soft);
+            margin-top: 2rem;
+            transition: all 0.3s ease;
+        }
+
+        .feature-box:hover {
+            transform: translateX(10px);
+        }
+
+        .feature-box i {
+            font-size: 2.5rem;
+            color: var(--pastel-rose);
+            margin-bottom: 1rem;
+        }
+
+        .feature-box h5 {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .feature-box p {
+            color: var(--text-secondary);
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        .about-images {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .about-images img {
+            width: 100%;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 20px;
+            box-shadow: var(--shadow-soft);
+        }
+
+        /* Gallery Section - Masonry Grid */
+        .gallery {
+            padding: 100px 0;
+            background: var(--pastel-white);
+        }
+
+        .gallery-grid {
+            column-count: 4;
+            column-gap: 1rem;
+            margin-top: 3rem;
+        }
+
+        .gallery-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+            position: relative;
+            border-radius: 15px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-medium);
+        }
+
+        .gallery-item img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border-radius: 15px;
+        }
+
+        .btn-outline-custom {
+            border: 2px solid var(--pastel-rose);
+            color: var(--pastel-rose);
+            padding: 0.875rem 2.5rem;
+            border-radius: 50px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-outline-custom:hover {
+            background: var(--pastel-rose);
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(232, 185, 203, 0.3);
+        }
+
+        /* Customize Section */
+        .customize {
+            padding: 100px 0;
+            background: linear-gradient(135deg, var(--pastel-rose), var(--pastel-pink));
+            position: relative;
+            overflow: hidden;
+        }
+
+        .customize::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .customize-content {
+            position: relative;
+            z-index: 2;
+            text-align: center;
+        }
+
+        .customize h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 3rem;
+            color: white;
+            margin-bottom: 1rem;
+            font-weight: 700;
+        }
+
+        .customize p {
+            color: rgba(255,255,255,0.95);
+            font-size: 1.2rem;
+            margin-bottom: 3rem;
+        }
+
+        .custom-options {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-bottom: 3rem;
+            flex-wrap: wrap;
+        }
+
+        .custom-option {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 4px solid white;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+            transition: all 0.3s ease;
+        }
+
+        .custom-option:hover {
+            transform: scale(1.1) rotate(5deg);
+        }
+
+        .custom-option img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .btn-white-custom {
+            background: white;
+            color: var(--pastel-rose);
+            padding: 1rem 3rem;
+            border-radius: 50px;
+            border: none;
+            font-weight: 600;
+            font-size: 1.05rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .btn-white-custom:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(0,0,0,0.3);
+            color: var(--pastel-rose);
+        }
+
+        /* Chatbot */
+        .chatbot-float {
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            z-index: 1000;
+        }
+
+        .chatbot-btn {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            text-decoration: none;
+            box-shadow: 0 8px 30px rgba(232, 185, 203, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .chatbot-btn:hover {
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: 0 10px 40px rgba(232, 185, 203, 0.4);
+            color: white;
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeInUp 0.8s ease forwards;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .gallery-grid {
+                column-count: 3;
+            }
+        }
+
+        @media (max-width: 992px) {
+            .hero h1 {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
+
+            .about-content h2 {
+                font-size: 2.5rem;
+            }
+
+            .about-content {
+                padding-right: 0;
+                margin-bottom: 3rem;
+            }
+
+            .gallery-grid {
+                column-count: 2;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 100px 0 60px;
+                min-height: auto;
+            }
+
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+
+            .about-content h2 {
+                font-size: 2rem;
+            }
+
+            .customize h2 {
+                font-size: 2.5rem;
+            }
+
+            .gallery-grid {
+                column-count: 1;
+            }
+
+            .category-card {
+                height: 300px;
+            }
+
+            .chatbot-float {
+                bottom: 25px;
+                right: 25px;
+            }
+
+            .chatbot-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.7rem;
+            }
+        }
+    </style>
 </head>
 <body>
 
 @include('components.login_modal')
 @include('components.signup_modal')
-
-<!-- Navbar -->
 @include('components.navbar')
 
-
+<!-- Chatbot Button -->
 <div class="chatbot-float">
-    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+    <a href="{{ route('chatbot') }}" class="chatbot-btn" title="Chat with AI Assistant">
         <i class="bi bi-robot"></i>
     </a>
 </div>
-
-
 
 <!-- Hero Section -->
 <section class="hero">
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <div class="hero-content fade-in">
-                    <h1>Elevate your moments with our handcrafted floral creations</h1>
-                    <p>Celebrate beauty, one petal at a time.</p>
-                    <a href="{{ route('shop') }}" class="btn btn-pink btn-lg">
-                        <i class="bi bi-flower1 me-2"></i>Shop Now
+                <div class="hero-content">
+                    <span class="hero-badge">Handcrafted with Love</span>
+                    <h1>Elevate Your Moments</h1>
+                    <p>Celebrate beauty, one petal at a time with our handcrafted floral creations</p>
+                    <a href="{{ route('shop') }}" class="btn-primary-custom">
+                        <i class="bi bi-flower1 me-2"></i>Explore Collection
                     </a>
                 </div>
             </div>
             <div class="col-lg-6">
-                <img src="{{ asset('asset/images/hero-image.png') }}" alt="Flower Hero" class="img-fluid">
+                <div class="hero-image-wrapper">
+                    <img src="{{ asset('asset/images/hero-image.png') }}" alt="Flower Hero">
+                </div>
             </div>
         </div>
     </div>
@@ -99,36 +578,33 @@
 <!-- Categories Section -->
 <section class="categories">
     <div class="container">
-        <h2>Shop by Category</h2>
+        <div class="section-header">
+            <span class="section-label">Our Collections</span>
+            <h2 class="section-title">Shop by Category</h2>
+            <p class="section-subtitle">Discover our carefully curated collections for every occasion</p>
+        </div>
         <div class="row g-4">
             <div class="col-md-4">
-                <div class="category-item">
-                    <div class="position-relative overflow-hidden">
-                        <img src="{{ asset('asset/images/birthday.jpg') }}" class="img-fluid" alt="Birthday Bouquets">
-                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.3));">
-                            <h3 class="text-white mb-0">Birthday Bouquets</h3>
-                        </div>
-                       
+                <div class="category-card">
+                    <img src="{{ asset('asset/images/birthday.jpg') }}" alt="Birthday Bouquets">
+                    <div class="category-overlay">
+                        <h3>Birthday Bouquets</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="category-item">
-                    <div class="position-relative overflow-hidden">
-                        <img src="{{ asset('asset/images/casual.jpg') }}" class="img-fluid" alt="Casual Bouquets">
-                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.3));">
-                            <h3 class="text-white mb-0">Casual Bouquets</h3>
-                        </div>
+                <div class="category-card">
+                    <img src="{{ asset('asset/images/casual.jpg') }}" alt="Casual Bouquets">
+                    <div class="category-overlay">
+                        <h3>Casual Bouquets</h3>
                     </div>
                 </div>
             </div>
             <div class="col-md-4">
-                <div class="category-item">
-                    <div class="position-relative overflow-hidden">
-                        <img src="{{ asset('asset/images/tiny.jpg') }}" class="img-fluid" alt="Tiny Bouquets">
-                        <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end p-3" style="background: linear-gradient(transparent, rgba(0,0,0,0.3));">
-                            <h3 class="text-white mb-0">Tiny Bouquets</h3>
-                        </div>
+                <div class="category-card">
+                    <img src="{{ asset('asset/images/tiny.jpg') }}" alt="Tiny Bouquets">
+                    <div class="category-overlay">
+                        <h3>Tiny Bouquets</h3>
                     </div>
                 </div>
             </div>
@@ -141,9 +617,10 @@
     <div class="container">
         <div class="row align-items-center">
             <div class="col-lg-6">
-                <div class="about-text pe-lg-4">
-                    <h2>About Us</h2>
-                    <p >
+                <div class="about-content">
+                    <span class="section-label">Our Story</span>
+                    <h2>About Hookcraft Avenue</h2>
+                    <p>
                         At Hookcraft Avenue, we are passionate about delivering freshly picked flowers,
                         carefully handcrafted into beautiful arrangements that bring joy to every occasion.
                     </p>
@@ -152,25 +629,17 @@
                         stunning bouquets that tell your unique story. Every flower is selected with care 
                         and arranged with love.
                     </p>
-                    <div class="d-flex align-items-center mt-4">
-                        <div class="me-4">
-                            <i class="bi bi-flower1 fs-1 text-pink"></i>
-                        </div>
-                        <div>
-                            <h5 class="mb-1">Fresh & Handcrafted</h5>
-                            <p class="mb-0 text-muted">Every bouquet made with love and attention to detail</p>
-                        </div>
+                    <div class="feature-box">
+                        <i class="bi bi-flower1"></i>
+                        <h5>Fresh & Handcrafted</h5>
+                        <p>Every bouquet made with love and attention to detail</p>
                     </div>
                 </div>
             </div>
             <div class="col-lg-6">
-                <div class="row g-3">
-                    <div class="col-6">
-                        <img src="{{ asset('asset/images/about-flower.jpg') }}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
-                    </div>
-                    <div class="col-6">
-                        <img src="{{ asset('asset/images/about-flower1.jpg') }}" class="img-fluid w-100" style="height: 200px; object-fit: cover;">
-                    </div>
+                <div class="about-images">
+                    <img src="{{ asset('asset/images/about-flower.jpg') }}" alt="About Flower 1">
+                    <img src="{{ asset('asset/images/about-flower1.jpg') }}" alt="About Flower 2">
                 </div>
             </div>
         </div>
@@ -180,18 +649,20 @@
 <!-- Gallery Section -->
 <section class="gallery">
     <div class="container">
-        <h2>Our Beautiful Creations</h2>
-        <div class="row g-3">
+        <div class="section-header">
+            <span class="section-label">Inspiration</span>
+            <h2 class="section-title">Our Beautiful Creations</h2>
+            <p class="section-subtitle">A glimpse into our handcrafted masterpieces</p>
+        </div>
+        <div class="gallery-grid">
             @for($i=1;$i<=8;$i++)
-            <div class="col-lg-3 col-md-4 col-sm-6">
-                <div class="gallery-item">
-                    <img src="{{ asset("asset/images/gallery{$i}.jpg") }}" class="img-fluid" alt="Gallery Image">
-                </div>
+            <div class="gallery-item">
+                <img src="{{ asset("asset/images/gallery{$i}.jpg") }}" alt="Gallery Image">
             </div>
             @endfor
         </div>
-        <div class="text-center mt-4">
-            <a href="{{ route('gallery') }}" class="btn btn-outline-secondary">
+        <div class="text-center mt-5">
+            <a href="{{ route('gallery') }}" class="btn-outline-custom">
                 <i class="bi bi-images me-2"></i>View Full Gallery
             </a>
         </div>
@@ -199,149 +670,43 @@
 </section>
 
 <!-- Customize Section -->
-<section class="customize text-center">
+<section class="customize">
     <div class="container">
-        <h2>Create Something Special</h2>
-        <p class="lead text-white-50 mb-4">Design your perfect bouquet with our customization options</p>
-        <div class="d-flex justify-content-center gap-4 my-4 flex-wrap">
-            @for($i=1;$i<=3;$i++)
-            <img src="{{ asset("asset/images/custom{$i}.png") }}" class="img-fluid" style="width:120px; height:120px; object-fit: cover;" alt="Custom Option">
-            @endfor
+        <div class="customize-content">
+            <h2>Create Something Special</h2>
+            <p>Design your perfect bouquet with our customization options</p>
+            <div class="custom-options">
+                @for($i=1;$i<=3;$i++)
+                <div class="custom-option">
+                    <img src="{{ asset("asset/images/custom{$i}.png") }}" alt="Custom Option">
+                </div>
+                @endfor
+            </div>
+            <a href="{{ route('customization.create', ['id' => 1]) }}" class="btn-white-custom">
+                <i class="bi bi-palette me-2"></i>Start Customizing
+            </a>
         </div>
-      <!-- Make sure this uses the correct product ID -->
-<a href="{{ route('customization.create', ['id' => 1]) }}" class="btn btn-pink btn-lg">
-    <i class="bi bi-palette me-2"></i>Customize Now
-</a>
     </div>
 </section>
-<!-- Product Modal -->
-<div class="modal fade product-modal" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-            <div class="modal-header border-0">
-                <h5 class="modal-title" id="productModalLabel">Product Details</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div class="row">
-                    <!-- Product Image -->
-                    <div class="col-md-6">
-                        <img id="modalProductImage" src="" alt="" class="img-fluid product-modal-image w-100">
-                    </div>
-                    
-                    <!-- Product Details -->
-                    <div class="col-md-6">
-                        <h4 id="modalProductName" class="mb-3"></h4>
-                        
-                        <!-- Price -->
-                        <div class="product-modal-price mb-3" id="modalProductPrice"></div>
-                        
-                        <!-- Category -->
-                        <div class="mb-3">
-                            <span class="badge bg-secondary" id="modalProductCategory"></span>
-                        </div>
-                        
-                        <!-- Description -->
-                        <div class="mb-3">
-                            <h6><i class="fas fa-info-circle me-2"></i>Description</h6>
-                            <p id="modalProductDescription" class="text-muted"></p>
-                        </div>
-                        
-                        <!-- Stock Info -->
-                        <div class="stock-info">
-                            <div class="d-flex justify-content-between align-items-center">
-                                <span><i class="fas fa-boxes me-2"></i>Stock Available:</span>
-                                <span id="modalProductStock" class="fw-bold"></span>
-                            </div>
-                        </div>
-                        
-                        <!-- Quantity Selector -->
-                        <div class="mb-3">
-                            <label class="form-label"><i class="fas fa-sort-numeric-up me-2"></i>Quantity</label>
-                            <div class="quantity-input-group d-flex">
-                                <button type="button" class="quantity-btn" onclick="changeQuantity(-1)">
-                                    <i class="fas fa-minus"></i>
-                                </button>
-                                <input type="number" class="form-control quantity-input" id="modalQuantity" value="1" min="1" readonly>
-                                <button type="button" class="quantity-btn" onclick="changeQuantity(1)">
-                                    <i class="fas fa-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <!-- Add-ons Section -->
-                        <div class="add-ons-section" id="addOnsSection">
-                            <h6><i class="fas fa-plus-circle me-2"></i>Add-ons (Optional)</h6>
-                            <div id="addOnsList">
-                                <!-- Sample add-ons - replace with dynamic content -->
-                                <div class="add-on-item" data-addon-id="1" data-addon-price="25" onclick="toggleAddOn(this)">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Gift Wrapping</strong>
-                                            <small class="text-muted d-block">Beautiful gift wrap with ribbon</small>
-                                        </div>
-                                        <span class="text-primary fw-bold">+₱25</span>
-                                    </div>
-                                </div>
-                                <div class="add-on-item" data-addon-id="2" data-addon-price="15" onclick="toggleAddOn(this)">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Express Shipping</strong>
-                                            <small class="text-muted d-block">Delivered within 1-2 days</small>
-                                        </div>
-                                        <span class="text-primary fw-bold">+₱15</span>
-                                    </div>
-                                </div>
-                                <div class="add-on-item" data-addon-id="3" data-addon-price="10" onclick="toggleAddOn(this)">
-                                    <div class="d-flex justify-content-between align-items-center">
-                                        <div>
-                                            <strong>Care Instructions Card</strong>
-                                            <small class="text-muted d-block">Detailed care guide</small>
-                                        </div>
-                                        <span class="text-primary fw-bold">+₱10</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <!-- Total Price -->
-                        <div class="d-flex justify-content-between align-items-center mb-3 p-3 bg-light rounded">
-                            <strong>Total Price:</strong>
-                            <strong class="text-primary fs-5" id="modalTotalPrice">₱0.00</strong>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="modal-footer border-0">
-                <div class="d-flex gap-2 w-100">
-                    <button type="button" class="btn btn-primary flex-fill" id="modalAddToCart">
-                        <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                    </button>
-                    <button type="button" class="btn btn-buy-now flex-fill" id="modalBuyNow">
-                        <i class="fas fa-bolt me-2"></i>Buy Now
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Footer -->
 @include('components.footer')
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Add smooth scrolling for better UX
+    // Smooth scrolling
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
         anchor.addEventListener('click', function (e) {
             e.preventDefault();
-            document.querySelector(this.getAttribute('href')).scrollIntoView({
-                behavior: 'smooth'
-            });
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
         });
     });
 
-    // Add fade-in animation on scroll
+    // Fade-in animation on scroll
     const observerOptions = {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'

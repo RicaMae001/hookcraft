@@ -9,107 +9,161 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <style>
-        /* ALL YOUR EXISTING CSS STYLES REMAIN EXACTLY THE SAME */
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap');
+
+        :root {
+           --pastel-pink: #ffc0d3;
+            --pastel-rose: #ffb3c6;
+            --pastel-light: #ffe4ec;
+            --pastel-bg: #fff5f8;
+            --pastel-white: #ffffff;
+            --text-primary: #4a4a4a;
+            --text-secondary: #7a7a7a;
+            --shadow-soft: 0 10px 40px rgba(255, 192, 211, 0.15);
+            --shadow-medium: 0 15px 50px rgba(255, 192, 211, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg,rgb(223, 206, 216) 0%, #fff5f9 100%);
-            min-height: 100vh;
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--pastel-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
         }
 
-        .page-header {
-            background: linear-gradient(135deg,rgb(255, 191, 223) 0%,rgb(247, 113, 184) 100%);
-            padding: 60px 0 ;
-            margin-bottom: 50px;
+        /* Hero Section - Minimal Design */
+        .gallery-hero {
+            background: var(--pastel-white);
+            padding: 80px 0 40px;
+            margin-top: 10px;
+            border-bottom: 1px solid var(--pastel-light);
+        }
+
+        .hero-content {
+            max-width: 600px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .gallery-hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            color: var(--text-primary);
+            font-size: 3.5rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            letter-spacing: -0.5px;
+        }
+
+        .gallery-hero p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+            font-weight: 300;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            background: var(--pastel-white);
+            padding: 30px 0;
+            position: sticky;
+            top: 76px;
+            z-index: 100;
+            border-bottom: 2px solid var(--pastel-light);
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            gap: 0;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 0.9rem 2.5rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            font-weight: 500;
+            font-size: 1rem;
+            cursor: pointer;
             position: relative;
-            overflow: hidden;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
         }
 
-        .page-header::before {
+        .tab-btn::after {
             content: '';
             position: absolute;
-            top: 0;
+            bottom: -2px;
             left: 0;
-            right: 0;
-            bottom: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.5;
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--pastel-rose), var(--pastel-pink));
+            transition: width 0.3s ease;
         }
 
-        .page-header h1 {
-            color: white;
-            font-weight: 700;
-            font-size: 3rem;
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 1;
+        .tab-btn:hover {
+            color: var(--text-primary);
         }
 
-        .page-header p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .filter-section {
-            margin-bottom: 40px;
-        }
-
-        .filter-btn {
-            padding: 10px 25px;
-            margin: 5px;
-            border: 2px solid #ff69b4;
-            background: white;
-            color: #ff69b4;
-            border-radius: 50px;
+        .tab-btn.active {
+            color: var(--pastel-rose);
             font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
         }
 
-        .filter-btn:hover,
-        .filter-btn.active {
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
+        .tab-btn.active::after {
+            width: 100%;
         }
 
-        .gallery-container {
-            padding: 0 0 60px;
+        /* Masonry Gallery Layout */
+        .gallery-section {
+            padding: 60px 0 40px;
         }
 
-        .gallery-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+        .masonry-grid {
+            column-count: 3;
+            column-gap: 1rem;
+        }
+
+        .masonry-item {
+            break-inside: avoid;
+            margin-bottom: 1rem;
+            display: inline-block;
+            width: 100%;
+            opacity: 0;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
         }
 
         .gallery-item {
             position: relative;
             overflow: hidden;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s ease;
-            background: white;
+            border-radius: 20px;
             cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--pastel-white);
+            box-shadow: var(--shadow-soft);
         }
 
         .gallery-item:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3);
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px rgba(232, 185, 203, 0.18);
         }
 
         .gallery-item img {
             width: 100%;
-            height: 300px;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-
-        .gallery-item:hover img {
-            transform: scale(1.1);
+            height: auto;
+            display: block;
+            border-radius: 20px;
         }
 
         .gallery-overlay {
@@ -117,10 +171,10 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-            padding: 20px;
+            background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
+            padding: 2rem 1rem 1rem;
             transform: translateY(100%);
-            transition: transform 0.4s ease;
+            transition: transform 0.3s ease;
         }
 
         .gallery-item:hover .gallery-overlay {
@@ -129,38 +183,44 @@
 
         .gallery-overlay h5 {
             color: white;
-            margin: 0 0 5px 0;
             font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.3rem;
         }
 
         .gallery-overlay p {
-            color: rgba(255, 255, 255, 0.8);
-            margin: 0;
+            color: rgba(255,255,255,0.9);
             font-size: 0.9rem;
+            margin: 0;
         }
 
-        .gallery-badge {
+        .category-tag {
             position: absolute;
             top: 15px;
-            right: 15px;
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            left: 15px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: var(--pastel-rose);
+            padding: 0.4rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
             font-weight: 600;
             z-index: 2;
         }
 
+        /* Lightbox - Improved Design */
+        .lightbox-modal {
+            background: rgba(0, 0, 0, 0.95);
+        }
+
         .lightbox-modal .modal-dialog {
-            max-width: 90%;
-            margin: 2rem auto;
+            max-width: 1200px;
+            margin: 3rem auto;
         }
 
         .lightbox-modal .modal-content {
-            background: rgba(0, 0, 0, 0.95);
+            background: transparent;
             border: none;
-            border-radius: 0;
         }
 
         .lightbox-modal .modal-body {
@@ -168,227 +228,384 @@
             position: relative;
         }
 
+        .lightbox-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 400px;
+            gap: 2rem;
+            background: var(--pastel-white);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+
+        .lightbox-image-side {
+            padding: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--pastel-light);
+        }
+
         .lightbox-image {
-            width: 100%;
-            height: auto;
+            max-width: 100%;
             max-height: 80vh;
             object-fit: contain;
+            border-radius: 15px;
         }
 
-        .lightbox-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
-            padding: 30px;
-            color: white;
+        .lightbox-details {
+            padding: 3rem;
+            background: var(--pastel-white);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 1.5rem;
+        .lightbox-details h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .lightbox-details .category-badge {
+            display: inline-block;
+            background: var(--pastel-light);
+            color: var(--pastel-rose);
+            padding: 0.5rem 1.2rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+        }
+
+        .lightbox-details p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 1.05rem;
+        }
+
+        .lightbox-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .lightbox-btn {
+            flex: 1;
+            padding: 0.9rem;
+            border: 2px solid var(--pastel-rose);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 50px;
+            font-weight: 500;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .lightbox-nav:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .lightbox-nav.prev {
-            left: 20px;
-        }
-
-        .lightbox-nav.next {
-            right: 20px;
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
+        .lightbox-btn:hover {
+            background: var(--pastel-rose);
             color: white;
+            border-color: var(--pastel-rose);
+        }
+
+        .lightbox-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            color: white;
+            font-size: 1.5rem;
             cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
         }
 
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease forwards;
-            opacity: 0;
+        .lightbox-nav-btn:hover {
+            background: rgba(232, 185, 203, 0.5);
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .lightbox-nav-btn.prev {
+            left: -25px;
         }
 
-        .no-gallery {
+        .lightbox-nav-btn.next {
+            right: -25px;
+        }
+
+        .lightbox-close-btn {
+            position: absolute;
+            top: -15px;
+            right: -15px;
+            background: var(--pastel-white);
+            color: var(--text-primary);
+            border: none;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-soft);
+            z-index: 10;
+        }
+
+        .lightbox-close-btn:hover {
+            background: var(--pastel-rose);
+            color: white;
+            transform: rotate(90deg);
+        }
+
+        /* Empty State */
+        .empty-gallery {
             text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            padding: 100px 40px;
+            max-width: 500px;
+            margin: 0 auto;
         }
 
-        .no-gallery i {
-            font-size: 4rem;
-            color: #ff69b4;
-            margin-bottom: 20px;
+        .empty-gallery i {
+            font-size: 5rem;
+            color: var(--pastel-rose);
+            margin-bottom: 2rem;
+            opacity: 0.5;
         }
+
+        .empty-gallery h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .empty-gallery p {
+            color: var(--text-secondary);
+            font-size: 1.05rem;
+        }
+
+        /* Chatbot */
         .chatbot-float {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 1000;
-    }
-    
-    .chatbot-float a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-        border-radius: 50%;
-        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
-        color: white;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        margin-bottom: 100px;
-    }
-    
-    .chatbot-float a:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(255, 105, 180, 0.6);
-    }
-    
-    .chatbot-float i {
-        font-size: 28px;
-    }
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            z-index: 999;
+        }
 
-    .chatbot-pulse {
-        animation: pulse 2s infinite;
-    }
+        .chatbot-btn {
+            width: 65px;
+            height: 65px;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8rem;
+            text-decoration: none;
+            box-shadow: 0 6px 25px rgba(232, 185, 203, 0.3);
+            transition: all 0.3s ease;
+        }
 
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        .chatbot-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 35px rgba(232, 185, 203, 0.4);
+            color: white;
         }
-        50% {
-            box-shadow: 0 4px 30px rgba(255, 105, 180, 0.7);
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .lightbox-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .lightbox-details {
+                padding: 2rem;
+            }
+
+            .lightbox-image-side {
+                padding: 1.5rem;
+            }
         }
-        100% {
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+
+        @media (max-width: 992px) {
+            .masonry-grid {
+                column-count: 2;
+            }
+
+            .gallery-hero h1 {
+                font-size: 3rem;
+            }
         }
-    }
+
+        @media (max-width: 768px) {
+            .gallery-hero {
+                padding: 100px 0 30px;
+            }
+
+            .gallery-hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .tab-navigation {
+                padding: 20px 0;
+            }
+
+            .tab-btn {
+                padding: 0.7rem 1.5rem;
+                font-size: 0.9rem;
+            }
+
+            .masonry-grid {
+                column-count: 1;
+                column-gap: 1rem;
+            }
+
+            .masonry-item {
+                margin-bottom: 1rem;
+            }
+
+            .lightbox-nav-btn.prev {
+                left: 10px;
+            }
+
+            .lightbox-nav-btn.next {
+                right: 10px;
+            }
+
+            .lightbox-close-btn {
+                top: 10px;
+                right: 10px;
+            }
+
+            .chatbot-float {
+                bottom: 25px;
+                right: 25px;
+            }
+
+            .chatbot-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.6rem;
+            }
+        }
     </style>
 </head>
 <body>
 
 @include('components.login_modal')
 @include('components.signup_modal')
-
-<!-- Navbar -->
 @include('components.navbar')
 
-
+<!-- Chatbot Button -->
 <div class="chatbot-float">
-    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+    <a href="{{ route('chatbot') }}" class="chatbot-btn" title="Chat with AI Assistant">
         <i class="bi bi-robot"></i>
     </a>
 </div>
 
-<!-- Page Header -->
-<div class="page-header text-center">
+<!-- Hero Section -->
+<section class="gallery-hero">
     <div class="container">
-        <h1><i class="bi bi-images me-3"></i>Our Gallery</h1>
-        <p>Explore our beautiful collection of handcrafted Products</p>
+        <div class="hero-content">
+            <h1>Our Gallery</h1>
+            <p>A curated collection of handcrafted beauty</p>
+        </div>
     </div>
-</div>
+</section>
+
+<!-- Tab Navigation -->
+<section class="tab-navigation">
+    <div class="container">
+        <div class="tab-container">
+            <button class="tab-btn active" data-filter="all">All</button>
+            <button class="tab-btn" data-filter="birthday">Birthday</button>
+            <button class="tab-btn" data-filter="casual">Casual</button>
+            <button class="tab-btn" data-filter="tiny">Tiny</button>
+            <button class="tab-btn" data-filter="wedding">Wedding</button>
+            <button class="tab-btn" data-filter="custom">Custom</button>
+        </div>
+    </div>
+</section>
 
 <!-- Gallery Section -->
-<div class="gallery-container">
+<section class="gallery-section">
     <div class="container">
-        <!-- Filter Buttons -->
-        <div class="filter-section text-center">
-            <button class="filter-btn active" data-filter="all">All Collections</button>
-            <button class="filter-btn" data-filter="birthday">Birthday Bouquets</button>
-            <button class="filter-btn" data-filter="casual">Casual Bouquets</button>
-            <button class="filter-btn" data-filter="tiny">Tiny Bouquets</button>
-            <button class="filter-btn" data-filter="wedding">Wedding Arrangements</button>
-            <button class="filter-btn" data-filter="custom">Custom Creations</button>
-        </div>
-
-        <!-- Gallery Grid -->
         @if($galleryItems->count() > 0)
-        <div class="gallery-grid" id="galleryGrid">
+        <div class="masonry-grid" id="galleryGrid">
             @foreach($galleryItems as $index => $item)
-            <div class="gallery-item fade-in-up" data-category="{{ $item->category_name }}" style="animation-delay: {{ ($index * 0.1) }}s">
-                <span class="gallery-badge">{{ $item->category_name }}</span>
-                <!-- UPDATED: Use same logic as product page -->
-                <img src="{{ asset('asset/images/' . $item->image_path) }}" alt="{{ $item->title }}" data-index="{{ $index }}">
-                <div class="gallery-overlay">
-                    <h5>{{ $item->title }}</h5>
-                    <p>{{ $item->description }}</p>
+            <div class="masonry-item" data-category="{{ $item->category_name }}" style="animation-delay: {{ ($index * 0.05) }}s">
+                <div class="gallery-item">
+                    <span class="category-tag">{{ $item->category_name }}</span>
+                    <img src="{{ asset('asset/images/' . $item->image_path) }}" alt="{{ $item->title }}" data-index="{{ $index }}">
+                    <div class="gallery-overlay">
+                        <h5>{{ $item->title }}</h5>
+                        <p>{{ $item->description }}</p>
+                    </div>
                 </div>
             </div>
             @endforeach
         </div>
         @else
-        <div class="no-gallery">
-            <i class="bi bi-images"></i>
-            <h3>No Gallery Images Yet</h3>
-            <p class="text-muted">Our beautiful collection is coming soon!</p>
+        <div class="empty-gallery">
+            <i class="bi bi-camera"></i>
+            <h3>Gallery Coming Soon</h3>
+            <p>We're preparing something beautiful for you. Stay tuned!</p>
         </div>
         @endif
     </div>
-</div>
+</section>
 
 <!-- Lightbox Modal -->
 <div class="modal fade lightbox-modal" id="lightboxModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-body">
-                <button class="lightbox-close" data-bs-dismiss="modal">&times;</button>
-                <button class="lightbox-nav prev" onclick="navigateLightbox(-1)">
+                <button class="lightbox-close-btn" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                </button>
+                <!-- <button class="lightbox-nav-btn prev" onclick="navigateLightbox(-1)">
                     <i class="bi bi-chevron-left"></i>
                 </button>
-                <button class="lightbox-nav next" onclick="navigateLightbox(1)">
+                <button class="lightbox-nav-btn next" onclick="navigateLightbox(1)">
                     <i class="bi bi-chevron-right"></i>
                 </button>
-                <!-- UPDATED: Use same logic as product page -->
-                <img src="" alt="" class="lightbox-image" id="lightboxImage">
-                <div class="lightbox-info">
-                    <h4 id="lightboxTitle"></h4>
-                    <p id="lightboxDescription"></p>
+                 -->
+                <div class="lightbox-wrapper">
+                    <div class="lightbox-image-side">
+                        <img src="" alt="" class="lightbox-image" id="lightboxImage">
+                    </div>
+                    <div class="lightbox-details">
+                        <div>
+                            <span class="category-badge" id="lightboxCategory"></span>
+                            <h3 id="lightboxTitle"></h3>
+                            <p id="lightboxDescription"></p>
+                        </div>
+                        <div class="lightbox-actions">
+                            <button class="lightbox-btn" onclick="navigateLightbox(-1)">
+                                <i class="bi bi-chevron-left me-2"></i>Previous
+                            </button>
+                            <button class="lightbox-btn" onclick="navigateLightbox(1)">
+                                Next<i class="bi bi-chevron-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Footer -->
 @include('components.footer')
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -397,20 +614,19 @@
     let currentLightboxIndex = 0;
     const lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
 
-    // Filter functionality
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    // Tab filter functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
 
             const filter = this.getAttribute('data-filter');
-            const items = document.querySelectorAll('.gallery-item');
+            const items = document.querySelectorAll('.masonry-item');
 
-            items.forEach((item, index) => {
+            items.forEach(item => {
                 const category = item.getAttribute('data-category');
                 if (filter === 'all' || category === filter) {
-                    item.style.display = 'block';
-                    item.style.animation = `fadeInUp 0.6s ease ${index * 0.05}s forwards`;
+                    item.style.display = 'inline-block';
                 } else {
                     item.style.display = 'none';
                 }
@@ -429,10 +645,10 @@
     function openLightbox(index) {
         if (galleryItems.length > 0) {
             const item = galleryItems[index];
-            // UPDATED: Use same logic as product page
             document.getElementById('lightboxImage').src = "{{ asset('asset/images') }}/" + item.image_path;
             document.getElementById('lightboxTitle').textContent = item.title;
             document.getElementById('lightboxDescription').textContent = item.description;
+            document.getElementById('lightboxCategory').textContent = item.category_name;
             lightboxModal.show();
         }
     }
