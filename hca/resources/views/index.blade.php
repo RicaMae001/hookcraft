@@ -8,19 +8,20 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
+
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
-            --pastel-pink: #f4d7e0;
-            --pastel-rose: #e8b9cb;
-            --pastel-light: #faf0f3;
-            --pastel-bg: #fdfbfc;
+            --pastel-pink: #ffb3d9;
+            --pastel-rose: #c2185b;
+            --pastel-light: #d4a5b8;
+            --pastel-bg: #fce4ec;
             --pastel-white: #ffffff;
-            --text-primary: #5a5a5a;
-            --text-secondary: #8a8a8a;
-            --shadow-soft: 0 10px 40px rgba(232, 185, 203, 0.12);
-            --shadow-medium: 0 15px 50px rgba(232, 185, 203, 0.15);
+            --text-primary: #2d2d2d;
+            --text-secondary: #4a4a4a;
+            --shadow-soft: 0 10px 40px rgba(194, 24, 91, 0.15);
+            --shadow-medium: 0 15px 50px rgba(194, 24, 91, 0.2);
         }
 
         * {
@@ -35,6 +36,7 @@
             color: var(--text-primary);
             line-height: 1.7;
             overflow-x: hidden;
+            font-size: 18px;
         }
 
         /* Hero Section - New Split Design */
@@ -56,7 +58,7 @@
             width: 50%;
             height: 100%;
             background: var(--pastel-pink);
-            opacity: 0.1;
+            opacity: 0.2;
             clip-path: polygon(20% 0, 100% 0, 100% 100%, 0% 100%);
         }
 
@@ -67,20 +69,20 @@
 
         .hero-badge {
             display: inline-block;
-            background: rgba(126, 82, 99, 0.15);
-            color: #5a5a5a;
-            padding: 0.5rem 1.25rem;
+            background: rgba(194, 24, 91, 0.15);
+            color: var(--text-primary);
+            padding: 0.6rem 1.5rem;
             border-radius: 50px;
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 600;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             text-transform: uppercase;
             margin-bottom: 2rem;
         }
 
         .hero h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 4rem;
+            font-size: 4.5rem;
             font-weight: 700;
             line-height: 1.2;
             color: var(--text-primary);
@@ -89,30 +91,30 @@
         }
 
         .hero p {
-            font-size: 1.25rem;
+            font-size: 1.4rem;
             color: var(--text-secondary);
             margin-bottom: 2.5rem;
             max-width: 500px;
-            font-weight: 300;
+            font-weight: 400;
         }
 
         .btn-primary-custom {
             background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
-            color: #5a5a5a;
-            padding: 1rem 3rem;
+            color: white;
+            padding: 1.2rem 3.5rem;
             border-radius: 50px;
             border: none;
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.3);
             text-decoration: none;
             display: inline-block;
         }
 
         .btn-primary-custom:hover {
             transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(232, 185, 203, 0.4);
+            box-shadow: 0 6px 25px rgba(194, 24, 91, 0.4);
             color: white;
         }
 
@@ -142,16 +144,16 @@
         .section-label {
             display: inline-block;
             color: var(--pastel-rose);
-            font-size: 0.9rem;
+            font-size: 1.05rem;
             font-weight: 600;
-            letter-spacing: 2px;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             margin-bottom: 1rem;
         }
 
         .section-title {
             font-family: 'Playfair Display', serif;
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: var(--text-primary);
             font-weight: 700;
             margin-bottom: 1rem;
@@ -159,7 +161,7 @@
 
         .section-subtitle {
             color: var(--text-secondary);
-            font-size: 1.15rem;
+            font-size: 1.3rem;
             max-width: 600px;
             margin: 0 auto;
         }
@@ -206,7 +208,7 @@
 
         .category-overlay h3 {
             color: white;
-            font-size: 1.8rem;
+            font-size: 2rem;
             font-weight: 600;
             margin: 0;
         }
@@ -223,7 +225,7 @@
 
         .about-content h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: var(--text-primary);
             margin-bottom: 1.5rem;
             font-weight: 700;
@@ -231,7 +233,7 @@
 
         .about-content p {
             color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1.25rem;
             line-height: 1.9;
             margin-bottom: 1.5rem;
         }
@@ -260,12 +262,13 @@
             color: var(--text-primary);
             font-weight: 600;
             margin-bottom: 0.5rem;
+            font-size: 1.25rem;
         }
 
         .feature-box p {
             color: var(--text-secondary);
             margin: 0;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
         }
 
         .about-images {
@@ -319,9 +322,10 @@
         .btn-outline-custom {
             border: 2px solid var(--pastel-rose);
             color: var(--pastel-rose);
-            padding: 0.875rem 2.5rem;
+            padding: 1rem 3rem;
             border-radius: 50px;
             font-weight: 600;
+            font-size: 1.15rem;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
@@ -331,7 +335,7 @@
             background: var(--pastel-rose);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.3);
         }
 
         /* Customize Section */
@@ -349,7 +353,7 @@
             right: -10%;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -361,7 +365,7 @@
 
         .customize h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 3rem;
+            font-size: 3.5rem;
             color: white;
             margin-bottom: 1rem;
             font-weight: 700;
@@ -369,7 +373,7 @@
 
         .customize p {
             color: rgba(255,255,255,0.95);
-            font-size: 1.2rem;
+            font-size: 1.35rem;
             margin-bottom: 3rem;
         }
 
@@ -404,11 +408,11 @@
         .btn-white-custom {
             background: white;
             color: var(--pastel-rose);
-            padding: 1rem 3rem;
+            padding: 1.2rem 3.5rem;
             border-radius: 50px;
             border: none;
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 1.15rem;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.2);
             text-decoration: none;
@@ -440,13 +444,13 @@
             color: white;
             font-size: 2rem;
             text-decoration: none;
-            box-shadow: 0 8px 30px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 8px 30px rgba(194, 24, 91, 0.3);
             transition: all 0.3s ease;
         }
 
         .chatbot-btn:hover {
             transform: scale(1.1) rotate(10deg);
-            box-shadow: 0 10px 40px rgba(232, 185, 203, 0.4);
+            box-shadow: 0 10px 40px rgba(194, 24, 91, 0.4);
             color: white;
         }
 
@@ -475,15 +479,15 @@
 
         @media (max-width: 992px) {
             .hero h1 {
-                font-size: 3rem;
+                font-size: 3.5rem;
             }
 
             .section-title {
-                font-size: 2.5rem;
+                font-size: 3rem;
             }
 
             .about-content h2 {
-                font-size: 2.5rem;
+                font-size: 3rem;
             }
 
             .about-content {
@@ -497,25 +501,33 @@
         }
 
         @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
             .hero {
                 padding: 100px 0 60px;
                 min-height: auto;
             }
 
             .hero h1 {
-                font-size: 2.5rem;
+                font-size: 2.8rem;
+            }
+
+            .hero p {
+                font-size: 1.2rem;
             }
 
             .section-title {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
 
             .about-content h2 {
-                font-size: 2rem;
+                font-size: 2.5rem;
             }
 
             .customize h2 {
-                font-size: 2.5rem;
+                font-size: 2.8rem;
             }
 
             .gallery-grid {
