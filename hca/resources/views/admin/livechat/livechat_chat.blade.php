@@ -1,387 +1,135 @@
-{{-- Save as: resources/views/admin/livechat/livechat_index.blade.php --}}
+{{-- Save as: resources/views/admin/livechat/livechat_chat.blade.php --}}
 
 @extends('admin.layouts.admin')
 
-@section('title', 'Live Chat Management')
+@section('title', 'Live Chat - ' . $session->customer_name)
 
 @section('content')
 <div class="container-fluid">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="h3 mb-0 text-gray-800">
-            <i class="fas fa-comments"></i> Live Chat Management
-        </h1>
-        <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-primary" onclick="refreshPage()">
-                <i class="fas fa-sync-alt"></i> Refresh
-            </button>
-        </div>
-    </div>
-
-    @if(session('success'))
-        <div class="alert alert-success alert-dismissible fade show" role="alert">
-            <i class="fas fa-check-circle"></i> {{ session('success') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    @if(session('error'))
-        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-            <i class="fas fa-exclamation-circle"></i> {{ session('error') }}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        </div>
-    @endif
-
-    <!-- Statistics Cards -->
-    <div class="row mb-4">
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-warning shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
-                                Waiting in Queue
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($waitingSessions) }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-clock fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="row">
+        <!-- Back Button and Header -->
+        <div class="col-12 mb-3">
+            <a href="{{ route('admin.livechat.index') }}" class="btn btn-secondary btn-sm">
+                <i class="fas fa-arrow-left"></i> Back to Chat List
+            </a>
         </div>
 
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
-                                My Active Chats
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($activeSessions) }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-comments fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
-                                All Active Chats
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($allActiveSessions) }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-users fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-secondary shadow h-100 py-2">
-                <div class="card-body">
-                    <div class="row no-gutters align-items-center">
-                        <div class="col mr-2">
-                            <div class="text-xs font-weight-bold text-secondary text-uppercase mb-1">
-                                Closed Today
-                            </div>
-                            <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($closedSessions) }}
-                            </div>
-                        </div>
-                        <div class="col-auto">
-                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Tabs Navigation -->
-    <ul class="nav nav-tabs mb-3" id="chatTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-            <button class="nav-link active" id="waiting-tab" data-bs-toggle="tab" data-bs-target="#waiting" type="button">
-                <i class="fas fa-clock"></i> Waiting Queue 
-                @if(count($waitingSessions) > 0)
-                    <span class="badge bg-warning">{{ count($waitingSessions) }}</span>
-                @endif
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="my-active-tab" data-bs-toggle="tab" data-bs-target="#my-active" type="button">
-                <i class="fas fa-comment-dots"></i> My Active Chats
-                @if(count($activeSessions) > 0)
-                    <span class="badge bg-success">{{ count($activeSessions) }}</span>
-                @endif
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="all-active-tab" data-bs-toggle="tab" data-bs-target="#all-active" type="button">
-                <i class="fas fa-users"></i> All Active Chats
-            </button>
-        </li>
-        <li class="nav-item" role="presentation">
-            <button class="nav-link" id="closed-tab" data-bs-toggle="tab" data-bs-target="#closed" type="button">
-                <i class="fas fa-history"></i> Chat History
-            </button>
-        </li>
-    </ul>
-
-    <!-- Tabs Content -->
-    <div class="tab-content" id="chatTabsContent">
-        <!-- Waiting Queue Tab -->
-        <div class="tab-pane fade show active" id="waiting" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-warning">
-                        <i class="fas fa-clock"></i> Customers Waiting for Support
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if(count($waitingSessions) > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Queue #</th>
-                                        <th>Customer Name</th>
-                                        <th>Email</th>
-                                        <th>Waiting Since</th>
-                                        <th>Duration</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($waitingSessions as $session)
-                                    <tr>
-                                        <td>
-                                            <span class="badge bg-warning text-dark fs-6">#{{ $session->queue_position }}</span>
-                                        </td>
-                                        <td>
-                                            <strong>{{ $session->customer_name }}</strong>
-                                        </td>
-                                        <td>{{ $session->customer_email ?? 'N/A' }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($session->created_at)->format('M d, Y h:i A') }}</td>
-                                        <td>
-                                            <span class="badge bg-secondary">
-                                                {{ \Carbon\Carbon::parse($session->created_at)->diffForHumans() }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <form action="{{ route('admin.livechat.accept', $session->id) }}" method="POST" class="d-inline">
-                                                @csrf
-                                                <button type="submit" class="btn btn-success btn-sm">
-                                                    <i class="fas fa-check"></i> Accept Chat
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
-                        <div class="text-center py-5">
-                            <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No customers waiting in queue</p>
-                        </div>
-                    @endif
-                </div>
-            </div>
-        </div>
-
-        <!-- My Active Chats Tab -->
-        <div class="tab-pane fade" id="my-active" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-success">
-                        <i class="fas fa-comment-dots"></i> My Active Chat Sessions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if(count($activeSessions) > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Customer</th>
-                                        <th>Email</th>
-                                        <th>Started</th>
-                                        <th>Duration</th>
-                                        <th>Status</th>
-                                        <th>Action</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($activeSessions as $session)
-                                    <tr>
-                                        <td><strong>{{ $session->customer_name }}</strong></td>
-                                        <td>{{ $session->customer_email ?? 'N/A' }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($session->started_at)->format('M d, Y h:i A') }}</td>
-                                        <td>
-                                            <span class="badge bg-info">
-                                                {{ \Carbon\Carbon::parse($session->started_at)->diffForHumans() }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-success">
+        <!-- Chat Interface -->
+        <div class="col-lg-12">
+            <div class="card shadow-lg" style="height: 80vh;">
+                <!-- Chat Header -->
+                <div class="card-header bg-gradient-primary text-white py-3">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <div class="d-flex align-items-center">
+                                <div class="chat-avatar me-3">
+                                    <i class="fas fa-user-circle fa-3x"></i>
+                                </div>
+                                <div>
+                                    <h5 class="mb-0">{{ $session->customer_name }}</h5>
+                                    <small>
+                                        @if($session->customer_email)
+                                            <i class="fas fa-envelope"></i> {{ $session->customer_email }}
+                                        @endif
+                                        @if($session->status === 'active')
+                                            <span class="badge bg-success ms-2">
                                                 <i class="fas fa-circle pulse"></i> Active
                                             </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('admin.livechat.chat', $session->id) }}" class="btn btn-primary btn-sm">
-                                                <i class="fas fa-comments"></i> Open Chat
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
+                                        @else
+                                            <span class="badge bg-secondary ms-2">
+                                                <i class="fas fa-times-circle"></i> Closed
+                                            </span>
+                                        @endif
+                                    </small>
+                                </div>
+                            </div>
                         </div>
-                    @else
-                        <div class="text-center py-5">
-                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">You don't have any active chats</p>
+                        <div class="col-md-4 text-end">
+                            @if($session->status === 'active')
+                                <button type="button" class="btn btn-danger btn-sm" onclick="endChat()">
+                                    <i class="fas fa-times-circle"></i> End Chat
+                                </button>
+                            @endif
                         </div>
-                    @endif
+                    </div>
                 </div>
-            </div>
-        </div>
 
-        <!-- All Active Chats Tab -->
-        <div class="tab-pane fade" id="all-active" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-info">
-                        <i class="fas fa-users"></i> All Active Chat Sessions
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if(count($allActiveSessions) > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Customer</th>
-                                        <th>Handled By</th>
-                                        <th>Started</th>
-                                        <th>Duration</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($allActiveSessions as $session)
-                                    <tr>
-                                        <td><strong>{{ $session->customer_name }}</strong></td>
-                                        <td>
-                                            <span class="badge bg-primary">
-                                                <i class="fas fa-user"></i> {{ $session->admin_name ?? 'Unknown' }}
-                                            </span>
-                                        </td>
-                                        <td>{{ \Carbon\Carbon::parse($session->started_at)->format('M d, Y h:i A') }}</td>
-                                        <td>
-                                            <span class="badge bg-info">
-                                                {{ \Carbon\Carbon::parse($session->started_at)->diffForHumans() }}
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-success">
-                                                <i class="fas fa-circle pulse"></i> Active
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
-                    @else
+                <!-- Chat Messages -->
+                <div class="card-body p-4" id="chatMessages" style="height: calc(80vh - 200px); overflow-y: auto; background: #f8f9fc;">
+                    @forelse($messages as $message)
+                        @if($message->sender_type === 'system')
+                            <div class="text-center my-3">
+                                <span class="badge bg-info px-3 py-2">
+                                    <i class="fas fa-info-circle"></i> {{ $message->message }}
+                                </span>
+                                <div class="small text-muted mt-1">
+                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                </div>
+                            </div>
+                        @elseif($message->sender_type === 'customer')
+                            <div class="message-wrapper mb-3">
+                                <div class="d-flex justify-content-start">
+                                    <div class="message customer-message">
+                                        <div class="message-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="message-content">
+                                            <div class="message-bubble bg-light">
+                                                {{ $message->message }}
+                                            </div>
+                                            <div class="message-time">
+                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @else
+                            <div class="message-wrapper mb-3">
+                                <div class="d-flex justify-content-end">
+                                    <div class="message staff-message">
+                                        <div class="message-content">
+                                            <div class="message-bubble bg-primary text-white">
+                                                {{ $message->message }}
+                                            </div>
+                                            <div class="message-time text-end">
+                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                            </div>
+                                        </div>
+                                        <div class="message-avatar">
+                                            <i class="fas fa-user-tie"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        @endif
+                    @empty
                         <div class="text-center py-5">
-                            <i class="fas fa-comments fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No active chats at the moment</p>
+                            <i class="fas fa-comments-slash fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No messages yet</p>
                         </div>
-                    @endif
+                    @endforelse
                 </div>
-            </div>
-        </div>
 
-        <!-- Chat History Tab -->
-        <div class="tab-pane fade" id="closed" role="tabpanel">
-            <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                    <h6 class="m-0 font-weight-bold text-secondary">
-                        <i class="fas fa-history"></i> Recent Chat History
-                    </h6>
-                </div>
-                <div class="card-body">
-                    @if(count($closedSessions) > 0)
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Customer</th>
-                                        <th>Handled By</th>
-                                        <th>Started</th>
-                                        <th>Ended</th>
-                                        <th>Duration</th>
-                                        <th>Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    @foreach($closedSessions as $session)
-                                    <tr>
-                                        <td>{{ $session->customer_name }}</td>
-                                        <td>
-                                            @if($session->admin_id)
-                                                {{ \DB::table('admin')->where('id', $session->admin_id)->value('name') }}
-                                            @else
-                                                <span class="text-muted">N/A</span>
-                                            @endif
-                                        </td>
-                                        <td>{{ $session->started_at ? \Carbon\Carbon::parse($session->started_at)->format('M d, h:i A') : 'N/A' }}</td>
-                                        <td>{{ \Carbon\Carbon::parse($session->closed_at)->format('M d, h:i A') }}</td>
-                                        <td>
-                                            @if($session->started_at && $session->closed_at)
-                                                {{ \Carbon\Carbon::parse($session->started_at)->diffInMinutes(\Carbon\Carbon::parse($session->closed_at)) }} min
-                                            @else
-                                                N/A
-                                            @endif
-                                        </td>
-                                        <td>
-                                            <span class="badge bg-secondary">
-                                                <i class="fas fa-check-circle"></i> Closed
-                                            </span>
-                                        </td>
-                                        <td>
-                                            <a href="{{ route('admin.livechat.view', $session->id) }}" class="btn btn-info btn-sm">
-                                                <i class="fas fa-eye"></i> View Chat
-                                            </a>
-                                        </td>
-                                    </tr>
-                                    @endforeach
-                                </tbody>
-                            </table>
-                        </div>
+                <!-- Chat Input -->
+                <div class="card-footer bg-white border-top">
+                    @if($session->status === 'active')
+                        <form id="chatForm" class="d-flex align-items-center gap-2">
+                            <input 
+                                type="text" 
+                                class="form-control" 
+                                id="messageInput" 
+                                placeholder="Type your message..."
+                                autocomplete="off"
+                                required
+                            >
+                            <button type="submit" class="btn btn-primary" id="sendBtn">
+                                <i class="fas fa-paper-plane"></i> Send
+                            </button>
+                        </form>
                     @else
-                        <div class="text-center py-5">
-                            <i class="fas fa-history fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No closed chats found</p>
+                        <div class="alert alert-secondary mb-0">
+                            <i class="fas fa-info-circle"></i> This chat session has been closed.
                         </div>
                     @endif
                 </div>
@@ -391,6 +139,78 @@
 </div>
 
 <style>
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+}
+
+.chat-avatar {
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.message {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 18px;
+}
+
+.customer-message .message-avatar {
+    background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
+    color: white;
+}
+
+.staff-message .message-avatar {
+    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+    color: white;
+}
+
+.message-content {
+    max-width: 70%;
+}
+
+.message-bubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    word-wrap: break-word;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.customer-message .message-bubble {
+    border-bottom-left-radius: 4px;
+}
+
+.staff-message .message-bubble {
+    border-bottom-right-radius: 4px;
+}
+
+.message-time {
+    font-size: 11px;
+    color: #6c757d;
+    margin-top: 4px;
+}
+
 .pulse {
     animation: pulse 2s infinite;
 }
@@ -404,48 +224,202 @@
     }
 }
 
+#chatMessages {
+    scroll-behavior: smooth;
+}
+
+#messageInput:focus {
+    border-color: #4e73df;
+    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+}
+
 .card {
-    border-radius: 10px;
-}
-
-.border-left-warning {
-    border-left: 4px solid #f6c23e;
-}
-
-.border-left-success {
-    border-left: 4px solid #1cc88a;
-}
-
-.border-left-info {
-    border-left: 4px solid #36b9cc;
-}
-
-.border-left-secondary {
-    border-left: 4px solid #858796;
-}
-
-.nav-tabs .nav-link {
-    color: #666;
-}
-
-.nav-tabs .nav-link.active {
-    color: #4e73df;
-    font-weight: 600;
+    border-radius: 15px;
+    overflow: hidden;
 }
 </style>
 
 <script>
-// Auto-refresh page every 30 seconds for waiting queue
-setInterval(function() {
-    // Only refresh if on waiting tab
-    const waitingTab = document.getElementById('waiting-tab');
-    if (waitingTab && waitingTab.classList.contains('active')) {
-        location.reload();
-    }
-}, 30000);
+const sessionId = {{ $session->id }};
+const sessionStatus = '{{ $session->status }}';
+const chatMessages = document.getElementById('chatMessages');
+const chatForm = document.getElementById('chatForm');
+const messageInput = document.getElementById('messageInput');
+const sendBtn = document.getElementById('sendBtn');
+let pollingInterval = null;
 
-function refreshPage() {
-    location.reload();
+// Scroll to bottom
+function scrollToBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+// Add message to chat
+function addMessage(message, type, time) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'message-wrapper mb-3';
+    
+    if (type === 'customer') {
+        messageDiv.innerHTML = `
+            <div class="d-flex justify-content-start">
+                <div class="message customer-message">
+                    <div class="message-avatar">
+                        <i class="fas fa-user"></i>
+                    </div>
+                    <div class="message-content">
+                        <div class="message-bubble bg-light">
+                            ${escapeHtml(message)}
+                        </div>
+                        <div class="message-time">
+                            ${time}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } else if (type === 'admin') {
+        messageDiv.innerHTML = `
+            <div class="d-flex justify-content-end">
+                <div class="message staff-message">
+                    <div class="message-content">
+                        <div class="message-bubble bg-primary text-white">
+                            ${escapeHtml(message)}
+                        </div>
+                        <div class="message-time text-end">
+                            ${time}
+                        </div>
+                    </div>
+                    <div class="message-avatar">
+                        <i class="fas fa-user-tie"></i>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+}
+
+// Escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Format time
+function formatTime() {
+    return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+}
+
+// Send message
+if (chatForm) {
+    chatForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        sendBtn.disabled = true;
+        
+        try {
+            const response = await fetch('{{ route("admin.livechat.send") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    message: message
+                })
+            });
+            
+            if (response.ok) {
+                addMessage(message, 'admin', formatTime());
+                messageInput.value = '';
+            } else {
+                alert('Failed to send message');
+            }
+        } catch (error) {
+            console.error('Error:', error);
+            alert('Failed to send message');
+        } finally {
+            sendBtn.disabled = false;
+            messageInput.focus();
+        }
+    });
+}
+
+// Poll for new messages
+function startPolling() {
+    if (sessionStatus !== 'active') return;
+    
+    pollingInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`{{ url('admin/livechat/poll') }}/${sessionId}`);
+            const data = await response.json();
+            
+            if (data.success && data.new_messages && data.new_messages.length > 0) {
+                data.new_messages.forEach(msg => {
+                    const time = new Date(msg.created_at).toLocaleTimeString('en-US', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                    addMessage(msg.message, 'customer', time);
+                });
+            }
+            
+            if (data.status === 'closed') {
+                clearInterval(pollingInterval);
+                location.reload();
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
+        }
+    }, 3000); // Poll every 3 seconds
+}
+
+// End chat
+async function endChat() {
+    if (!confirm('Are you sure you want to end this chat session?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch(`{{ url('admin/livechat/end') }}/${sessionId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            }
+        });
+        
+        if (response.ok) {
+            window.location.href = '{{ route("admin.livechat.index") }}';
+        } else {
+            alert('Failed to end chat');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        alert('Failed to end chat');
+    }
+}
+
+// Initialize
+window.addEventListener('load', () => {
+    scrollToBottom();
+    if (sessionStatus === 'active') {
+        startPolling();
+        messageInput.focus();
+    }
+});
+
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+});
 </script>
 @endsection

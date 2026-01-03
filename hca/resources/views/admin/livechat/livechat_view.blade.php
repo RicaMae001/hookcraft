@@ -88,71 +88,69 @@
 
                 <!-- Chat Messages -->
                 <div class="card-body p-4" id="chatMessages" style="height: calc(70vh - 100px); overflow-y: auto; background: #f8f9fc;">
-                    @if(count($messages) > 0)
-                        @foreach($messages as $message)
-                            @if($message->sender_type === 'system')
-                                <div class="text-center my-3">
-                                    <span class="badge bg-info px-3 py-2">
-                                        <i class="fas fa-info-circle"></i> {{ $message->message }}
-                                    </span>
-                                    <div class="small text-muted mt-1">
-                                        {{ \Carbon\Carbon::parse($message->created_at)->format('M d, Y h:i A') }}
-                                    </div>
+                    @forelse($messages as $message)
+                        @if($message->sender_type === 'system')
+                            <div class="text-center my-3">
+                                <span class="badge bg-info px-3 py-2">
+                                    <i class="fas fa-info-circle"></i> {{ $message->message }}
+                                </span>
+                                <div class="small text-muted mt-1">
+                                    {{ \Carbon\Carbon::parse($message->created_at)->format('M d, Y h:i A') }}
                                 </div>
-                            @elseif($message->sender_type === 'customer')
-                                <div class="message-wrapper mb-3">
-                                    <div class="d-flex justify-content-start">
-                                        <div class="message customer-message">
-                                            <div class="message-avatar">
-                                                <i class="fas fa-user"></i>
+                            </div>
+                        @elseif($message->sender_type === 'customer')
+                            <div class="message-wrapper mb-3">
+                                <div class="d-flex justify-content-start">
+                                    <div class="message customer-message">
+                                        <div class="message-avatar">
+                                            <i class="fas fa-user"></i>
+                                        </div>
+                                        <div class="message-content">
+                                            <div class="message-sender">
+                                                {{ $session->customer_name }}
                                             </div>
-                                            <div class="message-content">
-                                                <div class="message-sender">
-                                                    {{ $session->customer_name }}
-                                                </div>
-                                                <div class="message-bubble bg-light">
-                                                    {{ $message->message }}
-                                                </div>
-                                                <div class="message-time">
-                                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
-                                                </div>
+                                            <div class="message-bubble bg-light">
+                                                {{ $message->message }}
+                                            </div>
+                                            <div class="message-time">
+                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            @else
-                                <div class="message-wrapper mb-3">
-                                    <div class="d-flex justify-content-end">
-                                        <div class="message staff-message">
-                                            <div class="message-content">
-                                                <div class="message-sender text-end">
-                                                    @if($message->sender_id)
-                                                        {{ DB::table('admin')->where('id', $message->sender_id)->value('name') ?? 'Staff' }}
-                                                    @else
-                                                        Staff
-                                                    @endif
-                                                </div>
-                                                <div class="message-bubble bg-primary text-white">
-                                                    {{ $message->message }}
-                                                </div>
-                                                <div class="message-time text-end">
-                                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
-                                                </div>
+                            </div>
+                        @else
+                            <div class="message-wrapper mb-3">
+                                <div class="d-flex justify-content-end">
+                                    <div class="message staff-message">
+                                        <div class="message-content">
+                                            <div class="message-sender text-end">
+                                                @if($message->sender_id)
+                                                    {{ DB::table('admin')->where('id', $message->sender_id)->value('name') ?? 'Staff' }}
+                                                @else
+                                                    Staff
+                                                @endif
                                             </div>
-                                            <div class="message-avatar">
-                                                <i class="fas fa-user-tie"></i>
+                                            <div class="message-bubble bg-primary text-white">
+                                                {{ $message->message }}
                                             </div>
+                                            <div class="message-time text-end">
+                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                            </div>
+                                        </div>
+                                        <div class="message-avatar">
+                                            <i class="fas fa-user-tie"></i>
                                         </div>
                                     </div>
                                 </div>
-                            @endif
-                        @endforeach
-                    @else
+                            </div>
+                        @endif
+                    @empty
                         <div class="text-center py-5">
                             <i class="fas fa-comments-slash fa-3x text-muted mb-3"></i>
                             <p class="text-muted">No messages in this chat session</p>
                         </div>
-                    @endif
+                    @endforelse
                 </div>
             </div>
         </div>

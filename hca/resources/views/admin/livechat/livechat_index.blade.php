@@ -45,7 +45,7 @@
                                 Waiting in Queue
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($waitingSessions) }}
+                                {{ $waitingSessions->count() }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -65,7 +65,7 @@
                                 My Active Chats
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($activeSessions) }}
+                                {{ $activeSessions->count() }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -85,7 +85,7 @@
                                 All Active Chats
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($allActiveSessions) }}
+                                {{ $allActiveSessions->count() }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -105,7 +105,7 @@
                                 Closed Today
                             </div>
                             <div class="h5 mb-0 font-weight-bold text-gray-800">
-                                {{ count($closedSessions) }}
+                                {{ $closedSessions->count() }}
                             </div>
                         </div>
                         <div class="col-auto">
@@ -122,16 +122,16 @@
         <li class="nav-item" role="presentation">
             <button class="nav-link active" id="waiting-tab" data-bs-toggle="tab" data-bs-target="#waiting" type="button">
                 <i class="fas fa-clock"></i> Waiting Queue 
-                @if(count($waitingSessions) > 0)
-                    <span class="badge bg-warning">{{ count($waitingSessions) }}</span>
+                @if($waitingSessions->count() > 0)
+                    <span class="badge bg-warning">{{ $waitingSessions->count() }}</span>
                 @endif
             </button>
         </li>
         <li class="nav-item" role="presentation">
             <button class="nav-link" id="my-active-tab" data-bs-toggle="tab" data-bs-target="#my-active" type="button">
                 <i class="fas fa-comment-dots"></i> My Active Chats
-                @if(count($activeSessions) > 0)
-                    <span class="badge bg-success">{{ count($activeSessions) }}</span>
+                @if($activeSessions->count() > 0)
+                    <span class="badge bg-success">{{ $activeSessions->count() }}</span>
                 @endif
             </button>
         </li>
@@ -158,7 +158,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    @if(count($waitingSessions) > 0)
+                    @if($waitingSessions->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -219,7 +219,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    @if(count($activeSessions) > 0)
+                    @if($activeSessions->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -277,7 +277,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    @if(count($allActiveSessions) > 0)
+                    @if($allActiveSessions->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -333,7 +333,7 @@
                     </h6>
                 </div>
                 <div class="card-body">
-                    @if(count($closedSessions) > 0)
+                    @if($closedSessions->count() > 0)
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -459,7 +459,7 @@
                                 <strong>Danger Zone:</strong> This will permanently delete ALL closed chat sessions and their messages. This action cannot be undone!
                             </div>
                             <div class="mb-3">
-                                <p><strong>Total Closed Sessions:</strong> {{ count($closedSessions) }}</p>
+                                <p><strong>Total Closed Sessions:</strong> {{ $closedSessions->count() }}</p>
                             </div>
                             <div class="d-flex justify-content-end gap-2">
                                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>

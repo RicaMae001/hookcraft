@@ -153,6 +153,11 @@ class LiveChatController extends Controller
                 ->orderBy('created_at', 'asc')
                 ->get();
 
+            // Ensure $newMessages is never null
+            if ($newMessages === null) {
+                $newMessages = collect([]);
+            }
+
             // Mark messages as read
             if ($newMessages->count() > 0) {
                 DB::table('chat_messages')
@@ -253,31 +258,31 @@ class LiveChatController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
+        // FIXED: Ensure we always get collections, never null
         $waitingSessions = DB::table('chat_sessions')
             ->where('status', 'waiting')
             ->orderBy('queue_position', 'asc')
-            ->get();
+            ->get() ?? collect([]);
 
         $activeSessions = DB::table('chat_sessions')
             ->where('status', 'active')
             ->where('admin_id', session('admin_id'))
             ->orderBy('started_at', 'desc')
-            ->get();
+            ->get() ?? collect([]);
 
         $allActiveSessions = DB::table('chat_sessions')
             ->leftJoin('admin', 'chat_sessions.admin_id', '=', 'admin.id')
             ->where('chat_sessions.status', 'active')
             ->select('chat_sessions.*', 'admin.name as admin_name')
             ->orderBy('chat_sessions.started_at', 'desc')
-            ->get();
+            ->get() ?? collect([]);
 
         $closedSessions = DB::table('chat_sessions')
             ->where('status', 'closed')
             ->orderBy('closed_at', 'desc')
             ->limit(20)
-            ->get();
+            ->get() ?? collect([]);
 
-        // CHANGED: Using livechat_index instead of index
         return view('admin.livechat.livechat_index', compact(
             'waitingSessions',
             'activeSessions',
@@ -362,10 +367,11 @@ class LiveChatController extends Controller
                 ->with('error', 'This chat is being handled by another staff member');
         }
 
+        // FIXED: Ensure messages is always a collection
         $messages = DB::table('chat_messages')
             ->where('chat_session_id', $sessionId)
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->get() ?? collect([]);
 
         // Mark customer messages as read
         DB::table('chat_messages')
@@ -374,7 +380,6 @@ class LiveChatController extends Controller
             ->where('is_read', false)
             ->update(['is_read' => true]);
 
-        // CHANGED: Using livechat_chat instead of chat
         return view('admin.livechat.livechat_chat', compact('session', 'messages'));
     }
 
@@ -395,10 +400,11 @@ class LiveChatController extends Controller
                 ->with('error', 'Chat session not found');
         }
 
+        // FIXED: Ensure messages is always a collection
         $messages = DB::table('chat_messages')
             ->where('chat_session_id', $sessionId)
             ->orderBy('created_at', 'asc')
-            ->get();
+            ->get() ?? collect([]);
 
         return view('admin.livechat.livechat_view', compact('session', 'messages'));
     }
@@ -599,6 +605,11 @@ class LiveChatController extends Controller
                 ->where('is_read', false)
                 ->orderBy('created_at', 'asc')
                 ->get();
+
+            // FIXED: Ensure $newMessages is never null
+            if ($newMessages === null) {
+                $newMessages = collect([]);
+            }
 
             // Mark as read
             if ($newMessages->count() > 0) {
