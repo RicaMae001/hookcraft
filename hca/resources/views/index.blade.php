@@ -41,12 +41,12 @@
 
         /* Hero Section - New Split Design */
         .hero {
-            min-height: 90vh;
+            min-height: 85vh;
             display: flex;
             align-items: center;
             /* padding: 80px 0 60px; */
             /* margin-top: px; */
-            background: linear-gradient(135deg, var(--pastel-light) 0%, var(--pastel-white) 100%);
+            background: linear-gradient(135deg, var(--pastel-pink) 0%, var(--pastel-white) 100%);
             position: relative;
         }
 
@@ -64,12 +64,12 @@
 
         .hero-content {
             position: relative;
-            z-index: 2;
+            z-index: 1.5;
         }
 
         .hero-badge {
             display: inline-block;
-            background: rgba(194, 24, 91, 0.15);
+            background: rgba(42, 0, 54, 0.15);
             color: var(--text-primary);
             padding: 0.6rem 1.5rem;
             border-radius: 50px;
@@ -99,7 +99,7 @@
         }
 
         .btn-primary-custom {
-            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
+            background: linear-gradient(135deg, var(--pastel-rose), var(--pastel-rose));
             color: white;
             padding: 1.2rem 3.5rem;
             border-radius: 50px;
@@ -107,14 +107,14 @@
             font-weight: 600;
             font-size: 1.15rem;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.3);
+            box-shadow: 0 4px 15px rgba(233, 162, 190, 0.3);
             text-decoration: none;
             display: inline-block;
         }
 
         .btn-primary-custom:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(194, 24, 91, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 6px 25px rgba(75, 71, 73, 0.4);
             color: white;
         }
 
@@ -126,8 +126,8 @@
         .hero-image-wrapper img {
             width: 80%;
             height: auto;
-            border-radius: 30px;
-            box-shadow: var(--shadow-medium);
+            /* border-radius: 30px; */
+            /* box-shadow: var(--shadow-medium); */
         }
 
         /* Categories Section - Card Grid */

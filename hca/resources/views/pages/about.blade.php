@@ -8,19 +8,19 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
-    <style>
+   <style>
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
-            --pastel-pink: #f4d7e0;
-            --pastel-rose: #e8b9cb;
-            --pastel-light: #faf0f3;
-            --pastel-bg: #fdfbfc;
+            --pastel-pink: #ffb3d9;
+            --pastel-rose: #c2185b;
+            --pastel-light: #fce4ec;
+            --pastel-bg: #fff0f5;
             --pastel-white: #ffffff;
-            --text-primary: #5a5a5a;
-            --text-secondary: #8a8a8a;
-            --shadow-soft: 0 10px 40px rgba(232, 185, 203, 0.12);
-            --shadow-medium: 0 15px 50px rgba(232, 185, 203, 0.15);
+            --text-primary: #2d2d2d;
+            --text-secondary: #4a4a4a;
+            --shadow-soft: 0 10px 40px rgba(194, 24, 91, 0.15);
+            --shadow-medium: 0 15px 50px rgba(194, 24, 91, 0.2);
         }
 
         * {
@@ -35,12 +35,13 @@
             color: var(--text-primary);
             line-height: 1.7;
             overflow-x: hidden;
+            font-size: 18px;
         }
 
         /* Hero Section */
         .about-hero {
             padding: 80px 0 50px;
-            margin-top: 76px;
+            margin-top: 5px;
             background: var(--pastel-white);
             position: relative;
         }
@@ -54,7 +55,7 @@
 
         .hero-text h1 {
             font-family: 'Playfair Display', serif;
-            font-size: 3rem;
+            font-size: 3.5rem;
             font-weight: 700;
             color: var(--text-primary);
             margin-bottom: 1rem;
@@ -62,7 +63,7 @@
         }
 
         .hero-text p {
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             color: var(--text-secondary);
             line-height: 1.8;
         }
@@ -93,16 +94,16 @@
         .section-label {
             display: inline-block;
             color: var(--pastel-rose);
-            font-size: 0.8rem;
+            font-size: 1rem;
             font-weight: 600;
-            letter-spacing: 2px;
+            letter-spacing: 2.5px;
             text-transform: uppercase;
             margin-bottom: 0.5rem;
         }
 
         .section-title {
             font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: var(--text-primary);
             font-weight: 700;
             margin-bottom: 0.75rem;
@@ -110,7 +111,7 @@
 
         .section-subtitle {
             color: var(--text-secondary);
-            font-size: 1.05rem;
+            font-size: 1.25rem;
         }
 
         .story-grid {
@@ -122,7 +123,7 @@
 
         .story-text p {
             color: var(--text-secondary);
-            font-size: 1.05rem;
+            font-size: 1.2rem;
             line-height: 1.8;
             margin-bottom: 1.25rem;
         }
@@ -156,7 +157,7 @@
 
         .value-card {
             background: var(--pastel-light);
-            padding: 2rem;
+            padding: 2.25rem;
             border-radius: 20px;
             text-align: center;
             transition: all 0.3s ease;
@@ -170,8 +171,8 @@
         }
 
         .value-icon {
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             border-radius: 50%;
             display: flex;
@@ -181,12 +182,12 @@
         }
 
         .value-icon i {
-            font-size: 2.25rem;
+            font-size: 2.5rem;
             color: white;
         }
 
         .value-card h4 {
-            font-size: 1.3rem;
+            font-size: 1.5rem;
             color: var(--text-primary);
             margin-bottom: 0.75rem;
             font-weight: 600;
@@ -194,7 +195,7 @@
 
         .value-card p {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             margin: 0;
             line-height: 1.6;
         }
@@ -231,23 +232,23 @@
         }
 
         .process-number {
-            width: 80px;
-            height: 80px;
+            width: 85px;
+            height: 85px;
             background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             margin: 0 auto 1.25rem;
-            font-size: 2rem;
+            font-size: 2.25rem;
             font-weight: 700;
             color: white;
-            box-shadow: 0 6px 20px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 6px 20px rgba(194, 24, 91, 0.3);
             border: 4px solid var(--pastel-white);
         }
 
         .process-step h5 {
-            font-size: 1.15rem;
+            font-size: 1.3rem;
             color: var(--text-primary);
             margin-bottom: 0.5rem;
             font-weight: 600;
@@ -255,7 +256,7 @@
 
         .process-step p {
             color: var(--text-secondary);
-            font-size: 0.9rem;
+            font-size: 1.05rem;
             margin: 0;
         }
 
@@ -275,7 +276,7 @@
         .benefit-card {
             display: flex;
             gap: 1.25rem;
-            padding: 1.75rem;
+            padding: 2rem;
             background: var(--pastel-light);
             border-radius: 18px;
             border-left: 4px solid var(--pastel-rose);
@@ -289,8 +290,8 @@
 
         .benefit-icon {
             flex-shrink: 0;
-            width: 60px;
-            height: 60px;
+            width: 65px;
+            height: 65px;
             background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             border-radius: 15px;
             display: flex;
@@ -299,12 +300,12 @@
         }
 
         .benefit-icon i {
-            font-size: 1.75rem;
+            font-size: 2rem;
             color: white;
         }
 
         .benefit-content h5 {
-            font-size: 1.15rem;
+            font-size: 1.3rem;
             color: var(--text-primary);
             margin-bottom: 0.5rem;
             font-weight: 600;
@@ -312,7 +313,7 @@
 
         .benefit-content p {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             margin: 0;
             line-height: 1.6;
         }
@@ -363,7 +364,7 @@
             right: -10%;
             width: 500px;
             height: 500px;
-            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, transparent 70%);
             border-radius: 50%;
         }
 
@@ -375,7 +376,7 @@
 
         .cta-content h2 {
             font-family: 'Playfair Display', serif;
-            font-size: 2.5rem;
+            font-size: 3rem;
             color: white;
             margin-bottom: 0.75rem;
             font-weight: 700;
@@ -383,7 +384,7 @@
 
         .cta-content p {
             color: rgba(255,255,255,0.95);
-            font-size: 1.1rem;
+            font-size: 1.3rem;
             margin-bottom: 2rem;
         }
 
@@ -397,11 +398,11 @@
         .btn-white {
             background: white;
             color: var(--pastel-rose);
-            padding: 0.875rem 2.5rem;
+            padding: 1rem 3rem;
             border-radius: 50px;
             border: none;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 1.15rem;
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(0,0,0,0.15);
             text-decoration: none;
@@ -417,11 +418,11 @@
         .btn-outline-white {
             background: transparent;
             color: white;
-            padding: 0.875rem 2.5rem;
+            padding: 1rem 3rem;
             border-radius: 50px;
             border: 2px solid white;
             font-weight: 600;
-            font-size: 1rem;
+            font-size: 1.15rem;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
@@ -436,10 +437,10 @@
         .btn-view-gallery {
             border: 2px solid var(--pastel-rose);
             color: var(--pastel-rose);
-            padding: 0.75rem 2.25rem;
+            padding: 0.875rem 2.75rem;
             border-radius: 50px;
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 1.1rem;
             transition: all 0.3s ease;
             text-decoration: none;
             display: inline-block;
@@ -449,7 +450,7 @@
             background: var(--pastel-rose);
             color: white;
             transform: translateY(-2px);
-            box-shadow: 0 4px 15px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.3);
         }
 
         /* Chatbot */
@@ -461,23 +462,23 @@
         }
 
         .chatbot-btn {
-            width: 65px;
-            height: 65px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.8rem;
+            font-size: 2rem;
             text-decoration: none;
-            box-shadow: 0 6px 25px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 6px 25px rgba(194, 24, 91, 0.3);
             transition: all 0.3s ease;
         }
 
         .chatbot-btn:hover {
             transform: scale(1.1) rotate(10deg);
-            box-shadow: 0 8px 35px rgba(232, 185, 203, 0.4);
+            box-shadow: 0 8px 35px rgba(194, 24, 91, 0.4);
             color: white;
         }
 
@@ -510,19 +511,39 @@
             .gallery-masonry {
                 column-count: 2;
             }
+
+            .hero-text h1 {
+                font-size: 3rem;
+            }
+
+            .section-title {
+                font-size: 2.5rem;
+            }
         }
 
         @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
             .about-hero {
                 padding: 60px 0 40px;
             }
 
             .hero-text h1 {
-                font-size: 2.25rem;
+                font-size: 2.5rem;
+            }
+
+            .hero-text p {
+                font-size: 1.15rem;
             }
 
             .section-title {
-                font-size: 2rem;
+                font-size: 2.25rem;
+            }
+
+            .section-subtitle {
+                font-size: 1.1rem;
             }
 
             .hero-image img {
@@ -542,7 +563,11 @@
             }
 
             .cta-content h2 {
-                font-size: 2rem;
+                font-size: 2.5rem;
+            }
+
+            .cta-content p {
+                font-size: 1.15rem;
             }
 
             .cta-buttons {
@@ -556,9 +581,9 @@
             }
 
             .chatbot-btn {
-                width: 58px;
-                height: 58px;
-                font-size: 1.6rem;
+                width: 60px;
+                height: 60px;
+                font-size: 1.7rem;
             }
         }
     </style>

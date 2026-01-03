@@ -12,15 +12,15 @@
         @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap');
 
         :root {
-           --pastel-pink: #ffc0d3;
-            --pastel-rose: #ffb3c6;
-            --pastel-light: #ffe4ec;
-            --pastel-bg: #fff5f8;
+            --pastel-pink: #ffb3d9;
+            --pastel-rose: #c2185b;
+            --pastel-light: #fce4ec;
+            --pastel-bg: #fff0f5;
             --pastel-white: #ffffff;
-            --text-primary: #4a4a4a;
-            --text-secondary: #7a7a7a;
-            --shadow-soft: 0 10px 40px rgba(255, 192, 211, 0.15);
-            --shadow-medium: 0 15px 50px rgba(255, 192, 211, 0.2);
+            --text-primary: #2d2d2d;
+            --text-secondary: #4a4a4a;
+            --shadow-soft: 0 10px 40px rgba(194, 24, 91, 0.15);
+            --shadow-medium: 0 15px 50px rgba(194, 24, 91, 0.2);
         }
 
         * {
@@ -30,22 +30,24 @@
         }
 
         body {
-            font-family: 'Outfit', sans-serif;
+            font-family: 'Inter', sans-serif;
             background-color: var(--pastel-bg);
             color: var(--text-primary);
-            line-height: 1.6;
+            line-height: 1.7;
+            overflow-x: hidden;
+            font-size: 18px;
         }
-
-        /* Hero Section - Minimal Design */
+        
+        
         .gallery-hero {
-            background: var(--pastel-white);
-            padding: 80px 0 40px;
+            background: linear-gradient(135deg, var(--pastel-white) 0%, var(--pastel-light) 100%);
+            padding: 100px 0 50px;
             margin-top: 10px;
             border-bottom: 1px solid var(--pastel-light);
         }
 
         .hero-content {
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
             text-align: center;
         }
@@ -53,117 +55,129 @@
         .gallery-hero h1 {
             font-family: 'Cormorant Garamond', serif;
             color: var(--text-primary);
-            font-size: 3.5rem;
+            font-size: 4rem;
             font-weight: 600;
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             letter-spacing: -0.5px;
         }
 
         .gallery-hero p {
             color: var(--text-secondary);
-            font-size: 1.1rem;
+            font-size: 1.35rem;
             font-weight: 300;
         }
 
         /* Tab Navigation */
         .tab-navigation {
             background: var(--pastel-white);
-            padding: 30px 0;
+            padding: 35px 0;
             position: sticky;
             top: 76px;
             z-index: 100;
             border-bottom: 2px solid var(--pastel-light);
+            box-shadow: 0 2px 10px rgba(194, 24, 91, 0.05);
         }
 
         .tab-container {
             display: flex;
             justify-content: center;
-            gap: 0;
+            gap: 0.5rem;
             flex-wrap: wrap;
         }
 
         .tab-btn {
-            padding: 0.9rem 2.5rem;
+            padding: 1rem 2.75rem;
             background: transparent;
             color: var(--text-secondary);
             border: none;
             font-weight: 500;
-            font-size: 1rem;
+            font-size: 1.1rem;
             cursor: pointer;
             position: relative;
             transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
+            border-radius: 50px;
         }
 
         .tab-btn::after {
             content: '';
             position: absolute;
-            bottom: -2px;
-            left: 0;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
             width: 0;
             height: 3px;
             background: linear-gradient(90deg, var(--pastel-rose), var(--pastel-pink));
             transition: width 0.3s ease;
+            border-radius: 3px;
         }
 
         .tab-btn:hover {
             color: var(--text-primary);
+            background: var(--pastel-light);
         }
 
         .tab-btn.active {
-            color: var(--pastel-rose);
+            color: white;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             font-weight: 600;
         }
 
         .tab-btn.active::after {
-            width: 100%;
+            width: 0;
         }
 
-        /* Masonry Gallery Layout */
+        /* Modern Grid Gallery Layout */
         .gallery-section {
-            padding: 60px 0 40px;
+            padding: 70px 0 50px;
         }
 
-        .masonry-grid {
-            column-count: 3;
-            column-gap: 1rem;
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
         }
 
-        .masonry-item {
-            break-inside: avoid;
-            margin-bottom: 1rem;
-            display: inline-block;
-            width: 100%;
+        .gallery-item-wrapper {
             opacity: 0;
-            animation: fadeIn 0.5s ease forwards;
+            animation: fadeInScale 0.6s ease forwards;
         }
 
-        @keyframes fadeIn {
+        @keyframes fadeInScale {
             to {
                 opacity: 1;
+                transform: scale(1);
+            }
+            from {
+                opacity: 0;
+                transform: scale(0.9);
             }
         }
 
         .gallery-item {
             position: relative;
             overflow: hidden;
-            border-radius: 20px;
+            border-radius: 25px;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--pastel-white);
             box-shadow: var(--shadow-soft);
+            height: 400px;
         }
 
         .gallery-item:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px rgba(232, 185, 203, 0.18);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-medium);
         }
 
         .gallery-item img {
             width: 100%;
-            height: auto;
-            display: block;
-            border-radius: 20px;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .gallery-item:hover img {
+            transform: scale(1.1);
         }
 
         .gallery-overlay {
@@ -171,41 +185,43 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(to top, rgba(0,0,0,0.75), transparent);
-            padding: 2rem 1rem 1rem;
-            transform: translateY(100%);
-            transition: transform 0.3s ease;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3) 50%, transparent);
+            padding: 2.5rem 1.75rem 1.75rem;
+            transform: translateY(0);
+            transition: all 0.3s ease;
         }
 
         .gallery-item:hover .gallery-overlay {
-            transform: translateY(0);
+            background: linear-gradient(to top, rgba(194, 24, 91, 0.95), rgba(194, 24, 91, 0.7) 50%, transparent);
         }
 
         .gallery-overlay h5 {
             color: white;
-            font-size: 1.1rem;
+            font-size: 1.35rem;
             font-weight: 600;
-            margin-bottom: 0.3rem;
+            margin-bottom: 0.5rem;
         }
 
         .gallery-overlay p {
-            color: rgba(255,255,255,0.9);
-            font-size: 0.9rem;
+            color: rgba(255,255,255,0.95);
+            font-size: 1.05rem;
             margin: 0;
+            line-height: 1.5;
         }
 
         .category-tag {
             position: absolute;
-            top: 15px;
-            left: 15px;
+            top: 20px;
+            left: 20px;
             background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(10px);
             color: var(--pastel-rose);
-            padding: 0.4rem 1rem;
+            padding: 0.6rem 1.35rem;
             border-radius: 50px;
-            font-size: 0.8rem;
+            font-size: 0.95rem;
             font-weight: 600;
             z-index: 2;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
         /* Lightbox - Improved Design */
@@ -214,7 +230,7 @@
         }
 
         .lightbox-modal .modal-dialog {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 3rem auto;
         }
 
@@ -230,15 +246,16 @@
 
         .lightbox-wrapper {
             display: grid;
-            grid-template-columns: 1fr 400px;
-            gap: 2rem;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 0;
             background: var(--pastel-white);
-            border-radius: 20px;
+            border-radius: 25px;
             overflow: hidden;
+            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.3);
         }
 
         .lightbox-image-side {
-            padding: 2rem;
+            padding: 3rem;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -247,13 +264,14 @@
 
         .lightbox-image {
             max-width: 100%;
-            max-height: 80vh;
+            max-height: 75vh;
             object-fit: contain;
             border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
 
         .lightbox-details {
-            padding: 3rem;
+            padding: 3.5rem;
             background: var(--pastel-white);
             display: flex;
             flex-direction: column;
@@ -262,43 +280,45 @@
 
         .lightbox-details h3 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             color: var(--text-primary);
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
             font-weight: 600;
+            line-height: 1.2;
         }
 
         .lightbox-details .category-badge {
             display: inline-block;
-            background: var(--pastel-light);
-            color: var(--pastel-rose);
-            padding: 0.5rem 1.2rem;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
+            color: white;
+            padding: 0.6rem 1.5rem;
             border-radius: 50px;
-            font-size: 0.85rem;
+            font-size: 1rem;
             font-weight: 600;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1.75rem;
         }
 
         .lightbox-details p {
             color: var(--text-secondary);
             line-height: 1.8;
-            font-size: 1.05rem;
+            font-size: 1.2rem;
         }
 
         .lightbox-actions {
             display: flex;
             gap: 1rem;
-            margin-top: 2rem;
+            margin-top: 2.5rem;
         }
 
         .lightbox-btn {
             flex: 1;
-            padding: 0.9rem;
+            padding: 1.1rem;
             border: 2px solid var(--pastel-rose);
             background: transparent;
             color: var(--text-primary);
             border-radius: 50px;
-            font-weight: 500;
+            font-weight: 600;
+            font-size: 1.05rem;
             cursor: pointer;
             transition: all 0.3s ease;
         }
@@ -307,20 +327,22 @@
             background: var(--pastel-rose);
             color: white;
             border-color: var(--pastel-rose);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.3);
         }
 
         .lightbox-nav-btn {
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             backdrop-filter: blur(10px);
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
             color: white;
-            font-size: 1.5rem;
+            font-size: 1.75rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -330,28 +352,29 @@
         }
 
         .lightbox-nav-btn:hover {
-            background: rgba(232, 185, 203, 0.5);
+            background: var(--pastel-rose);
+            transform: translateY(-50%) scale(1.1);
         }
 
         .lightbox-nav-btn.prev {
-            left: -25px;
+            left: -27px;
         }
 
         .lightbox-nav-btn.next {
-            right: -25px;
+            right: -27px;
         }
 
         .lightbox-close-btn {
             position: absolute;
-            top: -15px;
-            right: -15px;
+            top: -20px;
+            right: -20px;
             background: var(--pastel-white);
             color: var(--text-primary);
             border: none;
-            width: 45px;
-            height: 45px;
+            width: 50px;
+            height: 50px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            font-size: 1.4rem;
             cursor: pointer;
             transition: all 0.3s ease;
             display: flex;
@@ -364,34 +387,34 @@
         .lightbox-close-btn:hover {
             background: var(--pastel-rose);
             color: white;
-            transform: rotate(90deg);
+            transform: rotate(90deg) scale(1.1);
         }
 
         /* Empty State */
         .empty-gallery {
             text-align: center;
-            padding: 100px 40px;
-            max-width: 500px;
+            padding: 120px 40px;
+            max-width: 550px;
             margin: 0 auto;
         }
 
         .empty-gallery i {
-            font-size: 5rem;
+            font-size: 6rem;
             color: var(--pastel-rose);
-            margin-bottom: 2rem;
-            opacity: 0.5;
+            margin-bottom: 2.5rem;
+            opacity: 0.6;
         }
 
         .empty-gallery h3 {
             font-family: 'Cormorant Garamond', serif;
-            font-size: 2rem;
+            font-size: 2.5rem;
             color: var(--text-primary);
-            margin-bottom: 1rem;
+            margin-bottom: 1.25rem;
         }
 
         .empty-gallery p {
             color: var(--text-secondary);
-            font-size: 1.05rem;
+            font-size: 1.25rem;
         }
 
         /* Chatbot */
@@ -403,23 +426,23 @@
         }
 
         .chatbot-btn {
-            width: 65px;
-            height: 65px;
+            width: 70px;
+            height: 70px;
             background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-size: 1.8rem;
+            font-size: 2rem;
             text-decoration: none;
-            box-shadow: 0 6px 25px rgba(232, 185, 203, 0.3);
+            box-shadow: 0 6px 25px rgba(194, 24, 91, 0.3);
             transition: all 0.3s ease;
         }
 
         .chatbot-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 8px 35px rgba(232, 185, 203, 0.4);
+            transform: scale(1.15) rotate(10deg);
+            box-shadow: 0 8px 35px rgba(194, 24, 91, 0.4);
             color: white;
         }
 
@@ -430,49 +453,66 @@
             }
 
             .lightbox-details {
-                padding: 2rem;
+                padding: 2.5rem;
             }
 
             .lightbox-image-side {
-                padding: 1.5rem;
+                padding: 2rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1.5rem;
             }
         }
 
         @media (max-width: 992px) {
-            .masonry-grid {
-                column-count: 2;
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
             }
 
             .gallery-hero h1 {
-                font-size: 3rem;
+                font-size: 3.5rem;
+            }
+
+            .gallery-item {
+                height: 350px;
             }
         }
 
         @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
             .gallery-hero {
-                padding: 100px 0 30px;
+                padding: 80px 0 35px;
             }
 
             .gallery-hero h1 {
-                font-size: 2.5rem;
+                font-size: 2.75rem;
+            }
+
+            .gallery-hero p {
+                font-size: 1.15rem;
             }
 
             .tab-navigation {
-                padding: 20px 0;
+                padding: 25px 0;
             }
 
             .tab-btn {
-                padding: 0.7rem 1.5rem;
-                font-size: 0.9rem;
+                padding: 0.8rem 1.75rem;
+                font-size: 1rem;
             }
 
-            .masonry-grid {
-                column-count: 1;
-                column-gap: 1rem;
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
             }
 
-            .masonry-item {
-                margin-bottom: 1rem;
+            .gallery-item {
+                height: 400px;
             }
 
             .lightbox-nav-btn.prev {
@@ -488,6 +528,14 @@
                 right: 10px;
             }
 
+            .lightbox-details h3 {
+                font-size: 2rem;
+            }
+
+            .lightbox-details p {
+                font-size: 1.05rem;
+            }
+
             .chatbot-float {
                 bottom: 25px;
                 right: 25px;
@@ -496,7 +544,7 @@
             .chatbot-btn {
                 width: 60px;
                 height: 60px;
-                font-size: 1.6rem;
+                font-size: 1.7rem;
             }
         }
     </style>
@@ -542,9 +590,9 @@
 <section class="gallery-section">
     <div class="container">
         @if($galleryItems->count() > 0)
-        <div class="masonry-grid" id="galleryGrid">
+        <div class="gallery-grid" id="galleryGrid">
             @foreach($galleryItems as $index => $item)
-            <div class="masonry-item" data-category="{{ $item->category_name }}" style="animation-delay: {{ ($index * 0.05) }}s">
+            <div class="gallery-item-wrapper" data-category="{{ $item->category_name }}" style="animation-delay: {{ ($index * 0.05) }}s">
                 <div class="gallery-item">
                     <span class="category-tag">{{ $item->category_name }}</span>
                     <img src="{{ asset('asset/images/' . $item->image_path) }}" alt="{{ $item->title }}" data-index="{{ $index }}">
@@ -621,12 +669,12 @@
             this.classList.add('active');
 
             const filter = this.getAttribute('data-filter');
-            const items = document.querySelectorAll('.masonry-item');
+            const items = document.querySelectorAll('.gallery-item-wrapper');
 
             items.forEach(item => {
                 const category = item.getAttribute('data-category');
                 if (filter === 'all' || category === filter) {
-                    item.style.display = 'inline-block';
+                    item.style.display = 'block';
                 } else {
                     item.style.display = 'none';
                 }
