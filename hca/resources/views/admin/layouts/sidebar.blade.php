@@ -27,6 +27,13 @@
                     <i class="fas fa-images me-2"></i>Gallery 
                 </a>
             </li>
+            <!-- Live Chat -->
+            <li class="nav-item">
+                <a class="nav-link {{ request()->routeIs('admin.livechat.*') ? 'active' : '' }}" href="{{ route('admin.livechat.index') }}">
+                    <i class="fas fa-comments me-2"></i>Live Chat
+                    <span class="badge bg-warning ms-2" id="waitingBadge" style="display: none;"></span>
+                </a>
+            </li>
         </ul>
 
         <!-- Staff Management Section with Restrictions -->

@@ -40,6 +40,12 @@
             padding: 25px;
             display: flex;
             align-items: center;
+            justify-content: space-between;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
             gap: 15px;
         }
 
@@ -63,6 +69,56 @@
         .header-info p {
             font-size: 0.9em;
             opacity: 0.9;
+        }
+
+        .header-info p.live-chat-status {
+            color: #FFD700;
+            font-weight: 600;
+        }
+
+        .live-chat-btn {
+            background: white;
+            color: #FF69B4;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .live-chat-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
+        .live-chat-btn.waiting {
+            background: #FFA500;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .live-chat-btn.active {
+            background: #32CD32;
+            color: white;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .queue-badge {
+            background: #FF4444;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: bold;
         }
 
         .chat-messages {
@@ -93,6 +149,18 @@
             justify-content: flex-end;
         }
 
+        .message.system {
+            justify-content: center;
+        }
+
+        .message.system .message-content {
+            background: #FFF3CD;
+            color: #856404;
+            border: 1px solid #FFE69C;
+            text-align: center;
+            max-width: 80%;
+        }
+
         .message-content {
             max-width: 70%;
             padding: 15px 20px;
@@ -114,6 +182,13 @@
             box-shadow: 0 2px 10px rgba(255, 105, 180, 0.3);
         }
 
+        .message.staff .message-content {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
+        }
+
         .message-avatar {
             width: 35px;
             height: 35px;
@@ -133,6 +208,18 @@
         .message.user .message-avatar {
             background: linear-gradient(135deg, #FFE4E1 0%, #FFB6C1 100%);
             color: #FF69B4;
+        }
+
+        .message.staff .message-avatar {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .sender-name {
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 5px;
+            opacity: 0.8;
         }
 
         .typing-indicator {
@@ -177,6 +264,20 @@
             padding: 20px 25px;
             background: white;
             border-top: 2px solid #FFE4E8;
+        }
+
+        .chat-mode-indicator {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .chat-mode-indicator.live {
+            color: #32CD32;
+            font-weight: 600;
         }
 
         .chat-input-wrapper {
@@ -230,6 +331,21 @@
             height: 24px;
         }
 
+        .end-chat-btn {
+            background: #FF4444;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-left: 10px;
+        }
+
+        .end-chat-btn:hover {
+            background: #CC0000;
+        }
+
         .suggested-questions {
             display: flex;
             flex-wrap: wrap;
@@ -261,6 +377,98 @@
             margin-top: 5px;
         }
 
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            margin: 10% auto;
+            padding: 30px;
+            border-radius: 20px;
+            width: 90%;
+            max-width: 400px;
+            animation: slideDown 0.3s;
+        }
+
+        @keyframes slideDown {
+            from {
+                transform: translateY(-50px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-header {
+            margin-bottom: 20px;
+        }
+
+        .modal-header h3 {
+            color: #FF69B4;
+            margin-bottom: 10px;
+        }
+
+        .modal-form input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 2px solid #FFE4E8;
+            border-radius: 10px;
+            font-size: 14px;
+        }
+
+        .modal-form input:focus {
+            outline: none;
+            border-color: #FF69B4;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .modal-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .modal-btn.primary {
+            background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
+            color: white;
+        }
+
+        .modal-btn.secondary {
+            background: #E0E0E0;
+            color: #666;
+        }
+
+        .modal-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
         @media (max-width: 768px) {
             .chat-container {
                 height: 100vh;
@@ -271,17 +479,28 @@
             .message-content {
                 max-width: 85%;
             }
+
+            .live-chat-btn {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="chat-container">
         <div class="chat-header">
-            <div class="bot-avatar">🤖</div>
-            <div class="header-info">
-                <h2>AI Assistant</h2>
-                <p>Online • Ready to help</p>
+            <div class="header-left">
+                <div class="bot-avatar" id="headerAvatar">🤖</div>
+                <div class="header-info">
+                    <h2 id="headerTitle">AI Assistant</h2>
+                    <p id="headerStatus">Online • Ready to help</p>
+                </div>
             </div>
+            <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
+                <span id="liveChatIcon">💬</span>
+                <span id="liveChatText">Chat with Staff</span>
+            </button>
         </div>
 
         <div class="suggested-questions" id="suggestedQuestions">
@@ -318,6 +537,10 @@
         </div>
 
         <div class="chat-input-container">
+            <div class="chat-mode-indicator" id="chatModeIndicator">
+                <span>🤖</span>
+                <span>Chatting with AI Assistant</span>
+            </div>
             <form id="chatForm" class="chat-input-wrapper">
                 <input 
                     type="text" 
@@ -336,13 +559,43 @@
         </div>
     </div>
 
+    <!-- Live Chat Request Modal -->
+    <div id="liveChatModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Connect with Staff</h3>
+                <p>Please provide your information to start a live chat session.</p>
+            </div>
+            <form id="liveChatForm" class="modal-form">
+                <input type="text" id="customerName" placeholder="Your Name" required>
+                <input type="email" id="customerEmail" placeholder="Your Email (optional)">
+                <div class="modal-buttons">
+                    <button type="button" class="modal-btn secondary" onclick="closeLiveChatModal()">Cancel</button>
+                    <button type="submit" class="modal-btn primary">Start Live Chat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script>
+        // Global variables
+        let isLiveChatMode = false;
+        let liveChatSessionId = null;
+        let pollingInterval = null;
+
         const chatMessages = document.getElementById('chatMessages');
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const typingIndicator = document.getElementById('typingIndicator');
         const suggestedQuestions = document.getElementById('suggestedQuestions');
+        const liveChatBtn = document.getElementById('liveChatBtn');
+        const liveChatModal = document.getElementById('liveChatModal');
+        const liveChatForm = document.getElementById('liveChatForm');
+        const chatModeIndicator = document.getElementById('chatModeIndicator');
+        const headerAvatar = document.getElementById('headerAvatar');
+        const headerTitle = document.getElementById('headerTitle');
+        const headerStatus = document.getElementById('headerStatus');
 
         // Auto-scroll to bottom
         function scrollToBottom() {
@@ -356,20 +609,28 @@
         }
 
         // Add message to chat
-        function addMessage(message, isUser = false) {
+        function addMessage(message, type = 'bot', senderName = null) {
             const messageDiv = document.createElement('div');
-            messageDiv.className = `message ${isUser ? 'user' : 'bot'}`;
+            messageDiv.className = `message ${type}`;
             
-            messageDiv.innerHTML = `
-                ${!isUser ? '<div class="message-avatar">🤖</div>' : ''}
-                <div class="message-content">
-                    <div>${message}</div>
-                    <div class="timestamp">${getTimestamp()}</div>
-                </div>
-                ${isUser ? '<div class="message-avatar">👤</div>' : ''}
+            let avatar = '🤖';
+            if (type === 'user') avatar = '👤';
+            if (type === 'staff') avatar = '👨‍💼';
+            if (type === 'system') avatar = '';
+
+            let content = `<div>${message}</div><div class="timestamp">${getTimestamp()}</div>`;
+            if (senderName && type === 'staff') {
+                content = `<div class="sender-name">${senderName}</div>${content}`;
+            }
+            
+            messageDiv.innerHTML = type === 'system' ? 
+                `<div class="message-content">${content}</div>` :
+                `
+                ${type !== 'user' ? `<div class="message-avatar">${avatar}</div>` : ''}
+                <div class="message-content">${content}</div>
+                ${type === 'user' ? `<div class="message-avatar">${avatar}</div>` : ''}
             `;
 
-            // Insert before typing indicator
             chatMessages.insertBefore(messageDiv, chatMessages.lastElementChild);
             scrollToBottom();
         }
@@ -380,56 +641,206 @@
             scrollToBottom();
         }
 
-        // Send message to backend
-        async function sendMessage(message) {
-            // Disable input
-            sendBtn.disabled = true;
-            messageInput.disabled = true;
-
-            // Hide suggested questions after first message
-            if (suggestedQuestions.children.length > 0) {
-                suggestedQuestions.style.display = 'none';
+        // Toggle live chat modal
+        function toggleLiveChat() {
+            if (isLiveChatMode) {
+                // End live chat
+                if (confirm('Are you sure you want to end this live chat session?')) {
+                    endLiveChat();
+                }
+            } else {
+                // Start live chat
+                liveChatModal.style.display = 'block';
             }
+        }
 
-            // Add user message
-            addMessage(message, true);
-            messageInput.value = '';
+        function closeLiveChatModal() {
+            liveChatModal.style.display = 'none';
+        }
 
-            // Show typing indicator
-            toggleTyping(true);
+        // Handle live chat request
+        liveChatForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const customerName = document.getElementById('customerName').value;
+            const customerEmail = document.getElementById('customerEmail').value;
 
             try {
-                const response = await fetch('{{ route("chatbot.send") }}', {
+                const response = await fetch('{{ route("livechat.request") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        'Accept': 'application/json',
                     },
-                    body: JSON.stringify({ message: message })
+                    body: JSON.stringify({
+                        customer_name: customerName,
+                        customer_email: customerEmail
+                    })
                 });
 
                 const data = await response.json();
 
-                // Hide typing indicator
-                toggleTyping(false);
-
                 if (response.ok) {
-                    // Add bot response
-                    addMessage(data.response);
+                    liveChatSessionId = data.session_id;
+                    isLiveChatMode = true;
+                    closeLiveChatModal();
+                    updateUIForLiveChat('waiting', data.queue_position);
+                    addMessage('🎫 You have been added to the queue. A staff member will be with you shortly...', 'system');
+                    startPolling();
                 } else {
-                    addMessage('Sorry, I encountered an error. Please try again.');
+                    alert(data.message || 'Failed to start live chat. Please try again.');
                 }
             } catch (error) {
-                toggleTyping(false);
-                addMessage('Sorry, I\'m having trouble connecting. Please check your internet connection.');
                 console.error('Error:', error);
-            } finally {
-                // Re-enable input
-                sendBtn.disabled = false;
-                messageInput.disabled = false;
-                messageInput.focus();
+                alert('Failed to connect. Please check your internet connection.');
             }
+        });
+
+        // Update UI for live chat mode
+        function updateUIForLiveChat(status, queuePosition = null) {
+            const btn = liveChatBtn;
+            const icon = document.getElementById('liveChatIcon');
+            const text = document.getElementById('liveChatText');
+
+            if (status === 'waiting') {
+                btn.className = 'live-chat-btn waiting';
+                icon.textContent = '⏱️';
+                text.innerHTML = `Waiting... <span class="queue-badge">#${queuePosition}</span>`;
+                headerAvatar.textContent = '⏱️';
+                headerTitle.textContent = 'Waiting for Staff';
+                headerStatus.innerHTML = `<span class="live-chat-status">You are #${queuePosition} in queue</span>`;
+                chatModeIndicator.innerHTML = '<span>⏱️</span><span>Waiting for staff to join...</span>';
+                chatModeIndicator.className = 'chat-mode-indicator live';
+            } else if (status === 'active') {
+                btn.className = 'live-chat-btn active';
+                icon.textContent = '✓';
+                text.textContent = 'End Chat';
+                headerAvatar.textContent = '👨‍💼';
+                headerTitle.textContent = 'Live Chat Active';
+                headerStatus.innerHTML = '<span class="live-chat-status">Connected to staff</span>';
+                chatModeIndicator.innerHTML = '<span>👨‍💼</span><span>Live chat with staff</span>';
+                chatModeIndicator.className = 'chat-mode-indicator live';
+            }
+        }
+
+        // Start polling for new messages
+        function startPolling() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            
+            pollingInterval = setInterval(async () => {
+                if (!liveChatSessionId) return;
+
+                try {
+                    const response = await fetch(`{{ url('livechat/poll') }}/${liveChatSessionId}`);
+                    const data = await response.json();
+
+                    if (data.status === 'active' && !isLiveChatMode) {
+                        isLiveChatMode = true;
+                        updateUIForLiveChat('active');
+                        addMessage('✓ A staff member has joined the chat!', 'system');
+                    }
+
+                    if (data.new_messages && data.new_messages.length > 0) {
+                        data.new_messages.forEach(msg => {
+                            if (msg.sender_type === 'admin') {
+                                addMessage(msg.message, 'staff', msg.sender_name || 'Staff');
+                            } else if (msg.sender_type === 'system') {
+                                addMessage(msg.message, 'system');
+                            }
+                        });
+                    }
+
+                    if (data.status === 'closed') {
+                        endLiveChat();
+                    }
+                } catch (error) {
+                    console.error('Polling error:', error);
+                }
+            }, 3000); // Poll every 3 seconds
+        }
+
+        // End live chat
+        function endLiveChat() {
+            if (pollingInterval) clearInterval(pollingInterval);
+            isLiveChatMode = false;
+            liveChatSessionId = null;
+            
+            liveChatBtn.className = 'live-chat-btn';
+            document.getElementById('liveChatIcon').textContent = '💬';
+            document.getElementById('liveChatText').textContent = 'Chat with Staff';
+            
+            headerAvatar.textContent = '🤖';
+            headerTitle.textContent = 'AI Assistant';
+            headerStatus.textContent = 'Online • Ready to help';
+            
+            chatModeIndicator.innerHTML = '<span>🤖</span><span>Chatting with AI Assistant</span>';
+            chatModeIndicator.className = 'chat-mode-indicator';
+            
+            addMessage('Chat session ended. You can chat with our AI assistant or start a new live chat.', 'system');
+        }
+
+        // Send message
+        async function sendMessage(message) {
+            sendBtn.disabled = true;
+            messageInput.disabled = true;
+
+            if (suggestedQuestions.children.length > 0) {
+                suggestedQuestions.style.display = 'none';
+            }
+
+            addMessage(message, 'user');
+            messageInput.value = '';
+
+            if (isLiveChatMode && liveChatSessionId) {
+                // Send to live chat
+                try {
+                    await fetch('{{ route("livechat.send") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: JSON.stringify({
+                            session_id: liveChatSessionId,
+                            message: message
+                        })
+                    });
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    addMessage('Failed to send message. Please try again.', 'system');
+                }
+            } else {
+                // Send to AI chatbot
+                toggleTyping(true);
+
+                try {
+                    const response = await fetch('{{ route("chatbot.send") }}', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        },
+                        body: JSON.stringify({ message: message })
+                    });
+
+                    const data = await response.json();
+                    toggleTyping(false);
+
+                    if (response.ok) {
+                        addMessage(data.response);
+                    } else {
+                        addMessage('Sorry, I encountered an error. Please try again.');
+                    }
+                } catch (error) {
+                    toggleTyping(false);
+                    addMessage('Sorry, I\'m having trouble connecting.');
+                    console.error('Error:', error);
+                }
+            }
+
+            sendBtn.disabled = false;
+            messageInput.disabled = false;
+            messageInput.focus();
         }
 
         // Handle form submission
@@ -446,13 +857,19 @@
             sendMessage(question);
         }
 
-        // Focus input on load
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            if (event.target == liveChatModal) {
+                closeLiveChatModal();
+            }
+        }
+
+        // Initialize
         window.addEventListener('load', () => {
             messageInput.focus();
             scrollToBottom();
         });
 
-        // Allow Enter to send, Shift+Enter for new line
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
