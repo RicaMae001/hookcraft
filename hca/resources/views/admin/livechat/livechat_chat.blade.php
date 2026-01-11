@@ -63,7 +63,7 @@
                                     <i class="fas fa-info-circle"></i> {{ $message->message }}
                                 </span>
                                 <div class="small text-muted mt-1">
-                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                    {{ \Carbon\Carbon::parse($message->created_at)->setTimezone(config('app.timezone', 'Asia/Manila'))->format('h:i A') }}
                                 </div>
                             </div>
                         @elseif($message->sender_type === 'customer')
@@ -78,7 +78,7 @@
                                                 {{ $message->message }}
                                             </div>
                                             <div class="message-time">
-                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                                {{ \Carbon\Carbon::parse($message->created_at)->setTimezone(config('app.timezone', 'Asia/Manila'))->format('h:i A') }}
                                             </div>
                                         </div>
                                     </div>
@@ -93,7 +93,7 @@
                                                 {{ $message->message }}
                                             </div>
                                             <div class="message-time text-end">
-                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                                {{ \Carbon\Carbon::parse($message->created_at)->setTimezone(config('app.timezone', 'Asia/Manila'))->format('h:i A') }}
                                             </div>
                                         </div>
                                         <div class="message-avatar">
@@ -247,16 +247,97 @@ const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 let pollingInterval = null;
+let customerActiveTimeout = null;
+let customerWarningShown = false;
+
+// Get user's timezone
+const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 // Scroll to bottom
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// Format time to local timezone
+function formatTimeToLocal(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true
+    });
+}
+
+// Show customer status notification
+function showCustomerStatus(status) {
+    const existingNotification = document.getElementById('customerStatusNotification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.id = 'customerStatusNotification';
+    notification.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    
+    if (status === 'away') {
+        notification.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Customer Away</strong><br>
+            Customer has left the chat page. Chat will auto-end in 15 minutes if they don't return.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+    } else if (status === 'back') {
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <strong>Customer Back</strong><br>
+            Customer has returned to the chat.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        // Auto-dismiss success notification after 5 seconds
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    } else if (status === 'auto-ending') {
+        notification.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+        notification.innerHTML = `
+            <i class="fas fa-clock"></i>
+            <strong>Auto-Ending Chat</strong><br>
+            Customer has been away for 15 minutes. Chat will end automatically.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+    }
+    
+    document.body.appendChild(notification);
+}
+
+// Add system message to chat
+function addSystemMessage(message) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'text-center my-3';
+    messageDiv.innerHTML = `
+        <span class="badge bg-warning px-3 py-2">
+            <i class="fas fa-info-circle"></i> ${message}
+        </span>
+        <div class="small text-muted mt-1">
+            ${formatTimeToLocal(new Date().toISOString())}
+        </div>
+    `;
+    chatMessages.appendChild(messageDiv);
+    scrollToBottom();
+}
+
 // Add message to chat
-function addMessage(message, type, time) {
+function addMessage(message, type, timestamp) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message-wrapper mb-3';
+    
+    // Format the timestamp to local time
+    const formattedTime = formatTimeToLocal(timestamp);
     
     if (type === 'customer') {
         messageDiv.innerHTML = `
@@ -270,7 +351,7 @@ function addMessage(message, type, time) {
                             ${escapeHtml(message)}
                         </div>
                         <div class="message-time">
-                            ${time}
+                            ${formattedTime}
                         </div>
                     </div>
                 </div>
@@ -285,7 +366,7 @@ function addMessage(message, type, time) {
                             ${escapeHtml(message)}
                         </div>
                         <div class="message-time text-end">
-                            ${time}
+                            ${formattedTime}
                         </div>
                     </div>
                     <div class="message-avatar">
@@ -305,11 +386,6 @@ function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
-}
-
-// Format time
-function formatTime() {
-    return new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
 }
 
 // Send message
@@ -336,7 +412,8 @@ if (chatForm) {
             });
             
             if (response.ok) {
-                addMessage(message, 'admin', formatTime());
+                // Use current timestamp in ISO format
+                addMessage(message, 'admin', new Date().toISOString());
                 messageInput.value = '';
             } else {
                 alert('Failed to send message');
@@ -351,7 +428,7 @@ if (chatForm) {
     });
 }
 
-// Poll for new messages
+// Poll for new messages and customer activity
 function startPolling() {
     if (sessionStatus !== 'active') return;
     
@@ -362,17 +439,39 @@ function startPolling() {
             
             if (data.success && data.new_messages && data.new_messages.length > 0) {
                 data.new_messages.forEach(msg => {
-                    const time = new Date(msg.created_at).toLocaleTimeString('en-US', { 
-                        hour: '2-digit', 
-                        minute: '2-digit' 
-                    });
-                    addMessage(msg.message, 'customer', time);
+                    addMessage(msg.message, 'customer', msg.created_at);
                 });
+            }
+            
+            // Check customer activity status
+            if (data.customer_active !== undefined) {
+                if (data.customer_active === false && !customerWarningShown) {
+                    customerWarningShown = true;
+                    showCustomerStatus('away');
+                    addSystemMessage('⚠️ Customer has left the chat page');
+                } else if (data.customer_active === true && customerWarningShown) {
+                    customerWarningShown = false;
+                    showCustomerStatus('back');
+                    addSystemMessage('✓ Customer has returned to the chat');
+                }
+            }
+            
+            // Check for auto-end warning
+            if (data.auto_end_warning) {
+                showCustomerStatus('auto-ending');
+                addSystemMessage('⏰ Chat will auto-end soon due to customer inactivity');
             }
             
             if (data.status === 'closed') {
                 clearInterval(pollingInterval);
-                location.reload();
+                if (data.reason === 'customer_inactive') {
+                    addSystemMessage('🔴 Chat ended: Customer was inactive for 15 minutes');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    location.reload();
+                }
             }
         } catch (error) {
             console.error('Polling error:', error);

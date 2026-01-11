@@ -76,6 +76,32 @@
             font-weight: 600;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .home-btn {
+            background: white;
+            color: #FF69B4;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .home-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+
         .live-chat-btn {
             background: white;
             color: #FF69B4;
@@ -331,21 +357,6 @@
             height: 24px;
         }
 
-        .end-chat-btn {
-            background: #FF4444;
-            color: white;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            margin-left: 10px;
-        }
-
-        .end-chat-btn:hover {
-            background: #CC0000;
-        }
-
         .suggested-questions {
             display: flex;
             flex-wrap: wrap;
@@ -377,7 +388,6 @@
             margin-top: 5px;
         }
 
-        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -480,9 +490,13 @@
                 max-width: 85%;
             }
 
-            .live-chat-btn {
+            .live-chat-btn, .home-btn {
                 padding: 8px 12px;
                 font-size: 13px;
+            }
+            
+            .header-actions {
+                gap: 5px;
             }
         }
     </style>
@@ -497,10 +511,16 @@
                     <p id="headerStatus">Online • Ready to help</p>
                 </div>
             </div>
-            <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
-                <span id="liveChatIcon">💬</span>
-                <span id="liveChatText">Chat with Staff</span>
-            </button>
+            <div class="header-actions">
+                <button class="home-btn" onclick="goToHomepage()">
+                    <span>🏠</span>
+                    <span>Home</span>
+                </button>
+                <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
+                    <span id="liveChatIcon">💬</span>
+                    <span id="liveChatText">Chat with Staff</span>
+                </button>
+            </div>
         </div>
 
         <div class="suggested-questions" id="suggestedQuestions">
@@ -559,29 +579,25 @@
         </div>
     </div>
 
-    <!-- Live Chat Request Modal -->
     <div id="liveChatModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
                 <h3>Connect with Staff</h3>
-                <p>Please provide your information to start a live chat session.</p>
+                <p>Are you sure you want to start a live chat with our support team?</p>
             </div>
-            <form id="liveChatForm" class="modal-form">
-                <input type="text" id="customerName" placeholder="Your Name" required>
-                <input type="email" id="customerEmail" placeholder="Your Email (optional)">
-                <div class="modal-buttons">
-                    <button type="button" class="modal-btn secondary" onclick="closeLiveChatModal()">Cancel</button>
-                    <button type="submit" class="modal-btn primary">Start Live Chat</button>
-                </div>
-            </form>
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn secondary" onclick="closeLiveChatModal()">Cancel</button>
+                <button type="button" class="modal-btn primary" onclick="startLiveChatDirect()">Start Live Chat</button>
+            </div>
         </div>
     </div>
 
     <script>
-        // Global variables
         let isLiveChatMode = false;
         let liveChatSessionId = null;
         let pollingInterval = null;
+        let currentChatStatus = null; // Track current status
+        let activityHeartbeat = null; // Track heartbeat interval
 
         const chatMessages = document.getElementById('chatMessages');
         const chatForm = document.getElementById('chatForm');
@@ -591,24 +607,152 @@
         const suggestedQuestions = document.getElementById('suggestedQuestions');
         const liveChatBtn = document.getElementById('liveChatBtn');
         const liveChatModal = document.getElementById('liveChatModal');
-        const liveChatForm = document.getElementById('liveChatForm');
         const chatModeIndicator = document.getElementById('chatModeIndicator');
         const headerAvatar = document.getElementById('headerAvatar');
         const headerTitle = document.getElementById('headerTitle');
         const headerStatus = document.getElementById('headerStatus');
 
-        // Auto-scroll to bottom
+        // Send activity heartbeat to track customer presence
+        function sendActivityHeartbeat() {
+            if (!liveChatSessionId || !isLiveChatMode) return;
+            
+            fetch('{{ route("livechat.heartbeat") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                },
+                body: JSON.stringify({
+                    session_id: liveChatSessionId
+                })
+            }).catch(error => console.error('Heartbeat error:', error));
+        }
+
+        // Start heartbeat when live chat is active
+        function startActivityHeartbeat() {
+            if (activityHeartbeat) clearInterval(activityHeartbeat);
+            
+            // Send heartbeat every 10 seconds
+            activityHeartbeat = setInterval(sendActivityHeartbeat, 10000);
+            
+            // Send initial heartbeat
+            sendActivityHeartbeat();
+        }
+
+        // Stop heartbeat
+        function stopActivityHeartbeat() {
+            if (activityHeartbeat) {
+                clearInterval(activityHeartbeat);
+                activityHeartbeat = null;
+            }
+        }
+
+        // Track page visibility - stop heartbeat when user leaves
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden && isLiveChatMode) {
+                stopActivityHeartbeat();
+            } else if (!document.hidden && isLiveChatMode) {
+                startActivityHeartbeat();
+            }
+        });
+
+        window.addEventListener('load', async () => {
+            messageInput.focus();
+            scrollToBottom();
+            
+            // Check if staff just joined (after page refresh)
+            if (sessionStorage.getItem('staffJustJoined') === 'true') {
+                sessionStorage.removeItem('staffJustJoined');
+                
+                // Show notification that staff joined
+                setTimeout(() => {
+                    addMessage('✓ A staff member has joined the chat!', 'system');
+                    scrollToBottom();
+                }, 500);
+            }
+            
+            const isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
+            
+            if (isAuthenticated) {
+                try {
+                    const response = await fetch('{{ route("livechat.active-session") }}', {
+                        headers: {
+                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.success && data.has_session) {
+                        liveChatSessionId = data.session.session_id;
+                        isLiveChatMode = true;
+                        
+                        const status = data.session.status;
+                        currentChatStatus = status; // Set initial status
+                        
+                        if (status === 'waiting') {
+                            updateUIForLiveChat('waiting', data.session.queue_position);
+                            addMessage('🎫 Reconnected to queue. You are #' + data.session.queue_position + ' in line.', 'system');
+                        } else if (status === 'active') {
+                            updateUIForLiveChat('active');
+                            addMessage('✓ Reconnected to your active chat session!', 'system');
+                            await loadChatHistory(data.session.session_id);
+                            startActivityHeartbeat(); // Start heartbeat for active session
+                        }
+                        
+                        startPolling();
+                    }
+                } catch (error) {
+                    console.error('Error checking for active session:', error);
+                }
+            }
+        });
+
+        async function loadChatHistory(sessionId) {
+            try {
+                const response = await fetch(`{{ url('livechat/history') }}/${sessionId}`, {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success && data.messages && data.messages.length > 0) {
+                    data.messages.forEach(msg => {
+                        if (msg.sender_type === 'customer') {
+                            addMessage(msg.message, 'user');
+                        } else if (msg.sender_type === 'admin' || msg.sender_type === 'staff') {
+                            addMessage(msg.message, 'staff', msg.sender_name || 'Staff');
+                        } else if (msg.sender_type === 'system') {
+                            addMessage(msg.message, 'system');
+                        }
+                    });
+                }
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+            }
+        }
+
+        function goToHomepage() {
+            if (isLiveChatMode && liveChatSessionId) {
+                if (confirm('You are in an active live chat. Are you sure you want to leave?')) {
+                    window.location.href = '{{ route("home") }}';
+                }
+            } else {
+                window.location.href = '{{ route("home") }}';
+            }
+        }
+
         function scrollToBottom() {
             chatMessages.scrollTop = chatMessages.scrollHeight;
         }
 
-        // Format timestamp
         function getTimestamp() {
             const now = new Date();
             return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
-        // Add message to chat
         function addMessage(message, type = 'bot', senderName = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
@@ -633,23 +777,31 @@
 
             chatMessages.insertBefore(messageDiv, chatMessages.lastElementChild);
             scrollToBottom();
+            
+            if (isLiveChatMode && type === 'staff') {
+                markMessagesAsRead();
+            }
         }
 
-        // Show/hide typing indicator
         function toggleTyping(show) {
             typingIndicator.style.display = show ? 'block' : 'none';
             scrollToBottom();
         }
 
-        // Toggle live chat modal
         function toggleLiveChat() {
+            const isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
+            
+            if (!isAuthenticated) {
+                alert('Please login to use live chat support.');
+                window.location.href = '{{ route("login") }}';
+                return;
+            }
+            
             if (isLiveChatMode) {
-                // End live chat
                 if (confirm('Are you sure you want to end this live chat session?')) {
-                    endLiveChat();
+                    endLiveChatSession();
                 }
             } else {
-                // Start live chat
                 liveChatModal.style.display = 'block';
             }
         }
@@ -658,24 +810,16 @@
             liveChatModal.style.display = 'none';
         }
 
-        // Handle live chat request
-        liveChatForm.addEventListener('submit', async (e) => {
-            e.preventDefault();
+        async function startLiveChatDirect() {
+            closeLiveChatModal();
             
-            const customerName = document.getElementById('customerName').value;
-            const customerEmail = document.getElementById('customerEmail').value;
-
             try {
                 const response = await fetch('{{ route("livechat.request") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    },
-                    body: JSON.stringify({
-                        customer_name: customerName,
-                        customer_email: customerEmail
-                    })
+                    }
                 });
 
                 const data = await response.json();
@@ -683,7 +827,7 @@
                 if (response.ok) {
                     liveChatSessionId = data.session_id;
                     isLiveChatMode = true;
-                    closeLiveChatModal();
+                    currentChatStatus = 'waiting'; // Set initial status
                     updateUIForLiveChat('waiting', data.queue_position);
                     addMessage('🎫 You have been added to the queue. A staff member will be with you shortly...', 'system');
                     startPolling();
@@ -694,9 +838,8 @@
                 console.error('Error:', error);
                 alert('Failed to connect. Please check your internet connection.');
             }
-        });
+        }
 
-        // Update UI for live chat mode
         function updateUIForLiveChat(status, queuePosition = null) {
             const btn = liveChatBtn;
             const icon = document.getElementById('liveChatIcon');
@@ -723,7 +866,6 @@
             }
         }
 
-        // Start polling for new messages
         function startPolling() {
             if (pollingInterval) clearInterval(pollingInterval);
             
@@ -734,15 +876,20 @@
                     const response = await fetch(`{{ url('livechat/poll') }}/${liveChatSessionId}`);
                     const data = await response.json();
 
-                    if (data.status === 'active' && !isLiveChatMode) {
-                        isLiveChatMode = true;
+                    // Update UI when status changes from waiting to active
+                    if (data.status === 'active' && currentChatStatus !== 'active') {
+                        currentChatStatus = 'active';
                         updateUIForLiveChat('active');
                         addMessage('✓ A staff member has joined the chat!', 'system');
+                        startActivityHeartbeat(); // Start heartbeat when staff joins
+                    } else if (data.status === 'waiting' && currentChatStatus !== 'waiting') {
+                        currentChatStatus = 'waiting';
+                        updateUIForLiveChat('waiting', data.queue_position);
                     }
 
                     if (data.new_messages && data.new_messages.length > 0) {
                         data.new_messages.forEach(msg => {
-                            if (msg.sender_type === 'admin') {
+                            if (msg.sender_type === 'admin' || msg.sender_type === 'staff') {
                                 addMessage(msg.message, 'staff', msg.sender_name || 'Staff');
                             } else if (msg.sender_type === 'system') {
                                 addMessage(msg.message, 'system');
@@ -756,14 +903,45 @@
                 } catch (error) {
                     console.error('Polling error:', error);
                 }
-            }, 3000); // Poll every 3 seconds
+            }, 3000);
         }
 
-        // End live chat
+        function markMessagesAsRead() {
+            if (!liveChatSessionId) return;
+            
+            fetch(`{{ url('livechat/mark-read') }}/${liveChatSessionId}`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                }
+            }).catch(error => console.error('Error marking messages as read:', error));
+        }
+
+        async function endLiveChatSession() {
+            try {
+                stopActivityHeartbeat(); // Stop heartbeat when ending chat
+                
+                await fetch(`{{ url('admin/livechat/end') }}/${liveChatSessionId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                });
+                
+                endLiveChat();
+            } catch (error) {
+                console.error('Error ending chat:', error);
+                endLiveChat();
+            }
+        }
+
         function endLiveChat() {
             if (pollingInterval) clearInterval(pollingInterval);
+            stopActivityHeartbeat(); // Stop heartbeat
             isLiveChatMode = false;
             liveChatSessionId = null;
+            currentChatStatus = null; // Reset status tracker
             
             liveChatBtn.className = 'live-chat-btn';
             document.getElementById('liveChatIcon').textContent = '💬';
@@ -779,7 +957,6 @@
             addMessage('Chat session ended. You can chat with our AI assistant or start a new live chat.', 'system');
         }
 
-        // Send message
         async function sendMessage(message) {
             sendBtn.disabled = true;
             messageInput.disabled = true;
@@ -792,7 +969,6 @@
             messageInput.value = '';
 
             if (isLiveChatMode && liveChatSessionId) {
-                // Send to live chat
                 try {
                     await fetch('{{ route("livechat.send") }}', {
                         method: 'POST',
@@ -810,7 +986,6 @@
                     addMessage('Failed to send message. Please try again.', 'system');
                 }
             } else {
-                // Send to AI chatbot
                 toggleTyping(true);
 
                 try {
@@ -843,7 +1018,6 @@
             messageInput.focus();
         }
 
-        // Handle form submission
         chatForm.addEventListener('submit', (e) => {
             e.preventDefault();
             const message = messageInput.value.trim();
@@ -852,23 +1026,15 @@
             }
         });
 
-        // Handle suggested questions
         function sendSuggested(question) {
             sendMessage(question);
         }
 
-        // Close modal when clicking outside
         window.onclick = function(event) {
             if (event.target == liveChatModal) {
                 closeLiveChatModal();
             }
-        }
-
-        // Initialize
-        window.addEventListener('load', () => {
-            messageInput.focus();
-            scrollToBottom();
-        });
+        };
 
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {

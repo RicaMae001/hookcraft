@@ -178,9 +178,9 @@
                                             <span class="badge bg-warning text-dark fs-6">#{{ $session->queue_position }}</span>
                                         </td>
                                         <td>
-                                            <strong>{{ $session->customer_name }}</strong>
+                                            <strong>{{ $session->user_name ?? $session->customer_name }}</strong>
                                         </td>
-                                        <td>{{ $session->customer_email ?? 'N/A' }}</td>
+                                        <td>{{ $session->user_email ?? $session->customer_email ?? 'N/A' }}</td>
                                         <td>{{ \Carbon\Carbon::parse($session->created_at)->format('M d, Y h:i A') }}</td>
                                         <td>
                                             <span class="badge bg-secondary">
@@ -235,8 +235,8 @@
                                 <tbody>
                                     @foreach($activeSessions as $session)
                                     <tr>
-                                        <td><strong>{{ $session->customer_name }}</strong></td>
-                                        <td>{{ $session->customer_email ?? 'N/A' }}</td>
+                                        <td><strong>{{ $session->user_name ?? $session->customer_name }}</strong></td>
+                                        <td>{{ $session->user_email ?? $session->customer_email ?? 'N/A' }}</td>
                                         <td>{{ \Carbon\Carbon::parse($session->started_at)->format('M d, Y h:i A') }}</td>
                                         <td>
                                             <span class="badge bg-info">
@@ -285,24 +285,37 @@
                                         <th>Customer</th>
                                         <th>Handled By</th>
                                         <th>Started</th>
-                                        <th>Duration</th>
+                                        <th>Last Activity</th>
                                         <th>Status</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($allActiveSessions as $session)
-                                    <tr>
-                                        <td><strong>{{ $session->customer_name }}</strong></td>
+                                    <tr class="{{ $session->is_inactive_critical ? 'table-danger' : ($session->is_inactive_warning ? 'table-warning' : '') }}">
+                                        <td><strong>{{ $session->user_name ?? $session->customer_name }}</strong></td>
                                         <td>
                                             <span class="badge bg-primary">
                                                 <i class="fas fa-user"></i> {{ $session->admin_name ?? 'Unknown' }}
                                             </span>
                                         </td>
-                                        <td>{{ \Carbon\Carbon::parse($session->started_at)->format('M d, Y h:i A') }}</td>
+                                        <td>{{ \Carbon\Carbon::parse($session->started_at)->format('M d, h:i A') }}</td>
                                         <td>
-                                            <span class="badge bg-info">
-                                                {{ \Carbon\Carbon::parse($session->started_at)->diffForHumans() }}
-                                            </span>
+                                            @if($session->last_activity)
+                                                <span class="badge {{ $session->is_inactive_critical ? 'bg-danger' : ($session->is_inactive_warning ? 'bg-warning text-dark' : 'bg-success') }}">
+                                                    @if($session->minutes_inactive < 5)
+                                                        <i class="fas fa-circle pulse"></i> Active Now
+                                                    @else
+                                                        <i class="fas fa-clock"></i> {{ $session->minutes_inactive }} min ago
+                                                        @if($session->is_inactive_critical)
+                                                            (Auto-closing soon!)
+                                                        @elseif($session->is_inactive_warning)
+                                                            (Inactive)
+                                                        @endif
+                                                    @endif
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary">Unknown</span>
+                                            @endif
                                         </td>
                                         <td>
                                             <span class="badge bg-success">
@@ -313,6 +326,10 @@
                                     @endforeach
                                 </tbody>
                             </table>
+                        </div>
+                        <div class="alert alert-info mt-3">
+                            <i class="fas fa-info-circle"></i> 
+                            <strong>Note:</strong> Chats inactive for more than 15 minutes will be automatically closed.
                         </div>
                     @else
                         <div class="text-center py-5">
@@ -343,14 +360,14 @@
                                         <th>Started</th>
                                         <th>Ended</th>
                                         <th>Duration</th>
-                                        <th>Status</th>
+                                        <th>Reason</th>
                                         <th>Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     @foreach($closedSessions as $session)
                                     <tr>
-                                        <td>{{ $session->customer_name }}</td>
+                                        <td>{{ $session->user_name ?? $session->customer_name }}</td>
                                         <td>
                                             @if($session->admin_id)
                                                 {{ \DB::table('admin')->where('id', $session->admin_id)->value('name') }}
@@ -368,15 +385,21 @@
                                             @endif
                                         </td>
                                         <td>
-                                            <span class="badge bg-secondary">
-                                                <i class="fas fa-check-circle"></i> Closed
-                                            </span>
+                                            @if($session->closed_reason === 'auto_inactive')
+                                                <span class="badge bg-warning text-dark">
+                                                    <i class="fas fa-clock"></i> Auto (Inactive)
+                                                </span>
+                                            @else
+                                                <span class="badge bg-secondary">
+                                                    <i class="fas fa-check"></i> Manual
+                                                </span>
+                                            @endif
                                         </td>
                                         <td>
                                             <a href="{{ route('admin.livechat.view', $session->id) }}" class="btn btn-info btn-sm">
                                                 <i class="fas fa-eye"></i> View
                                             </a>
-                                            <button class="btn btn-danger btn-sm" onclick="deleteSession({{ $session->id }}, '{{ $session->customer_name }}')">
+                                            <button class="btn btn-danger btn-sm" onclick="deleteSession({{ $session->id }}, '{{ $session->user_name ?? $session->customer_name }}')">
                                                 <i class="fas fa-trash"></i> Delete
                                             </button>
                                         </td>
@@ -523,12 +546,19 @@
     color: #4e73df;
     font-weight: 600;
 }
+
+.table-warning {
+    background-color: #fff3cd !important;
+}
+
+.table-danger {
+    background-color: #f8d7da !important;
+}
 </style>
 
 <script>
 // Auto-refresh page every 30 seconds for waiting queue
 setInterval(function() {
-    // Only refresh if on waiting tab
     const waitingTab = document.getElementById('waiting-tab');
     if (waitingTab && waitingTab.classList.contains('active')) {
         location.reload();
@@ -539,7 +569,6 @@ function refreshPage() {
     location.reload();
 }
 
-// Delete single session
 function deleteSession(sessionId, customerName) {
     if (confirm(`Are you sure you want to delete the chat history with ${customerName}?\n\nThis action cannot be undone.`)) {
         const form = document.getElementById('deleteSessionForm');
@@ -548,13 +577,11 @@ function deleteSession(sessionId, customerName) {
     }
 }
 
-// Confirm bulk delete
 function confirmBulkDelete() {
     const days = document.getElementById('days').value;
     return confirm(`Are you sure you want to delete all chat sessions older than ${days} days?\n\nThis action cannot be undone.`);
 }
 
-// Confirm delete all
 function confirmDeleteAll() {
     const confirmation = prompt('Type "DELETE ALL" to confirm deletion of all closed chat sessions:');
     if (confirmation === 'DELETE ALL') {

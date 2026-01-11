@@ -16,6 +16,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         // $schedule->command('inspire')->hourly();
+        
+        // Auto-close inactive chat sessions every minute
+        $schedule->call(function () {
+            app(\App\Http\Controllers\LiveChatController::class)->autoCloseInactiveSessions();
+        })->everyMinute()->name('auto-close-inactive-chats');
     }
 
     /**

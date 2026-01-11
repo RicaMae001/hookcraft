@@ -2,6 +2,26 @@
     $isLoggedIn = Auth::check();
     $user = Auth::user();
     // $cartCount is already available from AppServiceProvider
+    
+    // Check for active chat session
+    $hasActiveChat = false;
+    $unreadMessages = 0;
+    if ($isLoggedIn) {
+        $activeChat = DB::table('chat_sessions')
+            ->where('user_id', Auth::id())
+            ->whereIn('status', ['waiting', 'active'])
+            ->first();
+        
+        if ($activeChat) {
+            $hasActiveChat = true;
+            // Count unread messages from staff
+            $unreadMessages = DB::table('chat_messages')
+                ->where('chat_session_id', $activeChat->id)
+                ->where('sender_type', '!=', 'customer')
+                ->where('is_read', false)
+                ->count();
+        }
+    }
 @endphp
 
 <nav class="navbar navbar-expand-lg navbar-light sticky-top">
@@ -23,13 +43,39 @@
             </ul>
 
             <ul class="navbar-nav flex-row align-items-center">
-                <!-- Chatbot Icon -->
+                <!-- Chatbot Icon with Live Chat Notification -->
                 <li class="nav-item me-3">
-                    <a class="nav-link position-relative" href="{{ route('chatbot') }}" title="AI Assistant">
+                    <a class="nav-link position-relative" 
+                       href="{{ route('chatbot') }}" 
+                       title="{{ $hasActiveChat ? 'Active Live Chat - Click to continue' : 'AI Assistant' }}"
+                       id="chatbotNavLink">
                         <i class="bi bi-robot fs-5" style="color: #FF69B4;"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle">
-                            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
-                        </span>
+                        
+                        @if($hasActiveChat)
+                            <!-- Red exclamation badge for active chat -->
+                            <span class="position-absolute top-0 start-100 translate-middle">
+                                <span class="badge bg-danger rounded-circle chat-notification-badge" 
+                                      style="width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold;">
+                                    !
+                                </span>
+                            </span>
+                            
+                            <!-- Unread message count (if any) -->
+                            @if($unreadMessages > 0)
+                                <span class="position-absolute" 
+                                      style="top: -8px; left: -8px;">
+                                    <span class="badge rounded-pill bg-danger" 
+                                          style="font-size: 0.65rem; padding: 0.25em 0.5em;">
+                                        {{ $unreadMessages > 9 ? '9+' : $unreadMessages }}
+                                    </span>
+                                </span>
+                            @endif
+                        @else
+                            <!-- Green dot for AI online -->
+                            <span class="position-absolute top-0 start-100 translate-middle">
+                                <span class="badge bg-success rounded-circle" style="width: 8px; height: 8px;"></span>
+                            </span>
+                        @endif
                     </a>
                 </li>
 
@@ -87,3 +133,67 @@
         </div>
     </div>
 </nav>
+
+<style>
+/* Pulse animation for chat notification */
+@keyframes chat-pulse {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.8;
+    }
+}
+
+.chat-notification-badge {
+    animation: chat-pulse 2s infinite;
+    box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+</style>
+
+@if($hasActiveChat)
+<script>
+// Check for new messages every 30 seconds when not on chatbot page
+if (window.location.pathname !== '/chatbot') {
+    setInterval(async function() {
+        try {
+            const response = await fetch('{{ route("livechat.check-unread") }}', {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.has_unread && data.unread_count > 0) {
+                // Update badge if it exists
+                const badge = document.querySelector('.chat-notification-badge');
+                if (badge) {
+                    badge.textContent = '!';
+                }
+                
+                // Show browser notification if allowed
+                if ("Notification" in window && Notification.permission === "granted") {
+                    new Notification("New message from support", {
+                        body: `You have ${data.unread_count} new message(s) from staff`,
+                        icon: "{{ asset('asset/images/logo.jpg') }}",
+                        tag: "live-chat-notification",
+                        requireInteraction: true
+                    });
+                }
+            }
+        } catch (error) {
+            console.error('Error checking messages:', error);
+        }
+    }, 30000); // Every 30 seconds
+}
+
+// Request notification permission
+if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+}
+</script>
+@endif
