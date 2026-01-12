@@ -9,101 +9,169 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <style>
-        /* ALL YOUR EXISTING CSS STYLES REMAIN EXACTLY THE SAME */
+        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Outfit:wght@300;400;500;600&display=swap');
+
+        :root {
+            --pastel-pink: #ffb3d9;
+            --pastel-rose: #c2185b;
+            --pastel-light: #fce4ec;
+            --pastel-bg: #fff0f5;
+            --pastel-white: #ffffff;
+            --text-primary: #2d2d2d;
+            --text-secondary: #4a4a4a;
+            --shadow-soft: 0 10px 40px rgba(194, 24, 91, 0.15);
+            --shadow-medium: 0 15px 50px rgba(194, 24, 91, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg,rgb(223, 206, 216) 0%, #fff5f9 100%);
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: var(--pastel-bg);
+            color: var(--text-primary);
+            line-height: 1.7;
+            overflow-x: hidden;
+            font-size: 18px;
+        }
+        
+        
+        .gallery-hero {
+            background: linear-gradient(135deg, var(--pastel-white) 0%, var(--pastel-light) 100%);
+            padding: 100px 0 50px;
+            margin-top: 10px;
+            border-bottom: 1px solid var(--pastel-light);
         }
 
-        .page-header {
-            background: linear-gradient(135deg,rgb(255, 191, 223) 0%,rgb(247, 113, 184) 100%);
-            padding: 60px 0 ;
-            margin-bottom: 50px;
+        .hero-content {
+            max-width: 700px;
+            margin: 0 auto;
+            text-align: center;
+        }
+
+        .gallery-hero h1 {
+            font-family: 'Cormorant Garamond', serif;
+            color: var(--text-primary);
+            font-size: 4rem;
+            font-weight: 600;
+            margin-bottom: 1.25rem;
+            letter-spacing: -0.5px;
+        }
+
+        .gallery-hero p {
+            color: var(--text-secondary);
+            font-size: 1.35rem;
+            font-weight: 300;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            background: var(--pastel-white);
+            padding: 35px 0;
+            position: sticky;
+            top: 76px;
+            z-index: 100;
+            border-bottom: 2px solid var(--pastel-light);
+            box-shadow: 0 2px 10px rgba(194, 24, 91, 0.05);
+        }
+
+        .tab-container {
+            display: flex;
+            justify-content: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .tab-btn {
+            padding: 1rem 2.75rem;
+            background: transparent;
+            color: var(--text-secondary);
+            border: none;
+            font-weight: 500;
+            font-size: 1.1rem;
+            cursor: pointer;
             position: relative;
-            overflow: hidden;
+            transition: all 0.3s ease;
+            border-radius: 50px;
         }
 
-        .page-header::before {
+        .tab-btn::after {
             content: '';
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
             bottom: 0;
-            background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
-            opacity: 0.5;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--pastel-rose), var(--pastel-pink));
+            transition: width 0.3s ease;
+            border-radius: 3px;
         }
 
-        .page-header h1 {
+        .tab-btn:hover {
+            color: var(--text-primary);
+            background: var(--pastel-light);
+        }
+
+        .tab-btn.active {
             color: white;
-            font-weight: 700;
-            font-size: 3rem;
-            margin-bottom: 15px;
-            position: relative;
-            z-index: 1;
-        }
-
-        .page-header p {
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 1.2rem;
-            position: relative;
-            z-index: 1;
-        }
-
-        .filter-section {
-            margin-bottom: 40px;
-        }
-
-        .filter-btn {
-            padding: 10px 25px;
-            margin: 5px;
-            border: 2px solid #ff69b4;
-            background: white;
-            color: #ff69b4;
-            border-radius: 50px;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
         }
 
-        .filter-btn:hover,
-        .filter-btn.active {
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(255, 105, 180, 0.3);
+        .tab-btn.active::after {
+            width: 0;
         }
 
-        .gallery-container {
-            padding: 0 0 60px;
+        /* Modern Grid Gallery Layout */
+        .gallery-section {
+            padding: 70px 0 50px;
         }
 
         .gallery-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 2rem;
+        }
+
+        .gallery-item-wrapper {
+            opacity: 0;
+            animation: fadeInScale 0.6s ease forwards;
+        }
+
+        @keyframes fadeInScale {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
         }
 
         .gallery-item {
             position: relative;
             overflow: hidden;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-            transition: all 0.4s ease;
-            background: white;
+            border-radius: 25px;
             cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--pastel-white);
+            box-shadow: var(--shadow-soft);
+            height: 400px;
         }
 
         .gallery-item:hover {
-            transform: translateY(-10px);
-            box-shadow: 0 15px 35px rgba(255, 105, 180, 0.3);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--shadow-medium);
         }
 
         .gallery-item img {
             width: 100%;
-            height: 300px;
+            height: 100%;
             object-fit: cover;
             transition: transform 0.4s ease;
         }
@@ -117,50 +185,58 @@
             bottom: 0;
             left: 0;
             right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
-            padding: 20px;
-            transform: translateY(100%);
-            transition: transform 0.4s ease;
+            background: linear-gradient(to top, rgba(0,0,0,0.85), rgba(0,0,0,0.3) 50%, transparent);
+            padding: 2.5rem 1.75rem 1.75rem;
+            transform: translateY(0);
+            transition: all 0.3s ease;
         }
 
         .gallery-item:hover .gallery-overlay {
-            transform: translateY(0);
+            background: linear-gradient(to top, rgba(194, 24, 91, 0.95), rgba(194, 24, 91, 0.7) 50%, transparent);
         }
 
         .gallery-overlay h5 {
             color: white;
-            margin: 0 0 5px 0;
-            font-size: 1.1rem;
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
 
         .gallery-overlay p {
-            color: rgba(255, 255, 255, 0.8);
+            color: rgba(255,255,255,0.95);
+            font-size: 1.05rem;
             margin: 0;
-            font-size: 0.9rem;
+            line-height: 1.5;
         }
 
-        .gallery-badge {
+        .category-tag {
             position: absolute;
-            top: 15px;
-            right: 15px;
-            background: linear-gradient(135deg, #ff69b4 0%, #ff1493 100%);
-            color: white;
-            padding: 5px 15px;
-            border-radius: 20px;
-            font-size: 0.85rem;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            color: var(--pastel-rose);
+            padding: 0.6rem 1.35rem;
+            border-radius: 50px;
+            font-size: 0.95rem;
             font-weight: 600;
             z-index: 2;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Lightbox - Improved Design */
+        .lightbox-modal {
+            background: rgba(0, 0, 0, 0.95);
         }
 
         .lightbox-modal .modal-dialog {
-            max-width: 90%;
-            margin: 2rem auto;
+            max-width: 1300px;
+            margin: 3rem auto;
         }
 
         .lightbox-modal .modal-content {
-            background: rgba(0, 0, 0, 0.95);
+            background: transparent;
             border: none;
-            border-radius: 0;
         }
 
         .lightbox-modal .modal-body {
@@ -168,320 +244,427 @@
             position: relative;
         }
 
+        .lightbox-wrapper {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 0;
+            background: var(--pastel-white);
+            border-radius: 25px;
+            overflow: hidden;
+            box-shadow: 0 25px 100px rgba(0, 0, 0, 0.3);
+        }
+
+        .lightbox-image-side {
+            padding: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--pastel-light);
+        }
+
         .lightbox-image {
-            width: 100%;
-            height: auto;
-            max-height: 80vh;
+            max-width: 100%;
+            max-height: 75vh;
             object-fit: contain;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
         }
 
-        .lightbox-info {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: linear-gradient(transparent, rgba(0, 0, 0, 0.9));
-            padding: 30px;
-            color: white;
+        .lightbox-details {
+            padding: 3.5rem;
+            background: var(--pastel-white);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
-        .lightbox-nav {
-            position: absolute;
-            top: 50%;
-            transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.2);
+        .lightbox-details h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+            font-weight: 600;
+            line-height: 1.2;
+        }
+
+        .lightbox-details .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
             color: white;
-            border: none;
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            font-size: 1.5rem;
+            padding: 0.6rem 1.5rem;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 1.75rem;
+        }
+
+        .lightbox-details p {
+            color: var(--text-secondary);
+            line-height: 1.8;
+            font-size: 1.2rem;
+        }
+
+        .lightbox-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2.5rem;
+        }
+
+        .lightbox-btn {
+            flex: 1;
+            padding: 1.1rem;
+            border: 2px solid var(--pastel-rose);
+            background: transparent;
+            color: var(--text-primary);
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.05rem;
             cursor: pointer;
             transition: all 0.3s ease;
         }
 
-        .lightbox-nav:hover {
-            background: rgba(255, 255, 255, 0.3);
-        }
-
-        .lightbox-nav.prev {
-            left: 20px;
-        }
-
-        .lightbox-nav.next {
-            right: 20px;
-        }
-
-        .lightbox-close {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background: rgba(255, 255, 255, 0.2);
+        .lightbox-btn:hover {
+            background: var(--pastel-rose);
             color: white;
+            border-color: var(--pastel-rose);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(194, 24, 91, 0.3);
+        }
+
+        .lightbox-nav-btn {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            background: rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(10px);
             border: none;
-            width: 40px;
-            height: 40px;
+            width: 55px;
+            height: 55px;
             border-radius: 50%;
-            font-size: 1.2rem;
+            color: white;
+            font-size: 1.75rem;
             cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             z-index: 10;
         }
 
-        .fade-in-up {
-            animation: fadeInUp 0.6s ease forwards;
-            opacity: 0;
+        .lightbox-nav-btn:hover {
+            background: var(--pastel-rose);
+            transform: translateY(-50%) scale(1.1);
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .lightbox-nav-btn.prev {
+            left: -27px;
         }
 
-        .no-gallery {
+        .lightbox-nav-btn.next {
+            right: -27px;
+        }
+
+        .lightbox-close-btn {
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            background: var(--pastel-white);
+            color: var(--text-primary);
+            border: none;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: var(--shadow-soft);
+            z-index: 10;
+        }
+
+        .lightbox-close-btn:hover {
+            background: var(--pastel-rose);
+            color: white;
+            transform: rotate(90deg) scale(1.1);
+        }
+
+        /* Empty State */
+        .empty-gallery {
             text-align: center;
-            padding: 60px 20px;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            padding: 120px 40px;
+            max-width: 550px;
+            margin: 0 auto;
         }
 
-        .no-gallery i {
-            font-size: 4rem;
-            color: #ff69b4;
-            margin-bottom: 20px;
+        .empty-gallery i {
+            font-size: 6rem;
+            color: var(--pastel-rose);
+            margin-bottom: 2.5rem;
+            opacity: 0.6;
         }
+
+        .empty-gallery h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            color: var(--text-primary);
+            margin-bottom: 1.25rem;
+        }
+
+        .empty-gallery p {
+            color: var(--text-secondary);
+            font-size: 1.25rem;
+        }
+
+        /* Chatbot */
         .chatbot-float {
-        position: fixed;
-        bottom: 30px;
-        right: 30px;
-        z-index: 1000;
-    }
-    
-    .chatbot-float a {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 60px;
-        height: 60px;
-        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-        border-radius: 50%;
-        box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
-        color: white;
-        text-decoration: none;
-        transition: all 0.3s ease;
-        margin-bottom: 100px;
-    }
-    
-    .chatbot-float a:hover {
-        transform: scale(1.1);
-        box-shadow: 0 6px 25px rgba(255, 105, 180, 0.6);
-    }
-    
-    .chatbot-float i {
-        font-size: 28px;
-    }
+            position: fixed;
+            bottom: 40px;
+            right: 40px;
+            z-index: 999;
+        }
 
-    .chatbot-pulse {
-        animation: pulse 2s infinite;
-    }
+        .chatbot-btn {
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            text-decoration: none;
+            box-shadow: 0 6px 25px rgba(194, 24, 91, 0.3);
+            transition: all 0.3s ease;
+        }
 
-    @keyframes pulse {
-        0% {
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+        .chatbot-btn:hover {
+            transform: scale(1.15) rotate(10deg);
+            box-shadow: 0 8px 35px rgba(194, 24, 91, 0.4);
+            color: white;
         }
-        50% {
-            box-shadow: 0 4px 30px rgba(255, 105, 180, 0.7);
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .lightbox-wrapper {
+                grid-template-columns: 1fr;
+            }
+
+            .lightbox-details {
+                padding: 2.5rem;
+            }
+
+            .lightbox-image-side {
+                padding: 2rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+                gap: 1.5rem;
+            }
         }
-        100% {
-            box-shadow: 0 4px 20px rgba(255, 105, 180, 0.4);
+
+        @media (max-width: 992px) {
+            .gallery-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .gallery-hero h1 {
+                font-size: 3.5rem;
+            }
+
+            .gallery-item {
+                height: 350px;
+            }
         }
-    }
+
+        @media (max-width: 768px) {
+            body {
+                font-size: 16px;
+            }
+
+            .gallery-hero {
+                padding: 80px 0 35px;
+            }
+
+            .gallery-hero h1 {
+                font-size: 2.75rem;
+            }
+
+            .gallery-hero p {
+                font-size: 1.15rem;
+            }
+
+            .tab-navigation {
+                padding: 25px 0;
+            }
+
+            .tab-btn {
+                padding: 0.8rem 1.75rem;
+                font-size: 1rem;
+            }
+
+            .gallery-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .gallery-item {
+                height: 400px;
+            }
+
+            .lightbox-nav-btn.prev {
+                left: 10px;
+            }
+
+            .lightbox-nav-btn.next {
+                right: 10px;
+            }
+
+            .lightbox-close-btn {
+                top: 10px;
+                right: 10px;
+            }
+
+            .lightbox-details h3 {
+                font-size: 2rem;
+            }
+
+            .lightbox-details p {
+                font-size: 1.05rem;
+            }
+
+            .chatbot-float {
+                bottom: 25px;
+                right: 25px;
+            }
+
+            .chatbot-btn {
+                width: 60px;
+                height: 60px;
+                font-size: 1.7rem;
+            }
+        }
     </style>
 </head>
 <body>
 
 @include('components.login_modal')
 @include('components.signup_modal')
+@include('components.navbar')
 
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-light sticky-top">
-    <div class="container">
-        <a class="navbar-brand fw-bold" href="{{ route('home') }}">
-            <img src="{{ asset('asset/images/logo.jpg') }}" alt="Logo" width="40" height="40" class="rounded-circle me-2">
-            HookcraftAvenue
-        </a>
-        <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarContent">
-            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('shop') }}">Shop</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('about') }}">About</a></li>
-                <li class="nav-item"><a class="nav-link active" href="{{ route('gallery') }}">Gallery</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact</a></li>
-            </ul>
-
-            @php
-                $isLoggedIn = Auth::check();
-                $user = Auth::user();
-            @endphp
-
-            <ul class="navbar-nav flex-row align-items-center">
-                <!-- Chatbot Icon -->
-                <li class="nav-item me-3">
-                    <a class="nav-link position-relative" href="{{ route('chatbot') }}" title="AI Assistant">
-                        <i class="bi bi-robot fs-5" style="color: #FF69B4;"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle">
-                            <span class="badge bg-success rounded-circle p-1" style="width: 8px; height: 8px;"></span>
-                        </span>
-                    </a>
-                </li>
-
-                <!-- Cart -->
-                <li class="nav-item me-3">
-                    <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
-                        <i class="bi bi-cart fs-5"></i>
-                        <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
-                            {{ $cartCount }}
-                        </span>
-                    </a>
-                </li>
-
-                <!-- User -->
-                @if($isLoggedIn)
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle p-0 border-0 bg-transparent d-flex align-items-center" 
-                           href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
-                                 width="40" height="40" class="rounded-circle" style="object-fit: cover; border: 2px solid #FFB6C1;">
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end mt-2 shadow" style="min-width: 250px;">
-                            <!-- User Info Header -->
-                            <li class="px-3 py-3 border-bottom">
-                                <div class="d-flex align-items-center">
-                                    <img src="{{ asset('asset/images/default-profile.png') }}" alt="Profile" 
-                                         width="50" height="50" class="rounded-circle me-3" style="border: 2px solid #FFB6C1;">
-                                    <div>
-                                        <div class="fw-bold">{{ $user->name }}</div>
-                                        <small class="text-muted">{{ $user->email }}</small>
-                                    </div>
-                                </div>
-                            </li>
-
-                            <!-- Menu Items -->
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('profile.index') }}">
-                                    <i class="bi bi-person-circle me-2"></i>My Account
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('profile.purchase-history') }}">
-                                    <i class="bi bi-clock-history me-2"></i>Purchase History
-                                </a>
-                            </li>
-                            <li>
-                                <a class="dropdown-item py-2" href="{{ route('profile.track-order') }}">
-                                    <i class="bi bi-truck me-2"></i>Track Order
-                                </a>
-                            </li>
-                            <li><hr class="dropdown-divider my-2"></li>
-                            <li>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button class="dropdown-item text-danger py-2" type="submit">
-                                        <i class="bi bi-box-arrow-right me-2"></i>Logout
-                                    </button>
-                                </form>
-                            </li>
-                        </ul>
-                    </li>
-                @else
-                    <li class="nav-item me-2">
-                        <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Login</a>
-                    </li>
-                @endif
-            </ul>
-        </div>
-    </div>
-</nav>
-
-
+<!-- Chatbot Button -->
 <div class="chatbot-float">
-    <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
+    <a href="{{ route('chatbot') }}" class="chatbot-btn" title="Chat with AI Assistant">
         <i class="bi bi-robot"></i>
     </a>
 </div>
 
-<!-- Page Header -->
-<div class="page-header text-center">
+<!-- Hero Section -->
+<section class="gallery-hero">
     <div class="container">
-        <h1><i class="bi bi-images me-3"></i>Our Gallery</h1>
-        <p>Explore our beautiful collection of handcrafted Products</p>
+        <div class="hero-content">
+            <h1>Our Gallery</h1>
+            <p>A curated collection of handcrafted beauty</p>
+        </div>
     </div>
-</div>
+</section>
+
+<!-- Tab Navigation -->
+<section class="tab-navigation">
+    <div class="container">
+        <div class="tab-container">
+            <button class="tab-btn active" data-filter="all">All</button>
+            <button class="tab-btn" data-filter="birthday">Birthday</button>
+            <button class="tab-btn" data-filter="casual">Casual</button>
+            <button class="tab-btn" data-filter="tiny">Tiny</button>
+            <button class="tab-btn" data-filter="wedding">Wedding</button>
+            <button class="tab-btn" data-filter="custom">Custom</button>
+        </div>
+    </div>
+</section>
 
 <!-- Gallery Section -->
-<div class="gallery-container">
+<section class="gallery-section">
     <div class="container">
         <!-- Filter Buttons -->
-     
+        <div class="filter-section text-center">
+            <button class="filter-btn active" data-filter="all">All Collections</button>
+            <button class="filter-btn" data-filter="birthday">Birthday Bouquets</button>
+            <button class="filter-btn" data-filter="casual">Casual Bouquets</button>
+            <button class="filter-btn" data-filter="tiny">Tiny Bouquets</button>
+            <button class="filter-btn" data-filter="wedding">Wedding Arrangements</button>
+            <button class="filter-btn" data-filter="custom">Custom Creations</button>
+        </div>
 
         <!-- Gallery Grid -->
         @if($galleryItems->count() > 0)
         <div class="gallery-grid" id="galleryGrid">
             @foreach($galleryItems as $index => $item)
-            <div class="gallery-item fade-in-up" data-category="{{ $item->category_name }}" style="animation-delay: {{ ($index * 0.1) }}s">
-                <span class="gallery-badge">{{ $item->category_name }}</span>
-                <!-- UPDATED: Use same logic as product page -->
-                <img src="{{ asset('asset/images/' . $item->image_path) }}" alt="{{ $item->title }}" data-index="{{ $index }}">
-                <div class="gallery-overlay">
-                    <h5>{{ $item->title }}</h5>
-                    <p>{{ $item->description }}</p>
+            <div class="gallery-item-wrapper" data-category="{{ $item->category_name }}" style="animation-delay: {{ ($index * 0.05) }}s">
+                <div class="gallery-item">
+                    <span class="category-tag">{{ $item->category_name }}</span>
+                    <img src="{{ asset('asset/images/' . $item->image_path) }}" alt="{{ $item->title }}" data-index="{{ $index }}">
+                    <div class="gallery-overlay">
+                        <h5>{{ $item->title }}</h5>
+                        <p>{{ $item->description }}</p>
+                    </div>
                 </div>
             </div>
             @endforeach
         </div>
         @else
-        <div class="no-gallery">
-            <i class="bi bi-images"></i>
-            <h3>No Gallery Images Yet</h3>
-            <p class="text-muted">Our beautiful collection is coming soon!</p>
+        <div class="empty-gallery">
+            <i class="bi bi-camera"></i>
+            <h3>Gallery Coming Soon</h3>
+            <p>We're preparing something beautiful for you. Stay tuned!</p>
         </div>
         @endif
     </div>
-</div>
+</section>
 
 <!-- Lightbox Modal -->
 <div class="modal fade lightbox-modal" id="lightboxModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-body">
-                <button class="lightbox-close" data-bs-dismiss="modal">&times;</button>
-                <button class="lightbox-nav prev" onclick="navigateLightbox(-1)">
+                <button class="lightbox-close-btn" data-bs-dismiss="modal">
+                    <i class="bi bi-x"></i>
+                </button>
+                <!-- <button class="lightbox-nav-btn prev" onclick="navigateLightbox(-1)">
                     <i class="bi bi-chevron-left"></i>
                 </button>
-                <button class="lightbox-nav next" onclick="navigateLightbox(1)">
+                <button class="lightbox-nav-btn next" onclick="navigateLightbox(1)">
                     <i class="bi bi-chevron-right"></i>
                 </button>
-                <!-- UPDATED: Use same logic as product page -->
-                <img src="" alt="" class="lightbox-image" id="lightboxImage">
-                <div class="lightbox-info">
-                    <h4 id="lightboxTitle"></h4>
-                    <p id="lightboxDescription"></p>
+                 -->
+                <div class="lightbox-wrapper">
+                    <div class="lightbox-image-side">
+                        <img src="" alt="" class="lightbox-image" id="lightboxImage">
+                    </div>
+                    <div class="lightbox-details">
+                        <div>
+                            <span class="category-badge" id="lightboxCategory"></span>
+                            <h3 id="lightboxTitle"></h3>
+                            <p id="lightboxDescription"></p>
+                        </div>
+                        <div class="lightbox-actions">
+                            <button class="lightbox-btn" onclick="navigateLightbox(-1)">
+                                <i class="bi bi-chevron-left me-2"></i>Previous
+                            </button>
+                            <button class="lightbox-btn" onclick="navigateLightbox(1)">
+                                Next<i class="bi bi-chevron-right ms-2"></i>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Footer -->
 @include('components.footer')
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
@@ -490,20 +673,19 @@
     let currentLightboxIndex = 0;
     const lightboxModal = new bootstrap.Modal(document.getElementById('lightboxModal'));
 
-    // Filter functionality
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    // Tab filter functionality
+    document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
 
             const filter = this.getAttribute('data-filter');
-            const items = document.querySelectorAll('.gallery-item');
+            const items = document.querySelectorAll('.gallery-item-wrapper');
 
-            items.forEach((item, index) => {
+            items.forEach(item => {
                 const category = item.getAttribute('data-category');
                 if (filter === 'all' || category === filter) {
                     item.style.display = 'block';
-                    item.style.animation = `fadeInUp 0.6s ease ${index * 0.05}s forwards`;
                 } else {
                     item.style.display = 'none';
                 }
@@ -522,10 +704,10 @@
     function openLightbox(index) {
         if (galleryItems.length > 0) {
             const item = galleryItems[index];
-            // UPDATED: Use same logic as product page
             document.getElementById('lightboxImage').src = "{{ asset('asset/images') }}/" + item.image_path;
             document.getElementById('lightboxTitle').textContent = item.title;
             document.getElementById('lightboxDescription').textContent = item.description;
+            document.getElementById('lightboxCategory').textContent = item.category_name;
             lightboxModal.show();
         }
     }

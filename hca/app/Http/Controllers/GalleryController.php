@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\GalleryImage;
 use App\Models\Category;
+use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -53,6 +54,17 @@ class GalleryController extends Controller
 
             \Log::info('Validation passed');
 
+            // FIX: Get admin ID from session and verify it's an admin/staff
+            $adminId = $this->getAuthenticatedAdminId();
+            
+            if (!$adminId) {
+                \Log::error('No authenticated admin found or user is not admin/staff');
+                return back()->with('error', 'You must be logged in as an admin or staff to perform this action.')
+                            ->withInput();
+            }
+
+            \Log::info('Admin ID retrieved: ' . $adminId);
+
             // Handle image upload - SAVE TO asset/images DIRECTORY (same as products)
             $imagePath = null;
             if ($request->hasFile('image')) {
@@ -72,7 +84,7 @@ class GalleryController extends Controller
                 'category_id' => $request->category_id,
                 'display_order' => $request->display_order,
                 'is_active' => $request->has('is_active') ? 1 : 0,
-                'admin_id' => auth()->id(), 
+                'admin_id' => $adminId,
             ];
 
             \Log::info('Creating gallery item with data:', $galleryData);
@@ -240,5 +252,52 @@ class GalleryController extends Controller
             
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    /**
+     * Get authenticated admin ID by checking session and role
+     * This ensures only admins/staff can perform actions, not regular users
+     */
+    private function getAuthenticatedAdminId()
+    {
+        // Method 1: Check session for admin_id (most common pattern)
+        $adminId = session('admin_id');
+        
+        if ($adminId) {
+            // Verify this is actually an admin/staff by checking the role
+            $admin = Admin::find($adminId);
+            
+            if ($admin && in_array($admin->role, ['Admin', 'Staff'])) {
+                \Log::info('Admin authenticated via session', [
+                    'admin_id' => $adminId, 
+                    'role' => $admin->role
+                ]);
+                return $adminId;
+            }
+        }
+
+        // Method 2: Check if auth() user is actually from admin table
+        if (auth()->check()) {
+            $authUser = auth()->user();
+            
+            // Check if this is an admin by looking in admin table
+            $admin = Admin::where('email', $authUser->email)->first();
+            
+            if ($admin && in_array($admin->role, ['Admin', 'Staff'])) {
+                \Log::info('Admin authenticated via auth()', [
+                    'admin_id' => $admin->id, 
+                    'role' => $admin->role
+                ]);
+                return $admin->id;
+            }
+            
+            // Log if it's a regular user trying to access
+            \Log::warning('Regular user attempted admin action', [
+                'user_id' => $authUser->id,
+                'user_email' => $authUser->email
+            ]);
+        }
+
+        return null;
     }
 }

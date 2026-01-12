@@ -15,6 +15,7 @@ use App\Models\CartItem;
 use App\Http\Controllers\ChatbotController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\LocationController;
+use App\Http\Controllers\LiveChatController;
 
 // Home
 Route::get('/', [ProductController::class, 'index'])->name('home');
@@ -38,7 +39,7 @@ Route::middleware('auth')->group(function () {
     // Cart Routes
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
     Route::post('/cart/add', [CartController::class, 'add'])->name('cart.add');
-    Route::post('/cart/buy-now', [CartController::class, 'buyNow'])->name('cart.buy-now'); // ✨ NEW
+    Route::post('/cart/buy-now', [CartController::class, 'buyNow'])->name('cart.buy-now');
     Route::post('/cart/update/{id}', [CartController::class, 'update'])->name('cart.update');
     Route::delete('/cart/delete/{id}', [CartController::class, 'delete'])->name('cart.delete');
 
@@ -135,6 +136,22 @@ Route::middleware(['admin'])->prefix('admin')->group(function () {
         Route::patch('/{id}/toggle-status', [GalleryController::class, 'toggleStatus'])->name('toggle-status');
         Route::post('/update-order', [GalleryController::class, 'updateOrder'])->name('update-order');
     });
+
+    // Live Chat Management Routes (Admin)
+    Route::prefix('livechat')->name('admin.livechat.')->group(function () {
+        Route::get('/', [LiveChatController::class, 'adminIndex'])->name('index');
+        Route::post('/accept/{sessionId}', [LiveChatController::class, 'adminAccept'])->name('accept');
+        Route::get('/chat/{sessionId}', [LiveChatController::class, 'adminChat'])->name('chat');
+        Route::get('/view/{sessionId}', [LiveChatController::class, 'adminViewHistory'])->name('view'); // View chat history
+        Route::post('/send', [LiveChatController::class, 'adminSendMessage'])->name('send');
+        Route::get('/poll/{sessionId}', [LiveChatController::class, 'adminPoll'])->name('poll');
+        Route::post('/end/{sessionId}', [LiveChatController::class, 'adminEndSession'])->name('end');
+        
+        // Delete Routes
+        Route::delete('/delete/{sessionId}', [LiveChatController::class, 'adminDeleteSession'])->name('delete');
+        Route::post('/bulk-delete', [LiveChatController::class, 'adminBulkDelete'])->name('bulk-delete');
+        Route::post('/delete-all-closed', [LiveChatController::class, 'adminDeleteAllClosed'])->name('delete-all-closed');
+    });
 });
 
 // Delivery Routes
@@ -154,9 +171,17 @@ Route::middleware(['delivery'])->prefix('delivery')->group(function () {
     Route::get('/history', [DeliveryController::class, 'history'])->name('delivery.history');
 });
 
-// Chatbot
+// Chatbot Routes
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
 Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
+
+// Customer Live Chat Routes (Public/Guest Access)
+Route::prefix('livechat')->group(function () {
+    Route::post('/request', [LiveChatController::class, 'request'])->name('livechat.request');
+    Route::post('/send', [LiveChatController::class, 'sendMessage'])->name('livechat.send');
+    Route::get('/poll/{sessionId}', [LiveChatController::class, 'poll'])->name('livechat.poll');
+    Route::post('/end', [LiveChatController::class, 'endSession'])->name('livechat.end');
+});
 
 // Location API Routes
 Route::prefix('api/locations')->group(function () {
