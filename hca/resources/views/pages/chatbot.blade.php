@@ -501,7 +501,12 @@
         }
     </style>
 </head>
+
 <body>
+    
+@include('components.login_modal')
+@include('components.signup_modal')
+
     <div class="chat-container">
         <div class="chat-header">
             <div class="header-left">
@@ -788,24 +793,23 @@
             scrollToBottom();
         }
 
-        function toggleLiveChat() {
-            const isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
-            
-            if (!isAuthenticated) {
-                alert('Please login to use live chat support.');
-                window.location.href = '{{ route("login") }}';
-                return;
-            }
-            
-            if (isLiveChatMode) {
-                if (confirm('Are you sure you want to end this live chat session?')) {
-                    endLiveChatSession();
-                }
-            } else {
-                liveChatModal.style.display = 'block';
-            }
+      function toggleLiveChat() {
+    const isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
+    
+    if (!isAuthenticated) {
+        alert('Please login to use live chat support.');
+        window.location.href = '{{ route("home") }}';
+        return;
+    }
+    
+    if (isLiveChatMode) {
+        if (confirm('Are you sure you want to end this live chat session?')) {
+            endLiveChatSession();
         }
-
+    } else {
+        liveChatModal.style.display = 'block';
+    }
+}
         function closeLiveChatModal() {
             liveChatModal.style.display = 'none';
         }
