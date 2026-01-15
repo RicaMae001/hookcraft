@@ -921,12 +921,15 @@
             try {
                 stopActivityHeartbeat(); // Stop heartbeat when ending chat
                 
-                await fetch(`{{ url('admin/livechat/end') }}/${liveChatSessionId}`, {
+                await fetch('{{ route("livechat.end") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    }
+                    },
+                    body: JSON.stringify({
+                        session_id: liveChatSessionId
+                    })
                 });
                 
                 endLiveChat();
