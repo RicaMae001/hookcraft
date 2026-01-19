@@ -1,15 +1,13 @@
-{{-- Save as: resources/views/admin/livechat/livechat_chat.blade.php --}}
-
-@extends('admin.layouts.admin')
+@extends('admin.delivery.layouts.delivery-layout')
 
 @section('title', 'Live Chat - ' . $session->customer_name)
 
 @section('content')
 <div class="container-fluid">
     <div class="row">
-        <!-- Back Button and Header -->
+        <!-- Back Button -->
         <div class="col-12 mb-3">
-            <a href="{{ route('admin.livechat.index') }}" class="btn btn-secondary btn-sm">
+            <a href="{{ route('delivery.livechat.index') }}" class="btn btn-secondary btn-sm">
                 <i class="fas fa-arrow-left"></i> Back to Chat List
             </a>
         </div>
@@ -18,7 +16,7 @@
         <div class="col-lg-12">
             <div class="card shadow-lg" style="height: 80vh;">
                 <!-- Chat Header -->
-                <div class="card-header bg-gradient-primary text-white py-3">
+                <div class="card-header bg-gradient-success text-white py-3">
                     <div class="row align-items-center">
                         <div class="col-md-8">
                             <div class="d-flex align-items-center">
@@ -32,7 +30,7 @@
                                             <i class="fas fa-envelope"></i> {{ $session->customer_email }}
                                         @endif
                                         @if($session->status === 'active')
-                                            <span class="badge bg-success ms-2">
+                                            <span class="badge bg-light text-dark ms-2">
                                                 <i class="fas fa-circle pulse"></i> Active
                                             </span>
                                         @else
@@ -63,7 +61,7 @@
                                     <i class="fas fa-info-circle"></i> {{ $message->message }}
                                 </span>
                                 <div class="small text-muted mt-1">
-                                    {{ \Carbon\Carbon::parse($message->created_at)->setTimezone(config('app.timezone', 'Asia/Manila'))->format('h:i A') }}
+                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
                                 </div>
                             </div>
                         @elseif($message->sender_type === 'customer')
@@ -78,7 +76,7 @@
                                                 {{ $message->message }}
                                             </div>
                                             <div class="message-time">
-                                                {{ \Carbon\Carbon::parse($message->created_at)->setTimezone(config('app.timezone', 'Asia/Manila'))->format('h:i A') }}
+                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
                                             </div>
                                         </div>
                                     </div>
@@ -87,17 +85,17 @@
                         @else
                             <div class="message-wrapper mb-3">
                                 <div class="d-flex justify-content-end">
-                                    <div class="message staff-message">
+                                    <div class="message delivery-message">
                                         <div class="message-content">
-                                            <div class="message-bubble bg-primary text-white">
+                                            <div class="message-bubble bg-success text-white">
                                                 {{ $message->message }}
                                             </div>
                                             <div class="message-time text-end">
-                                                {{ \Carbon\Carbon::parse($message->created_at)->setTimezone(config('app.timezone', 'Asia/Manila'))->format('h:i A') }}
+                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
                                             </div>
                                         </div>
                                         <div class="message-avatar">
-                                            <i class="fas fa-user-tie"></i>
+                                            <i class="fas fa-truck"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -123,7 +121,7 @@
                                 autocomplete="off"
                                 required
                             >
-                            <button type="submit" class="btn btn-primary" id="sendBtn">
+                            <button type="submit" class="btn btn-success" id="sendBtn">
                                 <i class="fas fa-paper-plane"></i> Send
                             </button>
                         </form>
@@ -139,12 +137,12 @@
 </div>
 
 <style>
-.bg-gradient-primary {
-    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+.bg-gradient-success {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
 }
 
 .chat-avatar {
-    color: rgba(255, 255, 255, 0.8);
+    color: rgba(255, 255, 255, 0.9);
 }
 
 .message {
@@ -169,8 +167,8 @@
     color: white;
 }
 
-.staff-message .message-avatar {
-    background: linear-gradient(135deg, #4e73df 0%, #224abe 100%);
+.delivery-message .message-avatar {
+    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
     color: white;
 }
 
@@ -201,7 +199,7 @@
     border-bottom-left-radius: 4px;
 }
 
-.staff-message .message-bubble {
+.delivery-message .message-bubble {
     border-bottom-right-radius: 4px;
 }
 
@@ -229,8 +227,8 @@
 }
 
 #messageInput:focus {
-    border-color: #4e73df;
-    box-shadow: 0 0 0 0.2rem rgba(78, 115, 223, 0.25);
+    border-color: #4CAF50;
+    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
 }
 
 .card {
@@ -247,16 +245,13 @@ const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
 let pollingInterval = null;
-let isPolling = false;
+let customerWarningShown = false;
 
-// Scroll to bottom
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Format time to local timezone
 function formatTimeToLocal(dateString) {
-    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -265,12 +260,48 @@ function formatTimeToLocal(dateString) {
     });
 }
 
-// Add system message to chat
+function showCustomerStatus(status) {
+    const existingNotification = document.getElementById('customerStatusNotification');
+    if (existingNotification) {
+        existingNotification.remove();
+    }
+    
+    const notification = document.createElement('div');
+    notification.id = 'customerStatusNotification';
+    notification.className = 'alert alert-warning alert-dismissible fade show position-fixed';
+    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+    
+    if (status === 'away') {
+        notification.innerHTML = `
+            <i class="fas fa-exclamation-triangle"></i>
+            <strong>Customer Away</strong><br>
+            Customer has left the chat page. Chat will auto-end in 15 minutes.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+    } else if (status === 'back') {
+        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
+        notification.innerHTML = `
+            <i class="fas fa-check-circle"></i>
+            <strong>Customer Back</strong><br>
+            Customer has returned to the chat.
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.remove();
+            }
+        }, 5000);
+    }
+    
+    document.body.appendChild(notification);
+}
+
 function addSystemMessage(message) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'text-center my-3';
     messageDiv.innerHTML = `
-        <span class="badge bg-info px-3 py-2">
+        <span class="badge bg-warning px-3 py-2">
             <i class="fas fa-info-circle"></i> ${message}
         </span>
         <div class="small text-muted mt-1">
@@ -281,12 +312,10 @@ function addSystemMessage(message) {
     scrollToBottom();
 }
 
-// Add message to chat
 function addMessage(message, type, timestamp) {
     const messageDiv = document.createElement('div');
     messageDiv.className = 'message-wrapper mb-3';
     
-    // Format the timestamp to local time
     const formattedTime = formatTimeToLocal(timestamp);
     
     if (type === 'customer') {
@@ -307,12 +336,12 @@ function addMessage(message, type, timestamp) {
                 </div>
             </div>
         `;
-    } else if (type === 'admin') {
+    } else if (type === 'delivery') {
         messageDiv.innerHTML = `
             <div class="d-flex justify-content-end">
-                <div class="message staff-message">
+                <div class="message delivery-message">
                     <div class="message-content">
-                        <div class="message-bubble bg-primary text-white">
+                        <div class="message-bubble bg-success text-white">
                             ${escapeHtml(message)}
                         </div>
                         <div class="message-time text-end">
@@ -320,7 +349,7 @@ function addMessage(message, type, timestamp) {
                         </div>
                     </div>
                     <div class="message-avatar">
-                        <i class="fas fa-user-tie"></i>
+                        <i class="fas fa-truck"></i>
                     </div>
                 </div>
             </div>
@@ -331,50 +360,85 @@ function addMessage(message, type, timestamp) {
     scrollToBottom();
 }
 
-// Escape HTML
 function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
     return div.innerHTML;
 }
 
-// Send message
 if (chatForm) {
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const message = messageInput.value.trim();
-        if (!message) return;
+        if (!message) {
+            alert('Please enter a message');
+            return;
+        }
         
         sendBtn.disabled = true;
         messageInput.disabled = true;
         
+        // Debug logs
+        console.log('=== SEND MESSAGE DEBUG ===');
+        console.log('Session ID:', sessionId);
+        console.log('Message:', message);
+        console.log('Route URL:', '{{ route("delivery.livechat.send") }}');
+        
         try {
-            const response = await fetch('/admin/livechat/send', {
+            const csrfToken = document.querySelector('meta[name="csrf-token"]');
+            if (!csrfToken) {
+                throw new Error('CSRF token not found in page');
+            }
+            
+            console.log('CSRF Token:', csrfToken.content.substring(0, 10) + '...');
+            
+            const requestData = {
+                session_id: sessionId,
+                message: message
+            };
+            
+            console.log('Request Data:', requestData);
+            
+            const response = await fetch('{{ route("delivery.livechat.send") }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    'Accept': 'application/json'
+                    'Accept': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken.content,
                 },
-                body: JSON.stringify({
-                    session_id: sessionId,
-                    message: message
-                })
+                body: JSON.stringify(requestData)
             });
             
-            const data = await response.json();
+            console.log('Response Status:', response.status);
+            console.log('Response OK:', response.ok);
             
-            if (data.success) {
-                // Use current timestamp in ISO format
-                addMessage(message, 'admin', new Date().toISOString());
-                messageInput.value = '';
+            const contentType = response.headers.get('content-type');
+            console.log('Content-Type:', contentType);
+            
+            let data;
+            if (contentType && contentType.includes('application/json')) {
+                data = await response.json();
             } else {
-                alert('Failed to send message: ' + (data.message || 'Unknown error'));
+                const text = await response.text();
+                console.error('Non-JSON response:', text);
+                throw new Error('Server returned non-JSON response. Check console for details.');
+            }
+            
+            console.log('Response Data:', data);
+            
+            if (response.ok && data.success) {
+                addMessage(message, 'delivery', new Date().toISOString());
+                messageInput.value = '';
+                console.log('✓ Message sent successfully');
+            } else {
+                const errorMsg = data.message || 'Failed to send message';
+                console.error('❌ Send failed:', data);
+                alert('Error: ' + errorMsg);
             }
         } catch (error) {
-            console.error('Error:', error);
-            alert('Failed to send message. Please check your connection.');
+            console.error('❌ Exception:', error);
+            alert('Failed to send message: ' + error.message);
         } finally {
             sendBtn.disabled = false;
             messageInput.disabled = false;
@@ -383,94 +447,72 @@ if (chatForm) {
     });
 }
 
-// Poll for new messages
-async function pollForMessages() {
-    if (isPolling) return; // Prevent overlapping requests
-    isPolling = true;
+function startPolling() {
+    if (sessionStatus !== 'active') return;
     
-    try {
-        const response = await fetch(`/admin/livechat/poll/${sessionId}`, {
-            headers: {
-                'Accept': 'application/json'
-            }
-        });
-        
-        const data = await response.json();
-        
-        if (data.success) {
-            // Check if session is closed
-            if (data.status === 'closed') {
-                clearInterval(pollingInterval);
-                addSystemMessage('Chat session has ended');
-                setTimeout(() => {
-                    location.reload();
-                }, 2000);
-                return;
-            }
+    pollingInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`{{ url('delivery/livechat/poll') }}/${sessionId}`);
+            const data = await response.json();
             
-            // Add new customer messages
-            if (data.new_messages && data.new_messages.length > 0) {
-                console.log('New messages received:', data.new_messages.length);
+            if (data.success && data.new_messages && data.new_messages.length > 0) {
                 data.new_messages.forEach(msg => {
                     addMessage(msg.message, 'customer', msg.created_at);
                 });
             }
-        } else {
-            console.error('Poll failed:', data.message);
-            if (data.message && data.message.includes('not assigned')) {
-                clearInterval(pollingInterval);
-                alert('You are no longer assigned to this chat. Redirecting...');
-                setTimeout(() => {
-                    window.location.href = '/admin/livechat';
-                }, 2000);
+            
+            // Check customer activity
+            if (data.customer_active !== undefined) {
+                if (data.customer_active === false && !customerWarningShown) {
+                    customerWarningShown = true;
+                    showCustomerStatus('away');
+                    addSystemMessage('⚠️ Customer has left the chat page');
+                } else if (data.customer_active === true && customerWarningShown) {
+                    customerWarningShown = false;
+                    showCustomerStatus('back');
+                    addSystemMessage('✓ Customer has returned to the chat');
+                }
             }
+            
+            if (data.auto_end_warning) {
+                addSystemMessage('⏰ Chat will auto-end soon due to customer inactivity');
+            }
+            
+            if (data.status === 'closed') {
+                clearInterval(pollingInterval);
+                if (data.reason === 'customer_inactive') {
+                    addSystemMessage('🔴 Chat ended: Customer was inactive for 15 minutes');
+                    setTimeout(() => {
+                        location.reload();
+                    }, 3000);
+                } else {
+                    location.reload();
+                }
+            }
+        } catch (error) {
+            console.error('Polling error:', error);
         }
-    } catch (error) {
-        console.error('Polling error:', error);
-    } finally {
-        isPolling = false;
-    }
+    }, 3000);
 }
 
-// Start polling for messages
-function startPolling() {
-    if (sessionStatus !== 'active') {
-        console.log('Session not active, polling stopped');
-        return;
-    }
-    
-    console.log('Starting polling for session:', sessionId);
-    
-    // Initial poll
-    pollForMessages();
-    
-    // Set up interval for polling
-    pollingInterval = setInterval(pollForMessages, 3000); // Poll every 3 seconds
-}
-
-// End chat
 async function endChat() {
     if (!confirm('Are you sure you want to end this chat session?')) {
         return;
     }
     
     try {
-        const response = await fetch(`/admin/livechat/end/${sessionId}`, {
+        const response = await fetch(`{{ url('delivery/livechat/end') }}/${sessionId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
-            },
-            body: JSON.stringify({ session_id: sessionId })
+            }
         });
         
-        const data = await response.json();
-        
-        if (data.success) {
-            window.location.href = '{{ route("admin.livechat.index") }}';
+        if (response.ok) {
+            window.location.href = '{{ route("delivery.livechat.index") }}';
         } else {
-            alert('Failed to end chat: ' + (data.message || 'Unknown error'));
+            alert('Failed to end chat');
         }
     } catch (error) {
         console.error('Error:', error);
@@ -478,36 +520,20 @@ async function endChat() {
     }
 }
 
-// Initialize
-document.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('load', () => {
     scrollToBottom();
-    
     if (sessionStatus === 'active') {
         startPolling();
-        
-        if (messageInput) {
-            messageInput.focus();
-            
-            // Set up keypress event for Enter key
-            messageInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                    e.preventDefault();
-                    if (chatForm) {
-                        chatForm.dispatchEvent(new Event('submit'));
-                    }
-                }
-            });
-        }
+        messageInput.focus();
     }
     
-    // Debug: Check if elements exist
+    // Log initial state
+    console.log('=== CHAT PAGE LOADED ===');
     console.log('Session ID:', sessionId);
     console.log('Session Status:', sessionStatus);
-    console.log('Chat Form:', chatForm ? 'Found' : 'Not found');
-    console.log('Message Input:', messageInput ? 'Found' : 'Not found');
+    console.log('CSRF Token exists:', !!document.querySelector('meta[name="csrf-token"]'));
 });
 
-// Cleanup on page unload
 window.addEventListener('beforeunload', () => {
     if (pollingInterval) {
         clearInterval(pollingInterval);

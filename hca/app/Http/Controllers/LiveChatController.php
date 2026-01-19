@@ -11,16 +11,17 @@ use Carbon\Carbon;
 
 class LiveChatController extends Controller
 {
+    // ============================================
+    // CUSTOMER METHODS
+    // ============================================
+
     /**
      * Customer activity heartbeat - tracks when customer is active on chat page
      */
     public function heartbeat(Request $request)
     {
         if (!Auth::check()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Not authenticated'
-            ], 401);
+            return response()->json(['success' => false], 401);
         }
 
         $sessionId = $request->session_id;
@@ -34,7 +35,10 @@ class LiveChatController extends Controller
             if ($session && $session->status === 'active') {
                 DB::table('chat_sessions')
                     ->where('id', $session->id)
-                    ->update(['last_activity' => now()]);
+                    ->update([
+                        'last_activity' => now(),
+                        'last_customer_activity' => now()
+                    ]);
             }
             
             return response()->json(['success' => true]);
@@ -45,11 +49,10 @@ class LiveChatController extends Controller
     }
 
     /**
-     * Customer requests a live chat session (REQUIRES LOGIN)
+     * Customer requests STAFF live chat
      */
     public function request(Request $request)
     {
-        // Check if user is authenticated
         if (!Auth::check()) {
             return response()->json([
                 'success' => false,
@@ -58,18 +61,14 @@ class LiveChatController extends Controller
             ], 401);
         }
 
-        $request->validate([
-            'customer_name' => 'nullable|string|max:255',
-            'customer_email' => 'nullable|email|max:255',
-        ]);
-
         try {
             $user = Auth::user();
             
-            // Check if user already has an active or waiting session
+            // Check existing staff session
             $existingSession = DB::table('chat_sessions')
                 ->where('user_id', $user->id)
                 ->whereIn('status', ['waiting', 'active'])
+                ->where('chat_type', 'staff')
                 ->first();
 
             if ($existingSession) {
@@ -82,31 +81,30 @@ class LiveChatController extends Controller
                 ]);
             }
 
-            // Get current queue position
+            // Get queue position for staff
             $queuePosition = DB::table('chat_sessions')
                 ->where('status', 'waiting')
-                ->max('queue_position') + 1;
+                ->where('chat_type', 'staff')
+                ->count() + 1;
 
-            // Create new chat session
             $sessionId = Str::uuid()->toString();
             
             DB::table('chat_sessions')->insert([
                 'user_id' => $user->id,
                 'session_id' => $sessionId,
-                'customer_name' => $request->customer_name ?? $user->name,
-                'customer_email' => $request->customer_email ?? $user->email,
+                'chat_type' => 'staff',
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
                 'status' => 'waiting',
                 'queue_position' => $queuePosition,
                 'last_activity' => now(),
+                'last_customer_activity' => now(),
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            // Add system message
-            $chatSessionId = DB::table('chat_sessions')
-                ->where('session_id', $sessionId)
-                ->value('id');
-
+            $chatSessionId = DB::table('chat_sessions')->where('session_id', $sessionId)->value('id');
+            
             DB::table('chat_messages')->insert([
                 'chat_session_id' => $chatSessionId,
                 'sender_type' => 'system',
@@ -115,10 +113,10 @@ class LiveChatController extends Controller
                 'updated_at' => now(),
             ]);
 
-            Log::info('Live chat session requested', [
+            Log::info('Staff live chat session requested', [
                 'session_id' => $sessionId,
                 'user_id' => $user->id,
-                'customer_name' => $request->customer_name ?? $user->name,
+                'customer_name' => $user->name,
                 'queue_position' => $queuePosition
             ]);
 
@@ -134,6 +132,94 @@ class LiveChatController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to start live chat'
+            ], 500);
+        }
+    }
+
+    /**
+     * Customer requests DELIVERY live chat
+     */
+    public function requestDeliveryChat(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'You must be logged in to use delivery chat',
+                'redirect' => route('login')
+            ], 401);
+        }
+
+        try {
+            $user = Auth::user();
+            
+            // Check existing delivery session
+            $existingSession = DB::table('chat_sessions')
+                ->where('user_id', $user->id)
+                ->whereIn('status', ['waiting', 'active'])
+                ->where('chat_type', 'delivery')
+                ->first();
+
+            if ($existingSession) {
+                return response()->json([
+                    'success' => true,
+                    'session_id' => $existingSession->session_id,
+                    'status' => $existingSession->status,
+                    'queue_position' => $existingSession->queue_position,
+                    'message' => 'You already have an active delivery chat session'
+                ]);
+            }
+
+            // Get queue position for delivery
+            $queuePosition = DB::table('chat_sessions')
+                ->where('status', 'waiting')
+                ->where('chat_type', 'delivery')
+                ->count() + 1;
+
+            $sessionId = Str::uuid()->toString();
+            
+            DB::table('chat_sessions')->insert([
+                'user_id' => $user->id,
+                'session_id' => $sessionId,
+                'chat_type' => 'delivery',
+                'customer_name' => $user->name,
+                'customer_email' => $user->email,
+                'status' => 'waiting',
+                'queue_position' => $queuePosition,
+                'last_activity' => now(),
+                'last_customer_activity' => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            $chatSessionId = DB::table('chat_sessions')->where('session_id', $sessionId)->value('id');
+            
+            DB::table('chat_messages')->insert([
+                'chat_session_id' => $chatSessionId,
+                'sender_type' => 'system',
+                'message' => 'Customer joined the delivery support queue',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Delivery chat session requested', [
+                'session_id' => $sessionId,
+                'user_id' => $user->id,
+                'customer_name' => $user->name,
+                'queue_position' => $queuePosition
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'session_id' => $sessionId,
+                'queue_position' => $queuePosition,
+                'message' => 'You have been added to the delivery support queue'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Delivery chat request error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to start delivery chat'
             ], 500);
         }
     }
@@ -160,7 +246,10 @@ class LiveChatController extends Controller
                 // Update last activity
                 DB::table('chat_sessions')
                     ->where('id', $session->id)
-                    ->update(['last_activity' => now()]);
+                    ->update([
+                        'last_activity' => now(),
+                        'last_customer_activity' => now()
+                    ]);
 
                 return response()->json([
                     'success' => true,
@@ -261,11 +350,14 @@ class LiveChatController extends Controller
                 ->orderBy('created_at', 'asc')
                 ->get();
 
-            // Get sender names for admin messages
+            // Get sender names for admin/delivery messages
             $messages = $messages->map(function ($msg) {
                 if ($msg->sender_type === 'admin' && $msg->sender_id) {
-                    $admin = DB::table('admin')->where('id', $msg->sender_id)->first();
-                    $msg->sender_name = $admin ? $admin->name : 'Staff';
+                    $staff = DB::table('admin')->where('id', $msg->sender_id)->first();
+                    $msg->sender_name = $staff ? $staff->name : 'Staff';
+                } elseif ($msg->sender_type === 'delivery' && $msg->sender_id) {
+                    $staff = DB::table('delivery_coordinator')->where('coordinator_id', $msg->sender_id)->first();
+                    $msg->sender_name = $staff ? $staff->name : 'Delivery Support';
                 }
                 return $msg;
             });
@@ -309,7 +401,7 @@ class LiveChatController extends Controller
                 ], 404);
             }
 
-            // Mark all staff/admin messages as read
+            // Mark all staff/admin/delivery messages as read
             DB::table('chat_messages')
                 ->where('chat_session_id', $session->id)
                 ->where('sender_type', '!=', 'customer')
@@ -370,7 +462,10 @@ class LiveChatController extends Controller
             // Update last activity
             DB::table('chat_sessions')
                 ->where('id', $session->id)
-                ->update(['last_activity' => now()]);
+                ->update([
+                    'last_activity' => now(),
+                    'last_customer_activity' => now()
+                ]);
 
             // Insert message
             DB::table('chat_messages')->insert([
@@ -425,7 +520,10 @@ class LiveChatController extends Controller
             // Update last activity (user is still active)
             DB::table('chat_sessions')
                 ->where('id', $session->id)
-                ->update(['last_activity' => now()]);
+                ->update([
+                    'last_activity' => now(),
+                    'last_customer_activity' => now()
+                ]);
 
             // Get new unread messages
             $newMessages = DB::table('chat_messages')
@@ -448,20 +546,34 @@ class LiveChatController extends Controller
                     ->update(['is_read' => true]);
             }
 
-            // Get sender names for admin messages
+            // Get sender names for admin/delivery messages
             $messagesWithNames = $newMessages->map(function ($msg) {
                 if ($msg->sender_type === 'admin' && $msg->sender_id) {
-                    $admin = DB::table('admin')->where('id', $msg->sender_id)->first();
-                    $msg->sender_name = $admin ? $admin->name : 'Staff';
+                    $staff = DB::table('admin')->where('id', $msg->sender_id)->first();
+                    $msg->sender_name = $staff ? $staff->name : 'Staff';
+                } elseif ($msg->sender_type === 'delivery' && $msg->sender_id) {
+                    $staff = DB::table('delivery_coordinator')->where('coordinator_id', $msg->sender_id)->first();
+                    $msg->sender_name = $staff ? $staff->name : 'Delivery Support';
                 }
                 return $msg;
             });
+
+            // Get staff name based on chat type
+            $staffName = null;
+            if ($session->chat_type === 'delivery' && $session->delivery_id) {
+                $staff = DB::table('delivery_coordinator')->where('coordinator_id', $session->delivery_id)->first();
+                $staffName = $staff ? $staff->name : null;
+            } elseif ($session->chat_type === 'staff' && $session->admin_id) {
+                $staff = DB::table('admin')->where('id', $session->admin_id)->first();
+                $staffName = $staff ? $staff->name : null;
+            }
 
             return response()->json([
                 'success' => true,
                 'status' => $session->status,
                 'queue_position' => $session->queue_position,
-                'admin_name' => $session->admin_id ? DB::table('admin')->where('id', $session->admin_id)->value('name') : null,
+                'staff_name' => $staffName,
+                'chat_type' => $session->chat_type,
                 'new_messages' => $messagesWithNames
             ]);
 
@@ -540,116 +652,148 @@ class LiveChatController extends Controller
     // ============================================
 
     /**
-     * Get all chat sessions for admin dashboard
+     * Admin dashboard for live chat
      */
     public function adminIndex()
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
+        $adminId = session('admin_id');
+
+        // Get waiting sessions
         $waitingSessions = DB::table('chat_sessions')
             ->leftJoin('users', 'chat_sessions.user_id', '=', 'users.id')
             ->where('chat_sessions.status', 'waiting')
-            ->orderBy('chat_sessions.queue_position', 'asc')
+            ->where('chat_sessions.chat_type', 'staff')
             ->select('chat_sessions.*', 'users.name as user_name', 'users.email as user_email')
+            ->orderBy('chat_sessions.created_at', 'asc')
             ->get() ?? collect([]);
 
+        // Get my active sessions (assigned to current admin)
         $activeSessions = DB::table('chat_sessions')
             ->leftJoin('users', 'chat_sessions.user_id', '=', 'users.id')
             ->where('chat_sessions.status', 'active')
-            ->where('chat_sessions.admin_id', session('admin_id'))
-            ->orderBy('chat_sessions.started_at', 'desc')
+            ->where('chat_sessions.chat_type', 'staff')
+            ->where('chat_sessions.admin_id', $adminId)
             ->select('chat_sessions.*', 'users.name as user_name', 'users.email as user_email')
+            ->orderBy('chat_sessions.last_activity', 'desc')
             ->get() ?? collect([]);
 
+        // Get all active sessions (for all admins) with additional info
         $allActiveSessions = DB::table('chat_sessions')
-            ->leftJoin('admin', 'chat_sessions.admin_id', '=', 'admin.id')
             ->leftJoin('users', 'chat_sessions.user_id', '=', 'users.id')
+            ->leftJoin('admin', 'chat_sessions.admin_id', '=', 'admin.id')
             ->where('chat_sessions.status', 'active')
-            ->select('chat_sessions.*', 'admin.name as admin_name', 'users.name as user_name', 'users.email as user_email')
-            ->orderBy('chat_sessions.started_at', 'desc')
-            ->get() ?? collect([]);
+            ->where('chat_sessions.chat_type', 'staff')
+            ->select(
+                'chat_sessions.*',
+                'users.name as user_name',
+                'users.email as user_email',
+                'admin.name as admin_name'
+            )
+            ->orderBy('chat_sessions.last_activity', 'desc')
+            ->get()
+            ->map(function ($session) {
+                // Calculate inactivity time
+                $session->minutes_inactive = 0;
+                $session->is_inactive_warning = false;
+                $session->is_inactive_critical = false;
+                
+                if ($session->last_activity) {
+                    $lastActivity = Carbon::parse($session->last_activity);
+                    $session->minutes_inactive = now()->diffInMinutes($lastActivity);
+                    
+                    // Mark as warning if inactive for 5+ minutes
+                    $session->is_inactive_warning = $session->minutes_inactive >= 5;
+                    
+                    // Mark as critical if inactive for 10+ minutes
+                    $session->is_inactive_critical = $session->minutes_inactive >= 10;
+                }
+                
+                return $session;
+            }) ?? collect([]);
 
+        // Get closed sessions (last 50)
         $closedSessions = DB::table('chat_sessions')
             ->leftJoin('users', 'chat_sessions.user_id', '=', 'users.id')
             ->where('chat_sessions.status', 'closed')
-            ->orderBy('chat_sessions.closed_at', 'desc')
+            ->where('chat_sessions.chat_type', 'staff')
             ->select('chat_sessions.*', 'users.name as user_name', 'users.email as user_email')
-            ->limit(20)
+            ->orderBy('chat_sessions.closed_at', 'desc')
+            ->take(50)
             ->get() ?? collect([]);
 
-        // Add activity warnings for active sessions
-        $now = Carbon::now();
-        $allActiveSessions = $allActiveSessions->map(function($session) use ($now) {
-            if ($session->last_activity) {
-                $lastActivity = Carbon::parse($session->last_activity);
-                $minutesInactive = $now->diffInMinutes($lastActivity);
-                $session->minutes_inactive = $minutesInactive;
-                $session->is_inactive_warning = $minutesInactive >= 2; // Warning at 2 mins (customer not on page)
-                $session->is_inactive_critical = $minutesInactive >= 13; // Critical at 13 mins (will auto-close soon)
-            }
-            return $session;
-        });
-
+        // Use your existing view name and pass the correct variables
         return view('admin.livechat.livechat_index', compact(
-            'waitingSessions',
-            'activeSessions',
-            'allActiveSessions',
+            'waitingSessions', 
+            'activeSessions', 
+            'allActiveSessions', 
             'closedSessions'
         ));
     }
 
     /**
-     * Admin accepts a waiting chat
+     * Admin accepts a chat session
      */
-    public function adminAccept(Request $request, $sessionId)
+    public function acceptChat(Request $request, $sessionId)
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
         try {
             $session = DB::table('chat_sessions')
                 ->where('id', $sessionId)
-                ->where('status', 'waiting')
                 ->first();
 
             if (!$session) {
-                return redirect()->back()->with('error', 'Chat session not found or already accepted');
+                return redirect()->route('admin.livechat.index')
+                    ->with('error', 'Chat session not found');
             }
 
-            // Update session
+            if ($session->status !== 'waiting') {
+                return redirect()->route('admin.livechat.index')
+                    ->with('error', 'Chat session is not in waiting status');
+            }
+
+            // Update session to active and assign admin
             DB::table('chat_sessions')
                 ->where('id', $sessionId)
                 ->update([
                     'status' => 'active',
                     'admin_id' => session('admin_id'),
-                    'started_at' => now(),
+                    'started_at' => now(), // FIXED: Changed from 'accepted_at' to 'started_at'
                     'last_activity' => now(),
-                    'queue_position' => null,
                     'updated_at' => now(),
                 ]);
 
             // Add system message
-            $adminName = session('admin_name');
+            $admin = DB::table('admin')->where('id', session('admin_id'))->first();
+            $adminName = $admin ? $admin->name : 'Staff';
+
             DB::table('chat_messages')->insert([
                 'chat_session_id' => $sessionId,
                 'sender_type' => 'system',
-                'message' => "{$adminName} joined the chat",
+                'message' => $adminName . ' joined the chat',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
 
-            Log::info('Admin accepted chat', [
+            Log::info('Admin accepted chat session', [
                 'session_id' => $sessionId,
-                'admin_id' => session('admin_id')
+                'admin_id' => session('admin_id'),
+                'customer_name' => $session->customer_name
             ]);
 
-            return redirect()->route('admin.livechat.chat', $sessionId)
+            return redirect()->route('admin.livechat.chat', ['sessionId' => $sessionId])
                 ->with('success', 'Chat session accepted');
 
         } catch (\Exception $e) {
-            Log::error('Admin accept error: ' . $e->getMessage());
-            return redirect()->back()->with('error', 'Failed to accept chat');
+            Log::error('Accept chat error: ' . $e->getMessage());
+            return redirect()->route('admin.livechat.index')
+                ->with('error', 'Failed to accept chat session: ' . $e->getMessage());
         }
     }
 
@@ -658,13 +802,14 @@ class LiveChatController extends Controller
      */
     public function adminChat($sessionId)
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
         $session = DB::table('chat_sessions')
             ->leftJoin('users', 'chat_sessions.user_id', '=', 'users.id')
             ->where('chat_sessions.id', $sessionId)
-            ->select('chat_sessions.*', 'users.name as user_name', 'users.email as user_email')
+            ->select('chat_sessions.*', 'users.name as customer_name', 'users.email as customer_email')
             ->first();
 
         if (!$session) {
@@ -672,31 +817,243 @@ class LiveChatController extends Controller
                 ->with('error', 'Chat session not found');
         }
 
-        // Check if admin owns this chat
-        if ($session->status === 'active' && $session->admin_id != session('admin_id')) {
+        // Check if admin is assigned to this chat
+        if ($session->status === 'active' && $session->admin_id !== session('admin_id')) {
             return redirect()->route('admin.livechat.index')
-                ->with('error', 'This chat is being handled by another staff member');
+                ->with('error', 'You are not assigned to this chat session');
         }
-
-        // Calculate inactivity
-        $now = Carbon::now();
-        $lastActivity = Carbon::parse($session->last_activity);
-        $session->minutes_inactive = $now->diffInMinutes($lastActivity);
-        $session->is_inactive_warning = $session->minutes_inactive >= 2;
 
         $messages = DB::table('chat_messages')
             ->where('chat_session_id', $sessionId)
             ->orderBy('created_at', 'asc')
             ->get() ?? collect([]);
 
-        // Mark customer messages as read
-        DB::table('chat_messages')
-            ->where('chat_session_id', $sessionId)
-            ->where('sender_type', 'customer')
-            ->where('is_read', false)
-            ->update(['is_read' => true]);
-
+        // Use your existing view name
         return view('admin.livechat.livechat_chat', compact('session', 'messages'));
+    }
+
+    /**
+     * Admin sends a message
+     */
+    public function adminSendMessage(Request $request)
+    {
+        if (!session('admin_id')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ], 401);
+        }
+
+        $request->validate([
+            'session_id' => 'required|integer',
+            'message' => 'required|string|max:2000',
+        ]);
+
+        try {
+            $session = DB::table('chat_sessions')
+                ->where('id', $request->session_id)
+                ->first();
+
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
+
+            if ($session->status !== 'active') {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Chat session is not active'
+                ], 400);
+            }
+
+            if ($session->admin_id !== session('admin_id')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not assigned to this chat'
+                ], 403);
+            }
+
+            // Update last activity
+            DB::table('chat_sessions')
+                ->where('id', $session->id)
+                ->update([
+                    'last_activity' => now(),
+                    'updated_at' => now()
+                ]);
+
+            // Insert message
+            DB::table('chat_messages')->insert([
+                'chat_session_id' => $session->id,
+                'sender_type' => 'admin',
+                'sender_id' => session('admin_id'),
+                'message' => $request->message,
+                'is_read' => false,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Message sent'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Admin send message error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send message'
+            ], 500);
+        }
+    }
+
+    /**
+     * Admin polls for new messages - FIXED VERSION
+     */
+    public function adminPoll($sessionId)
+    {
+        if (!session('admin_id')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ], 401);
+        }
+
+        try {
+            $session = DB::table('chat_sessions')
+                ->where('id', $sessionId)
+                ->first();
+
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
+
+            // Check if admin is assigned to this chat
+            if ($session->status === 'active' && $session->admin_id !== session('admin_id')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not assigned to this chat'
+                ], 403);
+            }
+
+            // Update last activity
+            DB::table('chat_sessions')
+                ->where('id', $session->id)
+                ->update([
+                    'last_activity' => now(),
+                    'updated_at' => now()
+                ]);
+
+            // Get ALL unread messages (customer messages)
+            $newMessages = DB::table('chat_messages')
+                ->where('chat_session_id', $sessionId)
+                ->where('is_read', false)
+                ->where('sender_type', 'customer') // Only get customer messages
+                ->orderBy('created_at', 'asc')
+                ->get();
+
+            // Mark ALL customer messages as read (not just the ones we fetched)
+            if ($newMessages->count() > 0) {
+                DB::table('chat_messages')
+                    ->where('chat_session_id', $sessionId)
+                    ->where('sender_type', 'customer')
+                    ->where('is_read', false)
+                    ->update(['is_read' => true]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'status' => $session->status,
+                'new_messages' => $newMessages
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Admin poll error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Polling failed'
+            ], 500);
+        }
+    }
+
+    /**
+     * Admin ends a chat session
+     */
+    public function adminEndChat(Request $request, $sessionId)
+    {
+        if (!session('admin_id')) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ], 401);
+        }
+
+        $request->validate([
+            'session_id' => 'required|integer',
+        ]);
+
+        try {
+            $session = DB::table('chat_sessions')
+                ->where('id', $sessionId)
+                ->first();
+
+            if (!$session) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Session not found'
+                ], 404);
+            }
+
+            if ($session->admin_id !== session('admin_id')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You are not assigned to this chat'
+                ], 403);
+            }
+
+            // Update session status
+            DB::table('chat_sessions')
+                ->where('id', $session->id)
+                ->update([
+                    'status' => 'closed',
+                    'closed_at' => now(),
+                    'updated_at' => now(),
+                ]);
+
+            // Add system message
+            $admin = DB::table('admin')->where('id', session('admin_id'))->first();
+            $adminName = $admin ? $admin->name : 'Staff';
+
+            DB::table('chat_messages')->insert([
+                'chat_session_id' => $session->id,
+                'sender_type' => 'system',
+                'message' => $adminName . ' ended the chat',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+
+            Log::info('Admin ended chat session', [
+                'session_id' => $sessionId,
+                'admin_id' => session('admin_id'),
+                'customer_name' => $session->customer_name
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Chat session ended'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Admin end chat error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to end session'
+            ], 500);
+        }
     }
 
     /**
@@ -704,8 +1061,9 @@ class LiveChatController extends Controller
      */
     public function adminViewHistory($sessionId)
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
         $session = DB::table('chat_sessions')
             ->leftJoin('users', 'chat_sessions.user_id', '=', 'users.id')
@@ -723,6 +1081,7 @@ class LiveChatController extends Controller
             ->orderBy('created_at', 'asc')
             ->get() ?? collect([]);
 
+        // Use your existing view name
         return view('admin.livechat.livechat_view', compact('session', 'messages'));
     }
 
@@ -731,8 +1090,9 @@ class LiveChatController extends Controller
      */
     public function adminDeleteSession(Request $request, $sessionId)
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
         try {
             DB::table('chat_messages')
@@ -763,8 +1123,9 @@ class LiveChatController extends Controller
      */
     public function adminBulkDelete(Request $request)
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
         $request->validate([
             'days' => 'required|integer|min:1|max:365'
@@ -813,8 +1174,9 @@ class LiveChatController extends Controller
      */
     public function adminDeleteAllClosed(Request $request)
     {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
 
         try {
             $closedSessions = DB::table('chat_sessions')
@@ -847,206 +1209,5 @@ class LiveChatController extends Controller
             return redirect()->back()
                 ->with('error', 'Failed to delete closed chat sessions');
         }
-    }
-
-    /**
-     * Admin sends a message
-     */
-    public function adminSendMessage(Request $request)
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
-
-        $request->validate([
-            'session_id' => 'required|integer',
-            'message' => 'required|string|max:2000',
-        ]);
-
-        try {
-            DB::table('chat_messages')->insert([
-                'chat_session_id' => $request->session_id,
-                'sender_type' => 'admin',
-                'sender_id' => session('admin_id'),
-                'message' => $request->message,
-                'is_read' => false,
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Message sent'
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Admin send message error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to send message'
-            ], 500);
-        }
-    }
-
-    /**
-     * Admin polls for new messages and customer activity status
-     */
-    public function adminPoll($sessionId)
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
-
-        try {
-            $session = DB::table('chat_sessions')
-                ->where('id', $sessionId)
-                ->first();
-
-            if (!$session) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Session not found'
-                ], 404);
-            }
-
-            // Check for auto-end due to inactivity (15 minutes)
-            $now = Carbon::now();
-            $lastActivity = Carbon::parse($session->last_activity);
-            $minutesInactive = $now->diffInMinutes($lastActivity);
-            
-            $customerActive = true;
-            $autoEndWarning = false;
-            
-            if ($session->status === 'active') {
-                // Auto-end after 15 minutes of inactivity
-                if ($minutesInactive >= 15) {
-                    DB::table('chat_sessions')
-                        ->where('id', $sessionId)
-                        ->update([
-                            'status' => 'closed',
-                            'closed_at' => now(),
-                            'updated_at' => now(),
-                        ]);
-                    
-                    // Add system message
-                    DB::table('chat_messages')->insert([
-                        'chat_session_id' => $sessionId,
-                        'sender_type' => 'system',
-                        'message' => 'Chat ended due to customer inactivity (15 minutes)',
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                    
-                    return response()->json([
-                        'success' => true,
-                        'status' => 'closed',
-                        'reason' => 'customer_inactive',
-                        'new_messages' => []
-                    ]);
-                }
-                
-                // Warning at 13 minutes (2 minutes before auto-end)
-                $autoEndWarning = $minutesInactive >= 13;
-                
-                // Customer is considered "away" if no activity for 2 minutes
-                $customerActive = $minutesInactive < 2;
-            }
-
-            // Get new messages
-            $newMessages = DB::table('chat_messages')
-                ->where('chat_session_id', $sessionId)
-                ->where('sender_type', 'customer')
-                ->where('is_read', false)
-                ->orderBy('created_at', 'asc')
-                ->get();
-
-            if ($newMessages === null) {
-                $newMessages = collect([]);
-            }
-
-            if ($newMessages->count() > 0) {
-                DB::table('chat_messages')
-                    ->where('chat_session_id', $sessionId)
-                    ->where('sender_type', 'customer')
-                    ->where('is_read', false)
-                    ->update(['is_read' => true]);
-            }
-
-            return response()->json([
-                'success' => true,
-                'status' => $session->status,
-                'minutes_inactive' => $minutesInactive,
-                'customer_active' => $customerActive,
-                'auto_end_warning' => $autoEndWarning,
-                'new_messages' => $newMessages
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Admin poll error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Polling failed'
-            ], 500);
-        }
-    }
-
-    /**
-     * Admin ends the chat
-     */
-    public function adminEndSession(Request $request, $sessionId)
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
-
-        try {
-            $session = DB::table('chat_sessions')
-                ->where('id', $sessionId)
-                ->first();
-
-            if (!$session) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Session not found'
-                ], 404);
-            }
-
-            DB::table('chat_sessions')
-                ->where('id', $sessionId)
-                ->update([
-                    'status' => 'closed',
-                    'closed_at' => now(),
-                    'updated_at' => now(),
-                ]);
-
-            $adminName = session('admin_name');
-            DB::table('chat_messages')->insert([
-                'chat_session_id' => $sessionId,
-                'sender_type' => 'system',
-                'message' => "{$adminName} ended the chat",
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
-
-            return response()->json([
-                'success' => true,
-                'message' => 'Chat ended successfully'
-            ]);
-
-        } catch (\Exception $e) {
-            Log::error('Admin end session error: ' . $e->getMessage());
-            return response()->json([
-                'success' => false,
-                'message' => 'Failed to end session'
-            ], 500);
-        }
-    }
-
-    /**
-     * Check admin authentication
-     */
-    private function checkAdminAuth()
-    {
-        if (!session('admin_id')) {
-            return redirect()->route('staff.login')->with('error', 'Please login first');
-        }
-        return null;
     }
 }

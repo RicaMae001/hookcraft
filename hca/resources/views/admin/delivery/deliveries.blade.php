@@ -35,6 +35,78 @@
         .sidebar .nav-link:hover {
             background-color: #f8f9fa;
         }
+            /* Notification Styles */
+        .notification-bell {
+            position: relative;
+            cursor: pointer;
+            padding: 8px 15px;
+        }
+        .notification-badge {
+            position: absolute;
+            top: 2px;
+            right: 8px;
+            background: #dc3545;
+            color: white;
+            border-radius: 50%;
+            padding: 2px 6px;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        .notification-dropdown {
+            position: absolute;
+            right: 80px;
+            top: 100%;
+            width: 380px;
+            max-height: 500px;
+            overflow-y: auto;
+            background: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            margin-top: 10px;
+        }
+        .notification-dropdown.show {
+            display: block;
+        }
+        .notification-item {
+            padding: 15px;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
+            color: #333;
+        }
+        .notification-item:hover {
+            background: #f8f9fa;
+        }
+        .notification-item.unread {
+            background: #e3f2fd;
+        }
+        .notification-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            border-bottom: 2px solid #f0f0f0;
+            background: white;
+        }
+        .notification-time {
+            font-size: 11px;
+            color: #999;
+        }
+        .notification-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+        }
+        .notification-icon.admin {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
         .card {
             border: none;
             box-shadow: 0 0 15px rgba(0,0,0,0.1);
@@ -210,53 +282,13 @@
 <body>
 
     <!-- Navbar -->
-    <nav class="navbar navbar-dark sticky-top navbar-delivery flex-md-nowrap p-0 shadow">
-        <a class="navbar-brand col-md-3 col-lg-2 me-0 px-3" href="{{ route('delivery.dashboard') }}">
-            <i class="fas fa-truck me-2"></i>Delivery Portal
-        </a>
-        <div class="navbar-nav">
-            <div class="nav-item text-nowrap">
-                <form action="{{ route('delivery.logout') }}" method="POST" class="d-inline">
-                    @csrf
-                    <button type="submit" class="nav-link px-3 btn btn-link text-white text-decoration-none">
-                        <i class="fas fa-sign-out-alt me-2"></i>Logout
-                    </button>
-                </form>
-            </div>
-        </div>
-    </nav>
+ @include('admin.delivery.layouts.navbar')
 
     <div class="container-fluid">
         <div class="row">
 
             <!-- Sidebar -->
-            <nav class="col-md-2 d-md-block sidebar collapse">
-                <div class="position-sticky pt-3">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-user-circle fa-3x text-primary"></i>
-                        <p class="mt-2 mb-0"><strong>{{ session('coordinator_name') }}</strong></p>
-                        <small class="text-muted">Delivery Coordinator</small>
-                    </div>
-
-                    <ul class="nav flex-column">
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('delivery.dashboard') }}">
-                                <i class="fas fa-tachometer-alt me-2"></i>Dashboard
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link active" href="{{ route('delivery.deliveries') }}">
-                                <i class="fas fa-box me-2"></i>My Deliveries
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('delivery.history') }}">
-                                <i class="fas fa-history me-2"></i>Delivery History
-                            </a>
-                        </li>
-                    </ul>
-                </div>
-            </nav>
+             @include('admin.delivery.layouts.sidebar')
 
             <!-- Main Content -->
             <main class="col-md-10 ms-sm-auto px-md-4 py-4">
@@ -562,6 +594,11 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
+              // Notification Toggle
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('show');
+        }
         // Image preview function
         function previewImage(input, orderId) {
             if (input.files && input.files[0]) {
