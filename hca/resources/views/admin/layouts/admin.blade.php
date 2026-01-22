@@ -6,6 +6,14 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Dashboard') - HookcraftAvenue Admin</title>
     
+    <!-- CRITICAL: Load theme BEFORE any styles to prevent flicker -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
     @stack('head-scripts')
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -136,14 +144,17 @@
         .theme-toggle-icon {
             font-size: 14px;
             transition: all 0.3s ease;
+            position: absolute;
         }
 
         .theme-toggle-icon.sun {
             color: #F6AD55;
+            opacity: 1;
         }
 
         .theme-toggle-icon.moon {
             color: white;
+            opacity: 0;
         }
 
         [data-theme="dark"] .theme-toggle-icon.sun {
@@ -151,9 +162,9 @@
             transform: rotate(180deg);
         }
 
-        [data-theme="light"] .theme-toggle-icon.moon {
-            opacity: 0;
-            transform: rotate(-180deg);
+        [data-theme="dark"] .theme-toggle-icon.moon {
+            opacity: 1;
+            transform: rotate(0deg);
         }
 
         .notification-bell {
@@ -795,16 +806,7 @@
             
             html.setAttribute('data-theme', newTheme);
             localStorage.setItem('theme', newTheme);
-            
-            // Optional: Show a nice toast notification
-            console.log(`Switched to ${newTheme} mode`);
         }
-
-        // Load saved theme on page load
-        document.addEventListener('DOMContentLoaded', function() {
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
-        });
 
         // Sidebar Toggle for Mobile
         document.getElementById('sidebarToggle')?.addEventListener('click', function() {

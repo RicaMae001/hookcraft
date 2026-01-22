@@ -142,10 +142,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/track-order', [ProfileController::class, 'trackOrder'])->name('profile.track-order');
     
     // ===================================
-    // CUSTOMIZATION ROUTES
+    // CUSTOMIZATION ROUTES (UPDATED)
     // ===================================
-    Route::get('/product/{id}/customize', [CustomizationController::class, 'create'])->name('customization.create');
-    Route::post('/product/{id}/customize', [CustomizationController::class, 'store'])->name('customization.store');
+    Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
+    Route::get('/customize/create', [CustomizationController::class, 'create'])->name('customization.create');
+    Route::post('/customize/store', [CustomizationController::class, 'store'])->name('customization.store');
     Route::get('/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
     Route::get('/customization/{id}', [CustomizationController::class, 'show'])->name('customization.show');
     Route::get('/customization/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');

@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>Customize {{ $product->name }} - Flower Shop</title>
+    <title>{{ $product ? "Customize {$product->name}" : 'Create Custom Design' }} - Flower Shop</title>
     <style>
         * {
             margin: 0;
@@ -346,6 +346,36 @@
             display: none;
         }
 
+        .product-selection {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #667eea;
+        }
+
+        .product-selection h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .product-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            font-size: 1em;
+            background: white;
+        }
+
+        .product-info-section {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
         @media (max-width: 968px) {
             .content {
                 grid-template-columns: 1fr;
@@ -356,7 +386,7 @@
 <body>
     <div class="container">
         <div class="header">
-            <h1>✨ Design Your Custom {{ $product->name }} ✨</h1>
+            <h1>✨ {{ $product ? "Design Your Custom {$product->name}" : 'Create Your Custom Design' }} ✨</h1>
             <p>Drag, drop, and customize to create your perfect arrangement</p>
         </div>
 
@@ -378,6 +408,30 @@
                         </ul>
                     </div>
                 @endif
+
+                <!-- Product Selection (if no product was preselected) -->
+                @if(!$product)
+                <div class="product-selection">
+                    <h3>📦 Select Product to Customize</h3>
+                    <select id="productSelect" class="product-select">
+                        <option value="">-- Choose a Product --</option>
+                        @foreach(\App\Models\Product::all() as $prod)
+                            <option value="{{ $prod->id }}" data-price="{{ $prod->price }}" data-name="{{ $prod->name }}">
+                                {{ $prod->name }} - ₱{{ number_format($prod->price, 2) }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <small style="color: #666; display: block; margin-top: 10px;">Select a product to see pricing and start customizing</small>
+                </div>
+                @endif
+
+                <!-- Product Info Section -->
+                <div class="product-info-section" id="productInfoSection" style="{{ !$product ? 'display: none;' : '' }}">
+                    <h3 id="productName">{{ $product ? $product->name : '' }}</h3>
+                    @if($product && $product->description)
+                        <p style="color: #666; margin-bottom: 15px;" id="productDescription">{{ $product->description }}</p>
+                    @endif
+                </div>
 
                 <div class="canvas-container">
                     <div id="bouquetCanvas">
@@ -458,18 +512,12 @@
                     </div>
                 </div>
 
-                <!-- Product Info -->
-                <div class="control-panel">
-                    <h3>{{ $product->name }}</h3>
-                    <p style="color: #666; margin-bottom: 15px;">{{ $product->description }}</p>
-                </div>
-
                 <!-- Price Summary -->
                 <div class="price-summary">
                     <h3 style="margin-bottom: 15px;">💰 Price Summary</h3>
                     <div class="price-row">
                         <span>Base Price:</span>
-                        <span id="basePrice">₱{{ number_format($product->price, 2) }}</span>
+                        <span id="basePrice">₱{{ $product ? number_format($product->price, 2) : '0.00' }}</span>
                     </div>
                     <div class="price-row">
                         <span>Customization:</span>
@@ -477,13 +525,16 @@
                     </div>
                     <div class="price-row">
                         <span>Total:</span>
-                        <span id="totalPrice">₱{{ number_format($product->price + 50, 2) }}</span>
+                        <span id="totalPrice">₱{{ $product ? number_format($product->price + 50, 2) : '50.00' }}</span>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
                 <button class="btn btn-secondary" onclick="saveDraft()">💾 Save as Draft</button>
                 <button class="btn btn-primary" onclick="saveDesign()">🛒 Add to Cart</button>
+                <a href="{{ route('customization.landing') }}" class="btn" style="background: #f8f9fa; color: #333; text-align: center; margin-top: 10px;">
+                    ← Back to Products
+                </a>
             </div>
         </div>
     </div>
@@ -492,8 +543,9 @@
     <canvas id="detectionCanvas"></canvas>
 
     <!-- Hidden Form -->
-    <form id="customizationForm" action="{{ route('customization.store', $product->id) }}" method="POST" enctype="multipart/form-data" style="display: none;">
+    <form id="customizationForm" action="{{ route('customization.store') }}" method="POST" enctype="multipart/form-data" style="display: none;">
         @csrf
+        <input type="hidden" name="product_id" id="product_id" value="{{ $product ? $product->id : '' }}">
         <input type="hidden" name="customization_name" id="customization_name">
         <input type="hidden" name="customization_details" id="customization_details">
         <input type="hidden" name="canvas_data" id="canvas_data">
@@ -505,16 +557,67 @@
         let dragOffset = { x: 0, y: 0 };
         let isDragging = false;
         let itemCounter = 0;
-        const basePrice = {{ $product->price }};
+        let basePrice = {{ $product ? $product->price : 0 }};
         const customizationPrice = 50;
         let autoFillMode = false;
         let fillPositions = [];
         let currentFillIndex = 0;
         let fillIndicators = [];
+        let selectedProductId = {{ $product ? $product->id : 'null' }};
+        let selectedProductName = '{{ $product ? $product->name : "" }}';
+        let selectedProductDescription = '{{ $product ? addslashes($product->description) : "" }}';
 
-        window.addEventListener('DOMContentLoaded', function() {
+        // Initialize product selection if no product was preselected
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!selectedProductId) {
+                // Show product selection
+                document.getElementById('productInfoSection').style.display = 'none';
+                
+                // Add event listener for product selection
+                const productSelect = document.getElementById('productSelect');
+                if (productSelect) {
+                    productSelect.addEventListener('change', function(e) {
+                        const selectedOption = this.options[this.selectedIndex];
+                        if (selectedOption.value) {
+                            selectedProductId = this.value;
+                            basePrice = parseFloat(selectedOption.dataset.price);
+                            selectedProductName = selectedOption.dataset.name;
+                            
+                            // Update the hidden field
+                            document.getElementById('product_id').value = selectedProductId;
+                            
+                            // Update the product info section
+                            const productInfoSection = document.getElementById('productInfoSection');
+                            productInfoSection.style.display = 'block';
+                            document.getElementById('productName').textContent = selectedProductName;
+                            
+                            // Update prices
+                            document.getElementById('basePrice').textContent = '₱' + basePrice.toFixed(2);
+                            updateTotalPrice();
+                        } else {
+                            // No product selected
+                            document.getElementById('productInfoSection').style.display = 'none';
+                            selectedProductId = null;
+                            basePrice = 0;
+                            document.getElementById('product_id').value = '';
+                            document.getElementById('basePrice').textContent = '₱0.00';
+                            updateTotalPrice();
+                        }
+                    });
+                }
+            } else {
+                // Product was preselected, update total price
+                updateTotalPrice();
+            }
+            
             detectBouquetShape();
         });
+
+        function updateTotalPrice() {
+            const totalPriceElement = document.getElementById('totalPrice');
+            const total = basePrice + customizationPrice;
+            totalPriceElement.textContent = '₱' + total.toFixed(2);
+        }
 
         function detectBouquetShape() {
             const img = new Image();
@@ -876,6 +979,12 @@
         }
 
         function saveDesign() {
+            // Check if product is selected
+            if (!selectedProductId) {
+                alert('Please select a product first!');
+                return;
+            }
+            
             const items = document.querySelectorAll('.draggable-item');
             if (items.length === 0) {
                 alert('Please add some customizations to your design first!');
@@ -884,7 +993,7 @@
             
             const canvasData = collectCanvasData();
             
-            document.getElementById('customization_name').value = 'Custom {{ $product->name }} Design';
+            document.getElementById('customization_name').value = selectedProductName + ' Custom Design';
             document.getElementById('customization_details').value = `Custom design with ${items.length} elements`;
             document.getElementById('canvas_data').value = JSON.stringify(canvasData);
             document.getElementById('status').value = 'Pending';
@@ -893,6 +1002,12 @@
         }
 
         function saveDraft() {
+            // Check if product is selected
+            if (!selectedProductId) {
+                alert('Please select a product first!');
+                return;
+            }
+            
             const items = document.querySelectorAll('.draggable-item');
             if (items.length === 0) {
                 alert('Please add some customizations first!');
@@ -901,7 +1016,7 @@
             
             const canvasData = collectCanvasData();
             
-            document.getElementById('customization_name').value = 'Draft - Custom {{ $product->name }}';
+            document.getElementById('customization_name').value = 'Draft - ' + selectedProductName;
             document.getElementById('customization_details').value = `Draft design with ${items.length} elements`;
             document.getElementById('canvas_data').value = JSON.stringify(canvasData);
             document.getElementById('status').value = 'Draft';
