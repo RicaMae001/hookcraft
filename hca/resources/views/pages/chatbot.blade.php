@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>AI Chatbot - {{ config('app.name') }}</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
             margin: 0;
@@ -215,6 +216,13 @@
             box-shadow: 0 2px 10px rgba(76, 175, 80, 0.3);
         }
 
+        .message.delivery .message-content {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
+            color: white;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 10px rgba(33, 150, 243, 0.3);
+        }
+
         .message-avatar {
             width: 35px;
             height: 35px;
@@ -238,6 +246,11 @@
 
         .message.staff .message-avatar {
             background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+        }
+
+        .message.delivery .message-avatar {
+            background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);
             color: white;
         }
 
@@ -303,6 +316,11 @@
 
         .chat-mode-indicator.live {
             color: #32CD32;
+            font-weight: 600;
+        }
+
+        .chat-mode-indicator.delivery {
+            color: #2196F3;
             font-weight: 600;
         }
 
@@ -411,7 +429,7 @@
             padding: 30px;
             border-radius: 20px;
             width: 90%;
-            max-width: 400px;
+            max-width: 500px;
             animation: slideDown 0.3s;
         }
 
@@ -498,10 +516,20 @@
             .header-actions {
                 gap: 5px;
             }
+            
+            .modal-content {
+                margin: 20% auto;
+                padding: 20px;
+            }
         }
     </style>
 </head>
+
 <body>
+    
+@include('components.login_modal')
+@include('components.signup_modal')
+
     <div class="chat-container">
         <div class="chat-header">
             <div class="header-left">
@@ -518,7 +546,7 @@
                 </button>
                 <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
                     <span id="liveChatIcon">💬</span>
-                    <span id="liveChatText">Chat with Staff</span>
+                    <span id="liveChatText">Chat with Support</span>
                 </button>
             </div>
         </div>
@@ -582,12 +610,29 @@
     <div id="liveChatModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Connect with Staff</h3>
-                <p>Are you sure you want to start a live chat with our support team?</p>
+                <h3>Choose Support Type</h3>
+                <p>How can we help you today?</p>
             </div>
-            <div class="modal-buttons">
-                <button type="button" class="modal-btn secondary" onclick="closeLiveChatModal()">Cancel</button>
-                <button type="button" class="modal-btn primary" onclick="startLiveChatDirect()">Start Live Chat</button>
+            <div class="modal-buttons" style="flex-direction: column; gap: 15px;">
+                <button type="button" class="modal-btn primary" onclick="startLiveChatWithType('staff')" 
+                        style="width: 100%; padding: 15px; text-align: left; display: flex; align-items: center; gap: 15px;">
+                    <i class="fas fa-user-tie" style="font-size: 24px;"></i>
+                    <div>
+                        <div style="font-size: 16px; font-weight: bold;">Website Support</div>
+                        <div style="font-size: 12px; opacity: 0.9;">General inquiries, products, account help</div>
+                    </div>
+                </button>
+                <button type="button" class="modal-btn primary" onclick="startLiveChatWithType('delivery')" 
+                        style="width: 100%; padding: 15px; text-align: left; display: flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                    <i class="fas fa-truck" style="font-size: 24px;"></i>
+                    <div>
+                        <div style="font-size: 16px; font-weight: bold;">Order & Delivery Support</div>
+                        <div style="font-size: 12px; opacity: 0.9;">Track orders, delivery status, order issues</div>
+                    </div>
+                </button>
+                <button type="button" class="modal-btn secondary" onclick="closeLiveChatModal()" style="width: 100%;">
+                    Cancel
+                </button>
             </div>
         </div>
     </div>
@@ -596,8 +641,9 @@
         let isLiveChatMode = false;
         let liveChatSessionId = null;
         let pollingInterval = null;
-        let currentChatStatus = null; // Track current status
-        let activityHeartbeat = null; // Track heartbeat interval
+        let currentChatStatus = null;
+        let activityHeartbeat = null;
+        let currentSupportType = null; // 'staff' or 'delivery'
 
         const chatMessages = document.getElementById('chatMessages');
         const chatForm = document.getElementById('chatForm');
@@ -666,7 +712,7 @@
                 
                 // Show notification that staff joined
                 setTimeout(() => {
-                    addMessage('✓ A staff member has joined the chat!', 'system');
+                    addMessage('✓ A support member has joined the chat!', 'system');
                     scrollToBottom();
                 }, 500);
             }
@@ -686,6 +732,7 @@
                     if (data.success && data.has_session) {
                         liveChatSessionId = data.session.session_id;
                         isLiveChatMode = true;
+                        currentSupportType = data.session.support_type || 'staff';
                         
                         const status = data.session.status;
                         currentChatStatus = status; // Set initial status
@@ -722,8 +769,9 @@
                     data.messages.forEach(msg => {
                         if (msg.sender_type === 'customer') {
                             addMessage(msg.message, 'user');
-                        } else if (msg.sender_type === 'admin' || msg.sender_type === 'staff') {
-                            addMessage(msg.message, 'staff', msg.sender_name || 'Staff');
+                        } else if (msg.sender_type === 'admin' || msg.sender_type === 'staff' || msg.sender_type === 'delivery') {
+                            const messageType = currentSupportType === 'delivery' ? 'delivery' : 'staff';
+                            addMessage(msg.message, messageType, msg.sender_name || 'Support');
                         } else if (msg.sender_type === 'system') {
                             addMessage(msg.message, 'system');
                         }
@@ -753,6 +801,10 @@
             return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
+        function getSupportTypeDisplay(type) {
+            return type === 'delivery' ? 'Delivery Support' : 'Website Support';
+        }
+
         function addMessage(message, type = 'bot', senderName = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
@@ -760,10 +812,11 @@
             let avatar = '🤖';
             if (type === 'user') avatar = '👤';
             if (type === 'staff') avatar = '👨‍💼';
+            if (type === 'delivery') avatar = '🚚';
             if (type === 'system') avatar = '';
 
             let content = `<div>${message}</div><div class="timestamp">${getTimestamp()}</div>`;
-            if (senderName && type === 'staff') {
+            if (senderName && (type === 'staff' || type === 'delivery')) {
                 content = `<div class="sender-name">${senderName}</div>${content}`;
             }
             
@@ -778,7 +831,7 @@
             chatMessages.insertBefore(messageDiv, chatMessages.lastElementChild);
             scrollToBottom();
             
-            if (isLiveChatMode && type === 'staff') {
+            if (isLiveChatMode && (type === 'staff' || type === 'delivery')) {
                 markMessagesAsRead();
             }
         }
@@ -793,7 +846,7 @@
             
             if (!isAuthenticated) {
                 alert('Please login to use live chat support.');
-                window.location.href = '{{ route("login") }}';
+                window.location.href = '{{ route("home") }}';
                 return;
             }
             
@@ -810,11 +863,15 @@
             liveChatModal.style.display = 'none';
         }
 
-        async function startLiveChatDirect() {
+        // NEW FUNCTION - Updated version
+        async function startLiveChatWithType(type) {
             closeLiveChatModal();
+            currentSupportType = type;
             
             try {
-                const response = await fetch('{{ route("livechat.request") }}', {
+                const route = type === 'delivery' ? '{{ route("livechat.request-delivery") }}' : '{{ route("livechat.request") }}';
+                
+                const response = await fetch(route, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -827,9 +884,11 @@
                 if (response.ok) {
                     liveChatSessionId = data.session_id;
                     isLiveChatMode = true;
-                    currentChatStatus = 'waiting'; // Set initial status
+                    currentChatStatus = 'waiting';
+                    
+                    const staffType = type === 'delivery' ? 'delivery coordinator' : 'staff member';
                     updateUIForLiveChat('waiting', data.queue_position);
-                    addMessage('🎫 You have been added to the queue. A staff member will be with you shortly...', 'system');
+                    addMessage(`🎫 You have been added to the queue. A ${staffType} will be with you shortly...`, 'system');
                     startPolling();
                 } else {
                     alert(data.message || 'Failed to start live chat. Please try again.');
@@ -850,19 +909,19 @@
                 icon.textContent = '⏱️';
                 text.innerHTML = `Waiting... <span class="queue-badge">#${queuePosition}</span>`;
                 headerAvatar.textContent = '⏱️';
-                headerTitle.textContent = 'Waiting for Staff';
+                headerTitle.textContent = 'Waiting for Support';
                 headerStatus.innerHTML = `<span class="live-chat-status">You are #${queuePosition} in queue</span>`;
-                chatModeIndicator.innerHTML = '<span>⏱️</span><span>Waiting for staff to join...</span>';
-                chatModeIndicator.className = 'chat-mode-indicator live';
+                chatModeIndicator.innerHTML = `<span>⏱️</span><span>Waiting for support to join...</span>`;
+                chatModeIndicator.className = `chat-mode-indicator ${currentSupportType === 'delivery' ? 'delivery' : 'live'}`;
             } else if (status === 'active') {
                 btn.className = 'live-chat-btn active';
                 icon.textContent = '✓';
                 text.textContent = 'End Chat';
-                headerAvatar.textContent = '👨‍💼';
-                headerTitle.textContent = 'Live Chat Active';
-                headerStatus.innerHTML = '<span class="live-chat-status">Connected to staff</span>';
-                chatModeIndicator.innerHTML = '<span>👨‍💼</span><span>Live chat with staff</span>';
-                chatModeIndicator.className = 'chat-mode-indicator live';
+                headerAvatar.textContent = currentSupportType === 'delivery' ? '🚚' : '👨‍💼';
+                headerTitle.textContent = currentSupportType === 'delivery' ? 'Delivery Support' : 'Live Support';
+                headerStatus.innerHTML = '<span class="live-chat-status">Connected to support</span>';
+                chatModeIndicator.innerHTML = `<span>${currentSupportType === 'delivery' ? '🚚' : '👨‍💼'}</span><span>Live chat with support</span>`;
+                chatModeIndicator.className = `chat-mode-indicator ${currentSupportType === 'delivery' ? 'delivery' : 'live'}`;
             }
         }
 
@@ -880,7 +939,7 @@
                     if (data.status === 'active' && currentChatStatus !== 'active') {
                         currentChatStatus = 'active';
                         updateUIForLiveChat('active');
-                        addMessage('✓ A staff member has joined the chat!', 'system');
+                        addMessage('✓ A support member has joined the chat!', 'system');
                         startActivityHeartbeat(); // Start heartbeat when staff joins
                     } else if (data.status === 'waiting' && currentChatStatus !== 'waiting') {
                         currentChatStatus = 'waiting';
@@ -889,8 +948,9 @@
 
                     if (data.new_messages && data.new_messages.length > 0) {
                         data.new_messages.forEach(msg => {
-                            if (msg.sender_type === 'admin' || msg.sender_type === 'staff') {
-                                addMessage(msg.message, 'staff', msg.sender_name || 'Staff');
+                            if (msg.sender_type === 'admin' || msg.sender_type === 'staff' || msg.sender_type === 'delivery') {
+                                const messageType = currentSupportType === 'delivery' ? 'delivery' : 'staff';
+                                addMessage(msg.message, messageType, msg.sender_name || 'Support');
                             } else if (msg.sender_type === 'system') {
                                 addMessage(msg.message, 'system');
                             }
@@ -921,12 +981,15 @@
             try {
                 stopActivityHeartbeat(); // Stop heartbeat when ending chat
                 
-                await fetch(`{{ url('admin/livechat/end') }}/${liveChatSessionId}`, {
+                await fetch('{{ route("livechat.end") }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                    }
+                    },
+                    body: JSON.stringify({
+                        session_id: liveChatSessionId
+                    })
                 });
                 
                 endLiveChat();
@@ -941,11 +1004,12 @@
             stopActivityHeartbeat(); // Stop heartbeat
             isLiveChatMode = false;
             liveChatSessionId = null;
-            currentChatStatus = null; // Reset status tracker
+            currentChatStatus = null;
+            currentSupportType = null;
             
             liveChatBtn.className = 'live-chat-btn';
             document.getElementById('liveChatIcon').textContent = '💬';
-            document.getElementById('liveChatText').textContent = 'Chat with Staff';
+            document.getElementById('liveChatText').textContent = 'Chat with Support';
             
             headerAvatar.textContent = '🤖';
             headerTitle.textContent = 'AI Assistant';
