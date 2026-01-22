@@ -85,6 +85,7 @@
 
 <!-- Navbar -->
  @include('components.navbar')
+ 
 <div class="chatbot-float">
     <a href="{{ route('chatbot') }}" class="chatbot-pulse" title="Chat with AI Assistant">
         <i class="bi bi-robot"></i>
