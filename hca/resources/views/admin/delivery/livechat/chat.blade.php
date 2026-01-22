@@ -12,8 +12,91 @@
             </a>
         </div>
 
+        <!-- Customer Orders Panel -->
+        <div class="col-lg-4 mb-3">
+            <div class="card shadow-sm">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-box"></i> Customer's Ongoing Orders
+                    </h6>
+                </div>
+                <div class="card-body" id="ordersPanel" style="max-height: 500px; overflow-y: auto;">
+                    @if($ongoingOrders && $ongoingOrders->count() > 0)
+                        @foreach($ongoingOrders as $order)
+                            <div class="order-card mb-3 p-3 border rounded" data-order-id="{{ $order->id }}">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <div>
+                                        <h6 class="mb-1 text-primary">
+                                            <i class="fas fa-receipt"></i> {{ $order->order_number }}
+                                        </h6>
+                                        <small class="text-muted">
+                                            {{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y h:i A') }}
+                                        </small>
+                                    </div>
+                                    <span class="badge bg-{{ 
+                                        $order->delivery_status === 'Pending' ? 'warning' : 
+                                        ($order->delivery_status === 'Out for Delivery' ? 'success' : 'secondary') 
+                                    }}">
+                                        {{ $order->delivery_status }}
+                                    </span>
+                                </div>
+                                
+                                <div class="mb-2">
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-shopping-cart"></i> {{ $order->items_count }} item(s)
+                                    </small>
+                                    <small class="text-muted d-block">
+                                        <i class="fas fa-peso-sign"></i> ₱{{ number_format($order->total, 2) }}
+                                    </small>
+                                    @if($order->address)
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-map-marker-alt"></i> {{ Str::limit($order->address, 50) }}
+                                        </small>
+                                    @endif
+                                </div>
+                                
+                                <button type="button" class="btn btn-sm btn-outline-primary w-100" 
+                                        onclick="insertOrderReference('{{ $order->order_number }}')">
+                                    <i class="fas fa-comment-dots"></i> Reference in Chat
+                                </button>
+                            </div>
+                        @endforeach
+                    @else
+                        <div class="text-center py-4">
+                            <i class="fas fa-box-open fa-3x text-muted mb-2"></i>
+                            <p class="text-muted mb-0">No ongoing orders</p>
+                            <small class="text-muted">Customer has no active orders</small>
+                        </div>
+                    @endif
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card shadow-sm mt-3">
+                <div class="card-header bg-secondary text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-bolt"></i> Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <button class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="sendQuickMessage('Can you provide your order number?')">
+                        <i class="fas fa-question-circle"></i> Ask for Order Number
+                    </button>
+                    <button class="btn btn-sm btn-outline-success w-100 mb-2" onclick="sendQuickMessage('Your order is on the way! Expected delivery today.')">
+                        <i class="fas fa-truck"></i> Delivery Update
+                    </button>
+                    <button class="btn btn-sm btn-outline-info w-100 mb-2" onclick="sendQuickMessage('Please provide your complete delivery address.')">
+                        <i class="fas fa-map-marker-alt"></i> Request Address
+                    </button>
+                    <button class="btn btn-sm btn-outline-warning w-100" onclick="sendQuickMessage('We apologize for the delay. Let me check the status for you.')">
+                        <i class="fas fa-exclamation-triangle"></i> Delay Notice
+                    </button>
+                </div>
+            </div>
+        </div>
+
         <!-- Chat Interface -->
-        <div class="col-lg-12">
+        <div class="col-lg-8">
             <div class="card shadow-lg" style="height: 80vh;">
                 <!-- Chat Header -->
                 <div class="card-header bg-gradient-success text-white py-3">
@@ -235,6 +318,29 @@
     border-radius: 15px;
     overflow: hidden;
 }
+
+.order-card {
+    background: #fff;
+    transition: all 0.3s ease;
+}
+
+.order-card:hover {
+    background: #f8f9fa;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+#ordersPanel::-webkit-scrollbar {
+    width: 6px;
+}
+
+#ordersPanel::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+#ordersPanel::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
 </style>
 
 <script>
@@ -258,6 +364,17 @@ function formatTimeToLocal(dateString) {
         minute: '2-digit',
         hour12: true
     });
+}
+
+function insertOrderReference(orderNumber) {
+    messageInput.value = `Regarding order ${orderNumber}: `;
+    messageInput.focus();
+}
+
+function sendQuickMessage(message) {
+    if (!messageInput || sessionStatus !== 'active') return;
+    messageInput.value = message;
+    messageInput.focus();
 }
 
 function showCustomerStatus(status) {
@@ -379,26 +496,16 @@ if (chatForm) {
         sendBtn.disabled = true;
         messageInput.disabled = true;
         
-        // Debug logs
-        console.log('=== SEND MESSAGE DEBUG ===');
-        console.log('Session ID:', sessionId);
-        console.log('Message:', message);
-        console.log('Route URL:', '{{ route("delivery.livechat.send") }}');
-        
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]');
             if (!csrfToken) {
                 throw new Error('CSRF token not found in page');
             }
             
-            console.log('CSRF Token:', csrfToken.content.substring(0, 10) + '...');
-            
             const requestData = {
                 session_id: sessionId,
                 message: message
             };
-            
-            console.log('Request Data:', requestData);
             
             const response = await fetch('{{ route("delivery.livechat.send") }}', {
                 method: 'POST',
@@ -410,11 +517,7 @@ if (chatForm) {
                 body: JSON.stringify(requestData)
             });
             
-            console.log('Response Status:', response.status);
-            console.log('Response OK:', response.ok);
-            
             const contentType = response.headers.get('content-type');
-            console.log('Content-Type:', contentType);
             
             let data;
             if (contentType && contentType.includes('application/json')) {
@@ -422,22 +525,18 @@ if (chatForm) {
             } else {
                 const text = await response.text();
                 console.error('Non-JSON response:', text);
-                throw new Error('Server returned non-JSON response. Check console for details.');
+                throw new Error('Server returned non-JSON response.');
             }
-            
-            console.log('Response Data:', data);
             
             if (response.ok && data.success) {
                 addMessage(message, 'delivery', new Date().toISOString());
                 messageInput.value = '';
-                console.log('✓ Message sent successfully');
             } else {
                 const errorMsg = data.message || 'Failed to send message';
-                console.error('❌ Send failed:', data);
                 alert('Error: ' + errorMsg);
             }
         } catch (error) {
-            console.error('❌ Exception:', error);
+            console.error('Exception:', error);
             alert('Failed to send message: ' + error.message);
         } finally {
             sendBtn.disabled = false;
@@ -461,7 +560,6 @@ function startPolling() {
                 });
             }
             
-            // Check customer activity
             if (data.customer_active !== undefined) {
                 if (data.customer_active === false && !customerWarningShown) {
                     customerWarningShown = true;
@@ -526,12 +624,6 @@ window.addEventListener('load', () => {
         startPolling();
         messageInput.focus();
     }
-    
-    // Log initial state
-    console.log('=== CHAT PAGE LOADED ===');
-    console.log('Session ID:', sessionId);
-    console.log('Session Status:', sessionStatus);
-    console.log('CSRF Token exists:', !!document.querySelector('meta[name="csrf-token"]'));
 });
 
 window.addEventListener('beforeunload', () => {
