@@ -682,6 +682,7 @@
 </section>
 
 <!-- Customize Section -->
+<!-- Customize Section -->
 <section class="customize">
     <div class="container">
         <div class="customize-content">
@@ -694,7 +695,8 @@
                 </div>
                 @endfor
             </div>
-            <a href="{{ route('customization.create', ['id' => 1]) }}" class="btn-white-custom">
+            <!-- CHANGED: From old product-based route to new landing page -->
+            <a href="{{ route('customization.landing') }}" class="btn-white-custom">
                 <i class="bi bi-palette me-2"></i>Start Customizing
             </a>
         </div>

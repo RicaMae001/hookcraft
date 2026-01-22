@@ -248,8 +248,9 @@
                 <div class="empty-state">
                     <h3>🎨 No Customizations Yet</h3>
                     <p>Start creating your personalized flower arrangements!</p>
-                    <a href="{{ route('products.index') }}" class="btn btn-primary btn-large">
-                        Browse Products
+                    <!-- CHANGED: From Browse Products to Start Customizing -->
+                    <a href="{{ route('customization.landing') }}" class="btn btn-primary btn-large">
+                        Start Customizing
                     </a>
                 </div>
             @endif

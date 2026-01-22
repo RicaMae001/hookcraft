@@ -11,34 +11,40 @@ use Illuminate\Support\Facades\DB;
 
 class CustomizationController extends Controller
 {
-    // Show customization page
-    public function create($productId)
+    // Customization landing page - Choose what to customize
+    public function landing()
     {
-        $product = Product::with('category')->findOrFail($productId);
+        // Get all products
+        $products = Product::with('category')->get();
         
-        // Check if product is customizable
-        $customizable = DB::table('customizable_products')
-            ->where('product_id', $productId)
-            ->where('is_customizable', 1)
-            ->first();
-            
-        if (!$customizable) {
-            return redirect()->back()->with('error', 'This product is not customizable.');
+        return view('customization.landing', compact('products'));
+    }
+
+    // Show customization creation page (no product ID needed)
+    public function create(Request $request)
+    {
+        // Get product ID from query parameter if provided
+        $productId = $request->query('product_id');
+        $product = null;
+        
+        if ($productId) {
+            $product = Product::with('category')->find($productId);
         }
         
         return view('customization.create', compact('product'));
     }
 
-    // Store customization with canvas data
-    public function store(Request $request, $productId)
+    // Store customization (no product ID in route)
+    public function store(Request $request)
     {
         $request->validate([
+            'product_id' => 'required|exists:products,id',
             'customization_name' => 'required|string|max:255',
             'customization_details' => 'required|string',
             'special_instructions' => 'nullable|string',
             'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'canvas_data' => 'nullable|string', // JSON data from canvas
-            'canvas_image' => 'nullable|string', // Base64 image
+            'canvas_data' => 'nullable|string',
+            'canvas_image' => 'nullable|string',
             'options.*.type' => 'nullable|string',
             'options.*.value' => 'nullable|string',
             'options.*.price' => 'nullable|numeric|min:0',
@@ -87,7 +93,7 @@ class CustomizationController extends Controller
             // Create customization
             $customization = ProductCustomization::create([
                 'user_id' => Auth::id(),
-                'product_id' => $productId,
+                'product_id' => $request->product_id,
                 'customization_name' => $request->customization_name,
                 'customization_details' => $request->customization_details,
                 'special_instructions' => $request->special_instructions,
@@ -160,15 +166,14 @@ class CustomizationController extends Controller
         return view('customization.show', compact('customization'));
     }
 
-    // Edit customization (redirect to canvas)
+    // Edit customization
     public function edit($id)
     {
         $customization = ProductCustomization::with(['product', 'options'])
             ->where('user_id', Auth::id())
-            ->where('order_id', null) // Can only edit if not ordered yet
+            ->where('order_id', null)
             ->findOrFail($id);
 
-        // Get canvas data if exists
         $canvasOption = $customization->options()
             ->where('option_type', 'canvas_design')
             ->first();
