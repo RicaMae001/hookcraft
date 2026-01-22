@@ -16,6 +16,51 @@ class LiveChatController extends Controller
     // ============================================
 
     /**
+     * Get customer's ongoing orders (for customer view)
+     */
+    public function getCustomerOngoingOrders()
+    {
+        if (!Auth::check()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Not authenticated'
+            ], 401);
+        }
+
+        try {
+            $orders = DB::table('orders')
+                ->where('user_id', Auth::id())
+                ->whereIn('delivery_status', ['Pending', 'Out for Delivery'])
+                ->orderBy('created_at', 'desc')
+                ->select('id', 'customer_name', 'delivery_status', 'total', 'created_at', 'address')
+                ->get()
+                ->map(function ($order) {
+                    // Get order items count
+                    $order->items_count = DB::table('order_item')
+                        ->where('order_id', $order->id)
+                        ->count();
+                    
+                    // Generate order number (e.g., ORD-00048)
+                    $order->order_number = 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+                    
+                    return $order;
+                });
+
+            return response()->json([
+                'success' => true,
+                'orders' => $orders
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Get customer ongoing orders error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to get orders'
+            ], 500);
+        }
+    }
+
+    /**
      * Customer activity heartbeat - tracks when customer is active on chat page
      */
     public function heartbeat(Request $request)

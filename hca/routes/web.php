@@ -103,6 +103,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/livechat/check-unread', [LiveChatController::class, 'checkUnread'])->name('livechat.check-unread');
 
     // ===================================
+    // CUSTOMER ORDERS ENDPOINT (NEW - FOR ORDER DISPLAY IN CHAT)
+    // ===================================
+    Route::get('/customer/orders/ongoing', [LiveChatController::class, 'getCustomerOngoingOrders'])->name('customer.orders.ongoing');
+
+    // ===================================
     // CART ROUTES
     // ===================================
     Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
@@ -288,7 +293,7 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
     Route::get('/history', [DeliveryController::class, 'history'])->name('history');
     
     // ===================================
-    // DELIVERY LIVE CHAT ROUTES (FIXED)
+    // DELIVERY LIVE CHAT ROUTES (FIXED + ENHANCED WITH ORDER DISPLAY)
     // ===================================
     Route::prefix('livechat')->name('livechat.')->group(function () {
         Route::get('/', [DeliveryLiveChatController::class, 'index'])->name('index');
@@ -297,5 +302,8 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
         Route::post('/send', [DeliveryLiveChatController::class, 'sendMessage'])->name('send');
         Route::post('/end/{sessionId}', [DeliveryLiveChatController::class, 'endChat'])->name('end');
         Route::get('/poll/{sessionId}', [DeliveryLiveChatController::class, 'pollMessages'])->name('poll');
+        
+        // NEW: Get customer orders endpoint for delivery coordinators
+        Route::get('/orders/{sessionId}', [DeliveryLiveChatController::class, 'getCustomerOrders'])->name('orders');
     });
 });

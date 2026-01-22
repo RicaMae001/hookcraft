@@ -23,9 +23,122 @@
             padding: 20px;
         }
 
-        .chat-container {
+        .main-container {
             width: 100%;
-            max-width: 800px;
+            max-width: 1400px;
+            display: flex;
+            gap: 20px;
+        }
+
+        /* Orders Sidebar Styles */
+        .orders-sidebar {
+            width: 350px;
+            background: white;
+            border-radius: 25px;
+            box-shadow: 0 25px 70px rgba(255, 105, 180, 0.25);
+            overflow: hidden;
+            display: none;
+        }
+
+        .orders-sidebar.active {
+            display: block;
+        }
+
+        .orders-header {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            padding: 20px;
+        }
+
+        .orders-header h3 {
+            font-size: 1.2em;
+            margin-bottom: 5px;
+        }
+
+        .orders-content {
+            padding: 15px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .order-card {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .order-card:hover {
+            border-color: #4CAF50;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.2);
+        }
+
+        .order-number {
+            font-weight: bold;
+            color: #4CAF50;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .order-status {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .status-pending { background: #FFF3CD; color: #856404; }
+        .status-out_for_delivery { background: #D4EDDA; color: #155724; }
+        .status-delivered { background: #D1ECF1; color: #0C5460; }
+
+        .order-detail {
+            font-size: 13px;
+            color: #666;
+            margin: 5px 0;
+        }
+
+        .order-detail i {
+            width: 16px;
+            color: #4CAF50;
+        }
+
+        .reference-btn {
+            width: 100%;
+            padding: 8px;
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s;
+        }
+
+        .reference-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(76, 175, 80, 0.3);
+        }
+
+        .no-orders {
+            text-align: center;
+            padding: 40px 20px;
+            color: #999;
+        }
+
+        .no-orders i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* Chat Container Styles */
+        .chat-container {
+            flex: 1;
             height: 600px;
             background: white;
             border-radius: 25px;
@@ -370,11 +483,6 @@
             cursor: not-allowed;
         }
 
-        .send-btn svg {
-            width: 24px;
-            height: 24px;
-        }
-
         .suggested-questions {
             display: flex;
             flex-wrap: wrap;
@@ -406,6 +514,7 @@
             margin-top: 5px;
         }
 
+        /* Modal Styles */
         .modal {
             display: none;
             position: fixed;
@@ -497,6 +606,22 @@
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-container {
+                flex-direction: column;
+            }
+            
+            .orders-sidebar {
+                width: 100%;
+                max-height: 300px;
+            }
+            
+            .orders-content {
+                max-height: 250px;
+            }
+        }
+
         @media (max-width: 768px) {
             .chat-container {
                 height: 100vh;
@@ -530,80 +655,97 @@
 @include('components.login_modal')
 @include('components.signup_modal')
 
-    <div class="chat-container">
-        <div class="chat-header">
-            <div class="header-left">
-                <div class="bot-avatar" id="headerAvatar">🤖</div>
-                <div class="header-info">
-                    <h2 id="headerTitle">AI Assistant</h2>
-                    <p id="headerStatus">Online • Ready to help</p>
-                </div>
+    <div class="main-container">
+        <!-- Orders Sidebar (Only shown in delivery chat) -->
+        <div class="orders-sidebar" id="ordersSidebar">
+            <div class="orders-header">
+                <h3><i class="fas fa-box"></i> Your Orders</h3>
+                <small>Click to reference in chat</small>
             </div>
-            <div class="header-actions">
-                <button class="home-btn" onclick="goToHomepage()">
-                    <span>🏠</span>
-                    <span>Home</span>
-                </button>
-                <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
-                    <span id="liveChatIcon">💬</span>
-                    <span id="liveChatText">Chat with Support</span>
-                </button>
-            </div>
-        </div>
-
-        <div class="suggested-questions" id="suggestedQuestions">
-            <button class="suggested-btn" onclick="sendSuggested('What are your business hours?')">
-                Business Hours?
-            </button>
-            <button class="suggested-btn" onclick="sendSuggested('Tell me about your products')">
-                Products Info
-            </button>
-            <button class="suggested-btn" onclick="sendSuggested('How can I track my order?')">
-                Track Order
-            </button>
-            <button class="suggested-btn" onclick="sendSuggested('What is your return policy?')">
-                Return Policy
-            </button>
-        </div>
-
-        <div class="chat-messages" id="chatMessages">
-            <div class="message bot">
-                <div class="message-avatar">🤖</div>
-                <div class="message-content">
-                    <div>Hello! 👋 I'm your AI assistant. How can I help you today?</div>
-                    <div class="timestamp">Just now</div>
-                </div>
-            </div>
-
-            <div class="message bot" style="margin-left: 45px;">
-                <div class="typing-indicator" id="typingIndicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
+            <div class="orders-content" id="ordersContent">
+                <div class="no-orders">
+                    <i class="fas fa-box-open"></i>
+                    <p>Loading orders...</p>
                 </div>
             </div>
         </div>
 
-        <div class="chat-input-container">
-            <div class="chat-mode-indicator" id="chatModeIndicator">
-                <span>🤖</span>
-                <span>Chatting with AI Assistant</span>
+        <!-- Chat Container -->
+        <div class="chat-container">
+            <div class="chat-header">
+                <div class="header-left">
+                    <div class="bot-avatar" id="headerAvatar">🤖</div>
+                    <div class="header-info">
+                        <h2 id="headerTitle">AI Assistant</h2>
+                        <p id="headerStatus">Online • Ready to help</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <button class="home-btn" onclick="goToHomepage()">
+                        <span>🏠</span>
+                        <span>Home</span>
+                    </button>
+                    <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
+                        <span id="liveChatIcon">💬</span>
+                        <span id="liveChatText">Chat with Support</span>
+                    </button>
+                </div>
             </div>
-            <form id="chatForm" class="chat-input-wrapper">
-                <input 
-                    type="text" 
-                    class="chat-input" 
-                    id="messageInput" 
-                    placeholder="Type your message here..."
-                    autocomplete="off"
-                    required
-                >
-                <button type="submit" class="send-btn" id="sendBtn">
-                    <svg viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                    </svg>
+
+            <div class="suggested-questions" id="suggestedQuestions">
+                <button class="suggested-btn" onclick="sendSuggested('What are your business hours?')">
+                    Business Hours?
                 </button>
-            </form>
+                <button class="suggested-btn" onclick="sendSuggested('Tell me about your products')">
+                    Products Info
+                </button>
+                <button class="suggested-btn" onclick="sendSuggested('How can I track my order?')">
+                    Track Order
+                </button>
+                <button class="suggested-btn" onclick="sendSuggested('What is your return policy?')">
+                    Return Policy
+                </button>
+            </div>
+
+            <div class="chat-messages" id="chatMessages">
+                <div class="message bot">
+                    <div class="message-avatar">🤖</div>
+                    <div class="message-content">
+                        <div>Hello! 👋 I'm your AI assistant. How can I help you today?</div>
+                        <div class="timestamp">Just now</div>
+                    </div>
+                </div>
+
+                <div class="message bot" style="margin-left: 45px;">
+                    <div class="typing-indicator" id="typingIndicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="chat-input-container">
+                <div class="chat-mode-indicator" id="chatModeIndicator">
+                    <span>🤖</span>
+                    <span>Chatting with AI Assistant</span>
+                </div>
+                <form id="chatForm" class="chat-input-wrapper">
+                    <input 
+                        type="text" 
+                        class="chat-input" 
+                        id="messageInput" 
+                        placeholder="Type your message here..."
+                        autocomplete="off"
+                        required
+                    >
+                    <button type="submit" class="send-btn" id="sendBtn">
+                        <svg viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+                        </svg>
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 
@@ -623,7 +765,7 @@
                     </div>
                 </button>
                 <button type="button" class="modal-btn primary" onclick="startLiveChatWithType('delivery')" 
-                        style="width: 100%; padding: 15px; text-align: left; display: flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);">
+                        style="width: 100%; padding: 15px; text-align: left; display: flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);">
                     <i class="fas fa-truck" style="font-size: 24px;"></i>
                     <div>
                         <div style="font-size: 16px; font-weight: bold;">Order & Delivery Support</div>
@@ -643,8 +785,11 @@
         let pollingInterval = null;
         let currentChatStatus = null;
         let activityHeartbeat = null;
-        let currentSupportType = null; // 'staff' or 'delivery'
+        let currentSupportType = null;
+        let customerOrders = [];
 
+        const ordersSidebar = document.getElementById('ordersSidebar');
+        const ordersContent = document.getElementById('ordersContent');
         const chatMessages = document.getElementById('chatMessages');
         const chatForm = document.getElementById('chatForm');
         const messageInput = document.getElementById('messageInput');
@@ -678,10 +823,7 @@
         function startActivityHeartbeat() {
             if (activityHeartbeat) clearInterval(activityHeartbeat);
             
-            // Send heartbeat every 10 seconds
             activityHeartbeat = setInterval(sendActivityHeartbeat, 10000);
-            
-            // Send initial heartbeat
             sendActivityHeartbeat();
         }
 
@@ -693,7 +835,7 @@
             }
         }
 
-        // Track page visibility - stop heartbeat when user leaves
+        // Track page visibility
         document.addEventListener('visibilitychange', () => {
             if (document.hidden && isLiveChatMode) {
                 stopActivityHeartbeat();
@@ -706,11 +848,8 @@
             messageInput.focus();
             scrollToBottom();
             
-            // Check if staff just joined (after page refresh)
             if (sessionStorage.getItem('staffJustJoined') === 'true') {
                 sessionStorage.removeItem('staffJustJoined');
-                
-                // Show notification that staff joined
                 setTimeout(() => {
                     addMessage('✓ A support member has joined the chat!', 'system');
                     scrollToBottom();
@@ -735,7 +874,7 @@
                         currentSupportType = data.session.support_type || 'staff';
                         
                         const status = data.session.status;
-                        currentChatStatus = status; // Set initial status
+                        currentChatStatus = status;
                         
                         if (status === 'waiting') {
                             updateUIForLiveChat('waiting', data.session.queue_position);
@@ -744,7 +883,7 @@
                             updateUIForLiveChat('active');
                             addMessage('✓ Reconnected to your active chat session!', 'system');
                             await loadChatHistory(data.session.session_id);
-                            startActivityHeartbeat(); // Start heartbeat for active session
+                            startActivityHeartbeat();
                         }
                         
                         startPolling();
@@ -782,6 +921,84 @@
             }
         }
 
+        // Load customer orders when delivery chat is active
+        async function loadCustomerOrders() {
+            if (!isLiveChatMode || currentSupportType !== 'delivery') {
+                ordersSidebar.classList.remove('active');
+                return;
+            }
+
+            try {
+                const response = await fetch('{{ route("customer.orders.ongoing") }}', {
+                    headers: {
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.orders && data.orders.length > 0) {
+                    customerOrders = data.orders;
+                    displayOrders(data.orders);
+                    ordersSidebar.classList.add('active');
+                } else {
+                    ordersContent.innerHTML = `
+                        <div class="no-orders">
+                            <i class="fas fa-box-open"></i>
+                            <p>No ongoing orders</p>
+                            <small>You don't have any active orders</small>
+                        </div>
+                    `;
+                    ordersSidebar.classList.add('active');
+                }
+            } catch (error) {
+                console.error('Error loading orders:', error);
+                ordersContent.innerHTML = `
+                    <div class="no-orders">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <p>Failed to load orders</p>
+                    </div>
+                `;
+            }
+        }
+
+        function displayOrders(orders) {
+            ordersContent.innerHTML = orders.map(order => {
+                const statusClass = order.delivery_status === 'Pending' ? 'status-pending' : 
+                                  order.delivery_status === 'Out for Delivery' ? 'status-out_for_delivery' : 
+                                  'status-delivered';
+                const statusText = order.delivery_status;
+                
+                return `
+                    <div class="order-card">
+                        <div class="order-number">
+                            <i class="fas fa-receipt"></i> ${order.order_number}
+                        </div>
+                        <span class="order-status ${statusClass}">${statusText}</span>
+                        <div class="order-detail">
+                            <i class="fas fa-shopping-cart"></i> ${order.items_count} item(s)
+                        </div>
+                        <div class="order-detail">
+                            <i class="fas fa-peso-sign"></i> ₱${parseFloat(order.total).toLocaleString()}
+                        </div>
+                        ${order.address ? `
+                            <div class="order-detail">
+                                <i class="fas fa-map-marker-alt"></i> ${order.address.substring(0, 40)}...
+                            </div>
+                        ` : ''}
+                        <button class="reference-btn" onclick="referenceOrder('${order.order_number}')">
+                            <i class="fas fa-comment-dots"></i> Reference in Chat
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function referenceOrder(orderNumber) {
+            messageInput.value = `I have a question about order ${orderNumber}: `;
+            messageInput.focus();
+        }
+
         function goToHomepage() {
             if (isLiveChatMode && liveChatSessionId) {
                 if (confirm('You are in an active live chat. Are you sure you want to leave?')) {
@@ -799,10 +1016,6 @@
         function getTimestamp() {
             const now = new Date();
             return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function getSupportTypeDisplay(type) {
-            return type === 'delivery' ? 'Delivery Support' : 'Website Support';
         }
 
         function addMessage(message, type = 'bot', senderName = null) {
@@ -863,7 +1076,6 @@
             liveChatModal.style.display = 'none';
         }
 
-        // NEW FUNCTION - Updated version
         async function startLiveChatWithType(type) {
             closeLiveChatModal();
             currentSupportType = type;
@@ -885,6 +1097,11 @@
                     liveChatSessionId = data.session_id;
                     isLiveChatMode = true;
                     currentChatStatus = 'waiting';
+                    
+                    // Load orders if delivery chat
+                    if (type === 'delivery') {
+                        await loadCustomerOrders();
+                    }
                     
                     const staffType = type === 'delivery' ? 'delivery coordinator' : 'staff member';
                     updateUIForLiveChat('waiting', data.queue_position);
@@ -935,12 +1152,11 @@
                     const response = await fetch(`{{ url('livechat/poll') }}/${liveChatSessionId}`);
                     const data = await response.json();
 
-                    // Update UI when status changes from waiting to active
                     if (data.status === 'active' && currentChatStatus !== 'active') {
                         currentChatStatus = 'active';
                         updateUIForLiveChat('active');
                         addMessage('✓ A support member has joined the chat!', 'system');
-                        startActivityHeartbeat(); // Start heartbeat when staff joins
+                        startActivityHeartbeat();
                     } else if (data.status === 'waiting' && currentChatStatus !== 'waiting') {
                         currentChatStatus = 'waiting';
                         updateUIForLiveChat('waiting', data.queue_position);
@@ -979,7 +1195,7 @@
 
         async function endLiveChatSession() {
             try {
-                stopActivityHeartbeat(); // Stop heartbeat when ending chat
+                stopActivityHeartbeat();
                 
                 await fetch('{{ route("livechat.end") }}', {
                     method: 'POST',
@@ -1001,11 +1217,13 @@
 
         function endLiveChat() {
             if (pollingInterval) clearInterval(pollingInterval);
-            stopActivityHeartbeat(); // Stop heartbeat
+            stopActivityHeartbeat();
             isLiveChatMode = false;
             liveChatSessionId = null;
             currentChatStatus = null;
             currentSupportType = null;
+            
+            ordersSidebar.classList.remove('active');
             
             liveChatBtn.className = 'live-chat-btn';
             document.getElementById('liveChatIcon').textContent = '💬';
