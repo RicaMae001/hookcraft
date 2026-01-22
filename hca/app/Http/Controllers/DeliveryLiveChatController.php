@@ -13,7 +13,7 @@ class DeliveryLiveChatController extends Controller
     {
         $coordinatorId = session('coordinator_id');
         
-        // Get waiting delivery chat sessions
+        // Get waiting delivery chat sessions with order info
         $waitingSessions = DB::table('chat_sessions')
             ->where('status', 'waiting')
             ->where('chat_type', 'delivery')
@@ -21,6 +21,10 @@ class DeliveryLiveChatController extends Controller
             ->get()
             ->map(function ($session, $index) {
                 $session->queue_position = $index + 1;
+                
+                // Get customer's ongoing orders
+                $session->ongoing_orders = $this->getCustomerOngoingOrders($session->user_id);
+                
                 return $session;
             });
         
@@ -30,7 +34,11 @@ class DeliveryLiveChatController extends Controller
             ->where('chat_type', 'delivery')
             ->where('delivery_id', $coordinatorId)
             ->orderBy('started_at', 'desc')
-            ->get();
+            ->get()
+            ->map(function ($session) {
+                $session->ongoing_orders = $this->getCustomerOngoingOrders($session->user_id);
+                return $session;
+            });
         
         // Get all active delivery sessions
         $allActiveSessions = DB::table('chat_sessions')
@@ -52,6 +60,8 @@ class DeliveryLiveChatController extends Controller
                     $session->is_inactive_critical = $minutesInactive >= 13;
                 }
                 
+                $session->ongoing_orders = $this->getCustomerOngoingOrders($session->user_id);
+                
                 return $session;
             });
         
@@ -70,6 +80,32 @@ class DeliveryLiveChatController extends Controller
             'closedSessions',
             'coordinatorId'
         ));
+    }
+    
+    /**
+     * Get customer's ongoing orders
+     */
+    private function getCustomerOngoingOrders($userId)
+    {
+        if (!$userId) return collect([]);
+        
+        return DB::table('orders')
+            ->where('user_id', $userId)
+            ->whereIn('delivery_status', ['Pending', 'Out for Delivery'])
+            ->orderBy('created_at', 'desc')
+            ->select('id', 'customer_name', 'delivery_status', 'total', 'created_at', 'address')
+            ->get()
+            ->map(function ($order) {
+                // Get order items count
+                $order->items_count = DB::table('order_item')
+                    ->where('order_id', $order->id)
+                    ->count();
+                
+                // Generate order number (e.g., ORD-00048)
+                $order->order_number = 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+                
+                return $order;
+            });
     }
     
     public function acceptChat($sessionId)
@@ -142,21 +178,37 @@ class DeliveryLiveChatController extends Controller
             ->where('is_read', 0)
             ->update(['is_read' => 1]);
         
-        return view('admin.delivery.livechat.chat', compact('session', 'messages'));
+        // Get customer's ongoing orders
+        $ongoingOrders = $this->getCustomerOngoingOrders($session->user_id);
+        
+        return view('admin.delivery.livechat.chat', compact('session', 'messages', 'ongoingOrders'));
+    }
+    
+    /**
+     * Get orders for customer (API endpoint)
+     */
+    public function getCustomerOrders($sessionId)
+    {
+        $coordinatorId = session('coordinator_id');
+        
+        $session = DB::table('chat_sessions')->where('id', $sessionId)->first();
+        
+        if (!$session || ($session->status === 'active' && $session->delivery_id != $coordinatorId)) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 403);
+        }
+        
+        $orders = $this->getCustomerOngoingOrders($session->user_id);
+        
+        return response()->json([
+            'success' => true,
+            'orders' => $orders
+        ]);
     }
     
     public function sendMessage(Request $request)
     {
-        // Debug: Log session data
-        Log::info('Delivery sendMessage called', [
-            'coordinator_id' => session('coordinator_id'),
-            'coordinator_name' => session('coordinator_name'),
-            'has_session' => session()->has('coordinator_id')
-        ]);
-        
         $coordinatorId = session('coordinator_id');
         
-        // Check if delivery is authenticated
         if (!$coordinatorId) {
             Log::error('Delivery not authenticated');
             return response()->json([
@@ -165,14 +217,6 @@ class DeliveryLiveChatController extends Controller
             ], 401);
         }
         
-        // Debug: Log request data
-        Log::info('Request data:', [
-            'session_id' => $request->session_id,
-            'message' => $request->message,
-            'all_input' => $request->all()
-        ]);
-        
-        // Validate input
         try {
             $validated = $request->validate([
                 'session_id' => 'required|integer',
@@ -195,15 +239,7 @@ class DeliveryLiveChatController extends Controller
         try {
             $session = DB::table('chat_sessions')->where('id', $sessionId)->first();
             
-            Log::info('Chat session lookup', [
-                'session_id' => $sessionId,
-                'found' => $session ? 'yes' : 'no',
-                'status' => $session ? $session->status : null,
-                'delivery_id' => $session ? $session->delivery_id : null
-            ]);
-            
             if (!$session) {
-                Log::error('Session not found', ['session_id' => $sessionId]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Session not found'
@@ -211,20 +247,13 @@ class DeliveryLiveChatController extends Controller
             }
             
             if ($session->status !== 'active') {
-                Log::error('Session not active', [
-                    'status' => $session->status
-                ]);
                 return response()->json([
                     'success' => false,
-                    'message' => 'Chat session is not active (Status: ' . $session->status . ')'
+                    'message' => 'Chat session is not active'
                 ], 400);
             }
             
             if ($session->delivery_id != $coordinatorId) {
-                Log::error('Unauthorized access', [
-                    'session_delivery_id' => $session->delivery_id,
-                    'current_coordinator_id' => $coordinatorId
-                ]);
                 return response()->json([
                     'success' => false,
                     'message' => 'Unauthorized access to this chat'
@@ -240,12 +269,6 @@ class DeliveryLiveChatController extends Controller
                 'is_read' => 0,
                 'created_at' => now(),
                 'updated_at' => now()
-            ]);
-            
-            Log::info('Message inserted', [
-                'message_id' => $messageId,
-                'session_id' => $sessionId,
-                'coordinator_id' => $coordinatorId
             ]);
             
             // Update session activity
@@ -265,9 +288,7 @@ class DeliveryLiveChatController extends Controller
         } catch (\Exception $e) {
             Log::error('Delivery send message error', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-                'line' => $e->getLine(),
-                'file' => $e->getFile()
+                'trace' => $e->getTraceAsString()
             ]);
             
             return response()->json([
