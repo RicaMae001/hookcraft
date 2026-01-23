@@ -610,6 +610,7 @@
         @media (max-width: 950px) {
             .main-container {
                 flex-direction: column;
+                width: 90%;
             }
             
             .orders-sidebar {
