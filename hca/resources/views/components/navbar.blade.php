@@ -81,7 +81,7 @@
 
                 <!-- Cart -->
                 <li class="nav-item me-3">
-                    <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : '#' }}">
+                    <a class="nav-link position-relative" href="{{ $isLoggedIn ? route('cart.index') : 'javascript:void(0)' }}">
                         <i class="bi bi-cart fs-5"></i>
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger cart-badge">
                             {{ $cartCount }}
@@ -150,6 +150,333 @@
 .chat-notification-badge {
     animation: chat-pulse 2s infinite;
     box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+}
+
+/* MOBILE RESPONSIVE - ONLY CSS ADDITIONS */
+@media (max-width: 991.98px) {
+    /* Make navbar-collapse use flexbox for reordering */
+    .navbar-collapse {
+        position: fixed;
+        top: 0;
+        right: -100%;
+        width: 85%;
+        max-width: 350px;
+        height: 100vh;
+        background: linear-gradient(135deg, #fff 0%, #fff5f8 100%);
+        box-shadow: -8px 0 30px rgba(255, 105, 180, 0.2);
+        transition: right 0.3s ease;
+        overflow-y: auto;
+        z-index: 1050;
+        padding: 0;
+        display: flex !important;
+        flex-direction: column !important;
+    }
+    
+    .navbar-collapse.show {
+        right: 0;
+    }
+    
+    .navbar-collapse.show::before {
+        content: '';
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(4px);
+        z-index: -1;
+    }
+    
+    /* User info section FIRST - Enhanced Design */
+    .navbar-nav.flex-row {
+        order: 1;
+        flex-direction: column !important;
+        align-items: flex-start !important; /* Keep left aligned */
+        padding: 2rem 1.5rem 1.5rem;
+        background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+        margin: 0 !important;
+        border-bottom: none;
+        box-shadow: 0 4px 15px rgba(255, 105, 180, 0.2);
+    }
+    
+    /* Show profile picture ONLY - bigger, stay on left */
+    .navbar-nav.flex-row .dropdown {
+        width: auto;
+        margin-bottom: 1.5rem;
+        order: -1; /* Show first before icons */
+    }
+    
+    .navbar-nav.flex-row .dropdown > a {
+        display: flex !important;
+        align-items: center;
+        background: transparent !important;
+        padding: 0 !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        gap: 0;
+        text-decoration: none;
+        border: none !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown > a img {
+        width: 80px !important;
+        height: 80px !important;
+        border: 4px solid white !important;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown > a::after {
+        display: none !important; /* Hide dropdown arrow */
+    }
+    
+    .navbar-nav.flex-row > .nav-item:not(.dropdown) {
+        width: 100%;
+        margin: 0 !important;
+        padding: 0.75rem 0;
+    }
+    
+    /* Style icons in user section */
+    .navbar-nav.flex-row .nav-link {
+        background: rgba(255, 255, 255, 0.9) !important;
+        border-radius: 12px !important;
+        padding: 0.75rem 1rem !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        color: white !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    }
+    
+    .navbar-nav.flex-row .nav-link:hover {
+        background: white !important;
+        transform: translateX(5px) !important;
+        box-shadow: 0 4px 12px rgba(255, 105, 180, 0.3) !important;
+    }
+    
+    .navbar-nav.flex-row .nav-link i {
+        font-size: 1.3rem;
+        color: #FF69B4 !important;
+    }
+    
+    /* Fix AI Assistant icon - replace with robot emoji */
+    .navbar-nav.flex-row > .nav-item:not(.dropdown):first-of-type .nav-link i.bi-robot::before {
+        content: '🤖' !important;
+        font-style: normal;
+        font-family: inherit !important;
+    }
+    
+    .navbar-nav.flex-row > .nav-item:not(.dropdown):first-of-type .nav-link i.bi-robot {
+        font-family: inherit !important;
+    }
+    
+    /* Keep cart icon as Bootstrap icon */
+    .navbar-nav.flex-row .nav-link i.bi-cart {
+        color: #FF69B4 !important;
+        font-size: 1.3rem !important;
+    }
+    
+    /* Add text labels to icons in mobile - AI Assistant */
+    .navbar-nav.flex-row .nav-item:not(.dropdown):first-of-type .nav-link::after {
+        content: 'AI Assistant';
+        font-size: 0.9rem;
+        color: #FF69B4;
+    }
+    
+    /* Add text labels to icons in mobile - Shopping Cart */
+    .navbar-nav.flex-row .nav-link .bi-cart::after {
+        content: 'Shopping Cart';
+        font-size: 0.9rem;
+        color: #FF69B4;
+        margin-left: 0.75rem;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    
+    .navbar-nav.flex-row .nav-item:not(.dropdown):last-of-type .nav-link::after {
+        content: 'Shopping Cart';
+        font-size: 0.9rem;
+        color: #FF69B4;
+    }
+    
+    .navbar-nav.flex-row .nav-link:hover i,
+    .navbar-nav.flex-row .nav-link:hover::after {
+        color: #FF1493 !important;
+    }
+    
+    /* Navigation links SECOND - Modern Style with Pink Background */
+    .navbar-nav.mx-auto {
+        order: 2;
+        margin: 0 !important;
+        padding: 1.5rem 1.5rem 1rem;
+        width: 100%;
+        background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+    }
+    
+    .navbar-nav.mx-auto .nav-item {
+        width: 100%;
+        margin-bottom: 0.5rem;
+        border: none !important;
+    }
+    
+    .navbar-nav.mx-auto .nav-link {
+        padding: 1rem 1.25rem !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-radius: 12px !important;
+        color: #FF69B4 !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        border-left: 4px solid transparent !important;
+    }
+    
+    .navbar-nav.mx-auto .nav-link:hover {
+        background: white !important;
+        color: #FF1493 !important;
+        transform: translateX(8px) !important;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4) !important;
+        border-left-color: white !important;
+    }
+    
+    /* Add icons to navigation links */
+    .navbar-nav.mx-auto .nav-item:nth-child(1) .nav-link::before {
+        content: '🏠';
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav.mx-auto .nav-item:nth-child(2) .nav-link::before {
+        content: '🛍️';
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav.mx-auto .nav-item:nth-child(3) .nav-link::before {
+        content: 'ℹ️';
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav.mx-auto .nav-item:nth-child(4) .nav-link::before {
+        content: '🖼️';
+        font-size: 1.2rem;
+    }
+    
+    .navbar-nav.mx-auto .nav-item:nth-child(5) .nav-link::before {
+        content: '✉️';
+        font-size: 1.2rem;
+    }
+    
+    /* Dropdown menu appears THIRD - Matching Style with Pink Background */
+    .navbar-nav.flex-row .dropdown {
+        order: 3 !important;
+        width: 100% !important;
+        padding: 0 1.5rem 1.5rem;
+        background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+        margin: 0 !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu {
+        position: static !important;
+        display: block !important;
+        transform: none !important;
+        background: transparent !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu li {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item {
+        padding: 1rem 1.25rem !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-radius: 12px !important;
+        color: #FF69B4 !important;
+        font-weight: 600 !important;
+        transition: all 0.3s ease !important;
+        display: flex !important;
+        align-items: center !important;
+        gap: 0.75rem !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+        border-left: 4px solid transparent !important;
+        border-bottom: none !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item:hover {
+        background: white !important;
+        color: #FF1493 !important;
+        transform: translateX(8px) !important;
+        box-shadow: 0 4px 15px rgba(255, 255, 255, 0.4) !important;
+        border-left-color: white !important;
+    }
+    
+    /* Style existing icons in dropdown */
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item i {
+        width: 24px;
+        font-size: 1.2rem;
+        color: #FF69B4 !important;
+        transition: color 0.3s ease;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item:hover i {
+        color: #FF1493 !important;
+    }
+    
+    /* Hide user header */
+    .navbar-nav.flex-row .dropdown-menu > li:first-child {
+        display: none;
+    }
+    
+    /* Hide divider */
+    .navbar-nav.flex-row .dropdown-menu .dropdown-divider {
+        display: none;
+    }
+    
+    /* Logout styling - Special red accent on pink background */
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item.text-danger {
+        color: #dc3545 !important;
+        background: rgba(255, 255, 255, 0.95) !important;
+        border-left-color: transparent !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item.text-danger:hover {
+        background: white !important;
+        color: #c82333 !important;
+        border-left-color: white !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item.text-danger i {
+        color: #dc3545 !important;
+    }
+    
+    .navbar-nav.flex-row .dropdown-menu .dropdown-item.text-danger:hover i {
+        color: #c82333 !important;
+    }
+    
+    /* Smooth scrollbar */
+    .navbar-collapse::-webkit-scrollbar {
+        width: 6px;
+    }
+    
+    .navbar-collapse::-webkit-scrollbar-track {
+        background: rgba(255, 182, 193, 0.1);
+    }
+    
+    .navbar-collapse::-webkit-scrollbar-thumb {
+        background: #FFB6C1;
+        border-radius: 10px;
+    }
+    
+    .navbar-collapse::-webkit-scrollbar-thumb:hover {
+        background: #FF69B4;
+    }
 }
 </style>
 
