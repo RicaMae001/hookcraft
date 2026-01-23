@@ -24,8 +24,8 @@
         }
 
         .main-container {
-            width: 100%;
-            max-width: 1400px;
+            width: 80%;
+            max-width: 1000px;
             display: flex;
             gap: 20px;
         }
@@ -610,6 +610,7 @@
         @media (max-width: 1024px) {
             .main-container {
                 flex-direction: column;
+                width: 90%;
             }
             
             .orders-sidebar {
