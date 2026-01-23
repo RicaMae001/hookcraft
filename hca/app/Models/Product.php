@@ -133,7 +133,7 @@ class Product extends Model
      */
     public function getFormattedPriceAttribute()
     {
-        return '₱' . number_format($this->price, 2);
+        return 'â‚±' . number_format($this->price, 2);
     }
 
     /**
