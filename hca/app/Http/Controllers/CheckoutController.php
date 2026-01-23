@@ -13,6 +13,9 @@ use App\Models\OrderItem;
 
 class CheckoutController extends Controller
 {
+    /**
+     * Display the checkout page
+     */
     public function index()
     {
         if (!Auth::check()) {
@@ -76,8 +79,12 @@ class CheckoutController extends Controller
         return view('pages.checkout', compact('cartItems', 'total', 'cartCount', 'isBuyNow'));
     }
 
+    /**
+     * Process the checkout and create order
+     */
     public function store(Request $request)
     {
+        // Validate the incoming request
         $request->validate([
             'name'        => 'required|string|max:255',
             'region_id'   => 'required|integer|exists:regions,id',
@@ -167,8 +174,10 @@ class CheckoutController extends Controller
                     'price'       => $item->product->price,
                 ]);
 
-                // Reduce product stock
-                $item->product->decrement('stock', $item->quantity);
+                // Reduce product stock manually without triggering updated_at
+                DB::table('products')
+                    ->where('id', $item->product_id)
+                    ->decrement('stock', $item->quantity);
             }
 
             // Delete the cart (buy-now or regular cart that was used)
@@ -211,61 +220,6 @@ class CheckoutController extends Controller
             ]);
             
             return redirect()->back()->with('error', 'Failed to process order. Please try again.');
-        }
-    }
-
-    /**
-     * Display the thank you page with order details
-     */
-    public function thankYou($order_id)
-    {
-        try {
-            // Load order with relationships
-            $order = Order::with(['orderItems.product', 'orderItems.category'])
-                ->findOrFail($order_id);
-            
-            // Optional: Check if the order belongs to the logged-in user
-            if (Auth::check() && $order->user_id !== Auth::id()) {
-                Log::warning('Unauthorized access to order', [
-                    'order_id' => $order_id,
-                    'user_id' => Auth::id(),
-                    'order_user_id' => $order->user_id
-                ]);
-                abort(403, 'Unauthorized access to this order.');
-            }
-            
-            Log::info('Thank you page accessed', [
-                'order_id' => $order_id,
-                'user_id' => Auth::id()
-            ]);
-            
-            // Get cart count for navbar
-            $cartCount = 0;
-            if (Auth::check()) {
-                $regularCart = Cart::where('user_id', Auth::id())
-                    ->where('is_buy_now', 0)
-                    ->first();
-                
-                $cartCount = $regularCart 
-                    ? CartItem::where('cart_id', $regularCart->id)->sum('quantity')
-                    : 0;
-            }
-            
-            return view('pages.thankyou', [
-                'order' => $order,
-                'order_id' => $order_id,
-                'cartCount' => $cartCount
-            ]);
-            
-        } catch (\Exception $e) {
-            Log::error('Thank you page error', [
-                'order_id' => $order_id,
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
-            
-            return redirect()->route('shop')
-                ->with('error', 'Order not found or an error occurred.');
         }
     }
 }
