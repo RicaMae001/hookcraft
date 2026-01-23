@@ -1015,4 +1015,5 @@
         /* Status badges mobile */
         .status-badge {
             padding: 0.4rem 0.75rem;
-            font-size: 0.8
+            font-size: 0.8;
+                                                                }
