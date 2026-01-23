@@ -8,19 +8,17 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <style>
-        :root {
-            --primary-pink: #FF6B9D;
-            --primary-dark: #2D3748;
-            --text-primary: #1A202C;
-            --text-secondary: #718096;
-            --border-color: #E2E8F0;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
         
         body {
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: linear-gradient(135deg, #667EEA 0%, #FF6B9D 100%);
+            background: #FFE8F4;
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -28,167 +26,200 @@
             padding: 2rem;
         }
         
-        .login-container {
+        .login-wrapper {
             width: 100%;
-            max-width: 440px;
-        }
-        
-        .login-card {
+            max-width: 900px;
+            display: grid;
+            grid-template-columns: 45% 55%;
             background: white;
-            border-radius: 24px;
-            padding: 3rem;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-            animation: fadeInUp 0.6s ease;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
         }
         
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-        
-        .logo-wrapper {
-            width: 100px;
-            height: 100px;
-            background: linear-gradient(135deg, var(--primary-pink), #FF8AAE);
-            border-radius: 24px;
+        .logo-section {
+            background: #FFD4E8;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 2rem;
-            box-shadow: 0 10px 30px rgba(255, 107, 157, 0.3);
+            padding: 3rem;
+            position: relative;
         }
         
-        .logo-wrapper i {
-            font-size: 3rem;
-            color: white;
+        .logo-circle {
+            width: 280px;
+            height: 280px;
+            background: rgba(255, 182, 217, 0.5);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-circle img {
+            width: 90%;
+            height: auto;
+            object-fit: contain;
+        }
+        
+        .form-section {
+            background: #FFE8F4;
+            padding: 3rem 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
         
         h1 {
-            font-family: 'Playfair Display', serif;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            color: var(--text-primary);
+            color: #0c0409ff;
             text-align: center;
-            margin-bottom: 0.5rem;
+            margin-bottom: 2rem;
         }
         
-        .subtitle {
-            text-align: center;
-            color: var(--text-secondary);
-            margin-bottom: 2.5rem;
-            font-size: 0.95rem;
-        }
-        
-        .form-label {
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 0.5rem;
+        .input-wrapper {
+            margin-bottom: 1.2rem;
         }
         
         .input-group {
-            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
         }
         
-        .input-group-text {
-            background: #F7FAFC;
-            border: 1px solid var(--border-color);
-            border-right: none;
-            border-radius: 12px 0 0 12px;
-            color: var(--text-secondary);
-            padding: 0.75rem 1rem;
+        .input-icon {
+            padding: 0 1rem;
+            color: #1A202C;
         }
         
         .form-control {
-            border-left: none;
-            border: 1px solid var(--border-color);
-            border-radius: 0 12px 12px 0;
+            border: none;
             padding: 0.75rem 1rem;
             font-size: 0.95rem;
+            background: white;
+            flex: 1;
         }
         
         .form-control:focus {
-            border-color: var(--primary-pink);
-            box-shadow: 0 0 0 3px rgba(255, 107, 157, 0.1);
-            border-left: 1px solid var(--primary-pink);
+            outline: none;
+            box-shadow: none;
         }
         
-        .form-control:focus + .input-group-text {
-            border-color: var(--primary-pink);
+        .input-group:focus-within {
+            border-color: #FF6B9D;
+        }
+        
+        .form-control::placeholder {
+            color: #999;
         }
         
         .btn-login {
             width: 100%;
-            padding: 0.875rem;
-            background: linear-gradient(135deg, var(--primary-pink), #FF8AAE);
+            padding: 0.85rem;
+            background: #cf59daff;
             color: white;
             border: none;
-            border-radius: 12px;
+            border-radius: 8px;
             font-weight: 600;
             font-size: 1rem;
-            transition: all 0.3s ease;
             margin-top: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
         }
         
         .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(255, 107, 157, 0.4);
-            color: white;
+            background: #1A202C;
         }
         
-        .back-link {
-            text-align: center;
-            margin-top: 2rem;
+        .form-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            font-size: 0.875rem;
         }
         
-        .back-link a {
-            color: var(--text-secondary);
+        .remember-me {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #1A202C;
+        }
+        
+        .remember-me input {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        
+        .forgot-link {
+            color: #718096;
             text-decoration: none;
-            font-weight: 500;
-            transition: all 0.2s ease;
         }
         
-        .back-link a:hover {
-            color: var(--primary-pink);
+        .forgot-link:hover {
+            color: #FF6B9D;
+        }
+        
+        .signup-text {
+            text-align: center;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+            color: #718096;
+        }
+        
+        .signup-text a {
+            color: #1A202C;
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .signup-text a:hover {
+            color: #FF6B9D;
         }
         
         .alert {
-            border-radius: 12px;
-            border: none;
+            border-radius: 8px;
             padding: 1rem;
             margin-bottom: 1.5rem;
+            border: none;
         }
         
         .alert-danger {
-            background: rgba(252, 129, 129, 0.1);
+            background: rgba(252, 129, 129, 0.15);
             color: #c53030;
             border-left: 4px solid #FC8181;
         }
         
-        .footer-text {
-            text-align: center;
-            margin-top: 2rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-size: 0.875rem;
+        @media (max-width: 768px) {
+            .login-wrapper {
+                grid-template-columns: 1fr;
+            }
+            
+            .logo-section {
+                display: none;
+            }
+            
+            .form-section {
+                padding: 2rem;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="login-container">
-        <div class="login-card">
-            <div class="logo-wrapper">
-                <i class="fas fa-user-shield"></i>
+    <div class="login-wrapper">
+        <div class="logo-section">
+            <div class="logo-circle">
+                <img src="{{ asset('asset/images/logo.jpg') }}" alt="HookcraftAvenue Logo" style ="border-radius: 50%;">
             </div>
-            
-            <h1>Staff Login</h1>
-            <p class="subtitle">HookcraftAvenue Management Portal</p>
+        </div>
+        
+        <div class="form-section">
+            <h1>Log In</h1>
 
             @if($errors->any())
                 <div class="alert alert-danger">
@@ -207,41 +238,36 @@
             <form method="POST" action="{{ route('staff.login.submit') }}">
                 @csrf
                 
-                <div class="mb-3">
-                    <label class="form-label">Email Address</label>
+                <div class="input-wrapper">
                     <div class="input-group">
-                        <span class="input-group-text">
-                            <i class="fas fa-envelope"></i>
+                        <span class="input-icon">
+                            <i class="fas fa-user"></i>
                         </span>
-                        <input type="email" name="email" class="form-control" placeholder="Enter your email" required autofocus>
+                        <input type="email" name="email" class="form-control" placeholder="Username" required autofocus>
                     </div>
                 </div>
 
-                <div class="mb-4">
-                    <label class="form-label">Password</label>
+                <div class="input-wrapper">
                     <div class="input-group">
-                        <span class="input-group-text">
+                        <span class="input-icon">
                             <i class="fas fa-lock"></i>
                         </span>
-                        <input type="password" name="password" class="form-control" placeholder="Enter your password" required>
+                        <input type="password" name="password" class="form-control" placeholder="Password" required>
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-login">
-                    <i class="fas fa-sign-in-alt me-2"></i>Login to Dashboard
-                </button>
+                <button type="submit" class="btn-login">Login</button>
+                
+                <div class="form-footer">
+                    <label class="remember-me">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot-link">Forgot Password?</a>
+                </div>
             </form>
 
-            <div class="back-link">
-                <a href="{{ route('home') }}">
-                    <i class="fas fa-arrow-left me-2"></i>Back to Store
-                </a>
-            </div>
-
-            <div class="footer-text">
-                <i class="fas fa-shield-alt me-1"></i>
-                Secure staff access only
-            </div>
+            
         </div>
     </div>
 

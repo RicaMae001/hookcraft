@@ -21,7 +21,6 @@
         .product-item { background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 10px; }
         .total-highlight { background: linear-gradient(135deg, #28a745, #20c997); color: white; padding: 20px; border-radius: 10px; }
         
-        /* Map Styles */
         #map { 
             height: 400px; 
             width: 100%; 
@@ -48,14 +47,26 @@
             padding: 12px;
             border-radius: 8px;
             margin-bottom: 15px;
+        }
+        .address-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #dee2e6;
+            margin-bottom: 15px;
             display: none;
         }
-        .location-info.active {
+        .address-display.active {
             display: block;
         }
-        .form-select:disabled {
-            background-color: #e9ecef;
-            cursor: not-allowed;
+        .address-display .location-badge {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            margin: 2px;
         }
     </style>
 </head>
@@ -63,10 +74,8 @@
 
 @include('components.login_modal')
 @include('components.signup_modal')
-
-<!-- Navbar -->
 @include('components.navbar')
-<!-- Checkout Section -->
+
 <div class="container my-5">
     <div class="d-flex align-items-center mb-4">
         <i class="bi bi-credit-card text-primary fs-3 me-3"></i>
@@ -94,7 +103,6 @@
         </div>
     @else
     <div class="row">
-        <!-- Customer Form -->
         <div class="col-lg-7">
             <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm">
                 @csrf
@@ -111,49 +119,51 @@
                         <div class="mb-3">
                             <label class="form-label fw-semibold"><i class="bi bi-geo-alt me-1"></i>Delivery Address *</label>
                             
-                            <!-- Map Search -->
-                            <div class="map-search-box">
-                                <input type="text" id="mapSearch" class="form-control" placeholder="Search for a location...">
-                                <i class="bi bi-search search-icon"></i>
+                            <div class="location-info">
+                                <small><i class="bi bi-info-circle me-1"></i><strong>Service Area:</strong> Central Visayas, Cebu Province (Cebu City, Lapu-Lapu, Mandaue, Talisay)</small>
+                            </div>
+
+                            <!-- City Selection -->
+                            <div class="mb-3">
+                                <label class="form-label">Select City *</label>
+                                <select class="form-select" id="citySelect" name="city_id" required>
+                                    <option value="">Choose City</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Barangay Selection -->
+                            <div class="mb-3">
+                                <label class="form-label">Select Barangay *</label>
+                                <select class="form-select" id="barangaySelect" name="barangay_id" disabled required>
+                                    <option value="">Select city first</option>
+                                </select>
                             </div>
 
                             <!-- Map Container -->
                             <div id="map"></div>
 
-                            <!-- Location Info Display -->
-                            <div class="location-info" id="locationInfo">
-                                <div class="d-flex align-items-center">
-                                    <i class="bi bi-geo-alt-fill text-primary me-2"></i>
-                                    <small><strong>Selected Location:</strong> <span id="selectedLocation">Click on the map to select</span></small>
+                            <!-- Address Display -->
+                            <div class="address-display" id="addressDisplay">
+                                <div class="mb-2">
+                                    <small class="text-muted d-block mb-1">Selected Address:</small>
+                                    <span class="location-badge" id="selectedRegion">-</span>
+                                    <span class="location-badge" id="selectedProvince">-</span>
+                                    <span class="location-badge" id="selectedCity">-</span>
+                                    <span class="location-badge" id="selectedBarangay">-</span>
                                 </div>
                             </div>
 
-                            <!-- Address Dropdowns -->
-                            <div class="row g-2">
-                                <div class="col-md-4">
-                                    <select class="form-select" name="region_id" id="regionSelect" required>
-                                        <option value="">Select Region</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select" name="province_id" id="provinceSelect" disabled required>
-                                        <option value="">Select Province</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-4">
-                                    <select class="form-select" name="city_id" id="citySelect" disabled required>
-                                        <option value="">Select City</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <select class="form-select" name="barangay_id" id="barangaySelect" disabled required>
-                                        <option value="">Select Barangay</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <input type="text" class="form-control" name="street" id="street" placeholder="Street / House No." required>
-                                </div>
+                            <!-- Hidden Fields -->
+                            <input type="hidden" name="region_id" id="regionId">
+                            <input type="hidden" name="province_id" id="provinceId">
+                            <input type="hidden" id="barangayId">
+                            
+                            <!-- Street Input -->
+                            <div class="mt-3">
+                                <label class="form-label fw-semibold">Street / House No. *</label>
+                                <input type="text" class="form-control" name="street" id="street" placeholder="e.g., 123 Main Street, Bldg 5" required>
                             </div>
+
                             <input type="hidden" name="latitude" id="latitude">
                             <input type="hidden" name="longitude" id="longitude">
                         </div>
@@ -193,7 +203,6 @@
             </form>
         </div>
 
-        <!-- Order Summary (Read-only, no edit/remove buttons) -->
         <div class="col-lg-5">
             <div class="card">
                 <div class="card-header">
@@ -228,7 +237,6 @@
     @endif
 </div>
 
-<!-- Footer -->
 <footer class="footer py-4 text-center bg-dark text-white">
     <div class="container">
         <div class="row">
@@ -250,195 +258,395 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
     // ==========================================
-    // LOCATION DROPDOWN CASCADE
+    // DATA STRUCTURES
     // ==========================================
-    const regionSelect = document.getElementById('regionSelect');
-    const provinceSelect = document.getElementById('provinceSelect');
+    let citiesData = [];
+    let barangaysData = [];
+    let currentCity = null;
+    let selectedBarangay = null;
+    
+    const METRO_CEBU_CITY_IDS = [1, 2, 3, 4]; // Cebu City, Lapu-Lapu, Mandaue, Talisay
+    
+    // Approximate bounds for each city
+    const DEFAULT_CITY_BOUNDS = {
+        1: { center: [10.3157, 123.8854], bounds: [[10.24, 123.78], [10.42, 123.98]] },
+        2: { center: [10.3103, 123.9494], bounds: [[10.27, 123.90], [10.35, 124.00]] },
+        3: { center: [10.3237, 123.9227], bounds: [[10.29, 123.90], [10.36, 123.95]] },
+        4: { center: [10.2449, 123.8493], bounds: [[10.20, 123.82], [10.29, 123.88]] }
+    };
+    
+    // ==========================================
+    // DOM ELEMENTS
+    // ==========================================
     const citySelect = document.getElementById('citySelect');
     const barangaySelect = document.getElementById('barangaySelect');
-
-    // Load regions on page load
-    fetch('/api/locations/regions')
+    
+    // ==========================================
+    // LOAD CITIES FROM DATABASE
+    // ==========================================
+    fetch('/api/locations/cities/1')
         .then(res => res.json())
         .then(data => {
-            data.forEach(region => {
-                const option = new Option(region.region_name, region.id);
-                regionSelect.add(option);
+            citiesData = data.filter(city => METRO_CEBU_CITY_IDS.includes(city.id));
+            
+            citiesData.forEach(city => {
+                const option = new Option(city.city_name, city.id);
+                citySelect.add(option);
             });
+            
+            console.log('Loaded cities:', citiesData.map(c => c.city_name));
         })
-        .catch(err => console.error('Error loading regions:', err));
-
-    // Region change - load provinces
-    regionSelect.addEventListener('change', function() {
-        const regionId = this.value;
-        
-        provinceSelect.innerHTML = '<option value="">Select Province</option>';
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        provinceSelect.disabled = !regionId;
-        citySelect.disabled = true;
-        barangaySelect.disabled = true;
-
-        if (regionId) {
-            fetch(`/api/locations/provinces/${regionId}`)
-                .then(res => res.json())
-                .then(data => {
-                    data.forEach(province => {
-                        const option = new Option(province.province_name, province.id);
-                        provinceSelect.add(option);
-                    });
-                })
-                .catch(err => console.error('Error loading provinces:', err));
-        }
-    });
-
-    // Province change - load cities
-    provinceSelect.addEventListener('change', function() {
-        const provinceId = this.value;
-        
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        citySelect.disabled = !provinceId;
-        barangaySelect.disabled = true;
-
-        if (provinceId) {
-            fetch(`/api/locations/cities/${provinceId}`)
-                .then(res => res.json())
-                .then(data => {
-                    data.forEach(city => {
-                        const option = new Option(city.city_name, city.id);
-                        citySelect.add(option);
-                    });
-                })
-                .catch(err => console.error('Error loading cities:', err));
-        }
-    });
-
-    // City change - load barangays
+        .catch(err => console.error('Error loading cities:', err));
+    
+    // ==========================================
+    // CITY SELECTION HANDLER
+    // ==========================================
     citySelect.addEventListener('change', function() {
-        const cityId = this.value;
+        const cityId = parseInt(this.value);
         
-        barangaySelect.innerHTML = '<option value="">Select Barangay</option>';
-        barangaySelect.disabled = !cityId;
-
-        if (cityId) {
-            fetch(`/api/locations/barangays/${cityId}`)
-                .then(res => res.json())
-                .then(data => {
-                    data.forEach(barangay => {
-                        const option = new Option(barangay.barangay_name, barangay.id);
-                        barangaySelect.add(option);
-                    });
-                })
-                .catch(err => console.error('Error loading barangays:', err));
+        if (!cityId) {
+            resetCitySelection();
+            return;
         }
+        
+        currentCity = citiesData.find(c => c.id === cityId);
+        if (!currentCity) return;
+        
+        // Update map view
+        const cityConfig = DEFAULT_CITY_BOUNDS[cityId];
+        if (cityConfig) {
+            map.setView(cityConfig.center, 13);
+            drawCityBoundary(cityConfig.bounds);
+        }
+        
+        // Update address display
+        updateCityInfo(currentCity);
+        
+        // Load barangays for dropdown
+        loadBarangays(cityId);
+        
+        // Clear previous selections
+        resetBarangaySelection();
     });
-
+    
+    function resetCitySelection() {
+        barangaySelect.disabled = true;
+        barangaySelect.innerHTML = '<option value="">Select city first</option>';
+        resetBarangaySelection();
+        if (boundaryRect) map.removeLayer(boundaryRect);
+        document.getElementById('addressDisplay').classList.remove('active');
+    }
+    
     // ==========================================
-    // MAP FUNCTIONALITY
+    // LOAD BARANGAYS FOR SELECTED CITY
     // ==========================================
-    const map = L.map('map').setView([10.3157, 123.8854], 13);
+    function loadBarangays(cityId) {
+        fetch(`/api/locations/barangays/${cityId}`)
+            .then(res => res.json())
+            .then(data => {
+                barangaysData = data;
+                
+                // Populate barangay dropdown
+                barangaySelect.innerHTML = '<option value="">Choose Barangay</option>';
+                barangaysData.forEach(barangay => {
+                    const option = new Option(barangay.barangay_name, barangay.id);
+                    barangaySelect.add(option);
+                });
+                
+                barangaySelect.disabled = false;
+                console.log(`Loaded ${barangaysData.length} barangays for ${currentCity.city_name}`);
+            })
+            .catch(err => console.error('Error loading barangays:', err));
+    }
+    
+    // ==========================================
+    // BARANGAY SELECTION HANDLER
+    // ==========================================
+    barangaySelect.addEventListener('change', async function() {
+        const barangayId = parseInt(this.value);
+        
+        if (!barangayId) {
+            resetBarangaySelection();
+            return;
+        }
+        
+        selectedBarangay = barangaysData.find(b => b.id === barangayId);
+        if (!selectedBarangay) return;
+        
+        // Update address display
+        updateBarangayInfo(selectedBarangay);
+        
+        // Try to find location on map
+        await searchBarangayLocation(selectedBarangay);
+    });
+    
+    function resetBarangaySelection() {
+        if (marker) map.removeLayer(marker);
+        selectedBarangay = null;
+        document.getElementById('selectedBarangay').textContent = '-';
+        document.getElementById('barangayId').value = '';
+        document.getElementById('latitude').value = '';
+        document.getElementById('longitude').value = '';
+        document.getElementById('addressDisplay').classList.remove('active');
+    }
+    
+    // ==========================================
+    // UPDATE ADDRESS DISPLAY
+    // ==========================================
+    function updateCityInfo(city) {
+        document.getElementById('selectedRegion').textContent = 'Central Visayas';
+        document.getElementById('selectedProvince').textContent = 'Cebu';
+        document.getElementById('selectedCity').textContent = city.city_name;
+        
+        document.getElementById('regionId').value = 1;
+        document.getElementById('provinceId').value = 1;
+    }
+    
+    function updateBarangayInfo(barangay) {
+        document.getElementById('selectedBarangay').textContent = barangay.barangay_name;
+        document.getElementById('barangayId').value = barangay.id;
+        document.getElementById('addressDisplay').classList.add('active');
+    }
+    
+    // ==========================================
+    // MAP SETUP
+    // ==========================================
+    const map = L.map('map', {
+        center: [10.3157, 123.8854],
+        zoom: 12,
+        minZoom: 11
+    });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors',
-        maxZoom: 19
+        maxZoom: 18
     }).addTo(map);
     
     let marker = null;
+    let boundaryRect = null;
     
+    function drawCityBoundary(bounds) {
+        if (boundaryRect) map.removeLayer(boundaryRect);
+        
+        boundaryRect = L.rectangle(bounds, {
+            color: '#007bff',
+            weight: 2,
+            fillOpacity: 0.05
+        }).addTo(map);
+    }
+    
+    // ==========================================
+    // SEARCH BARANGAY LOCATION ON MAP
+    // ==========================================
+    async function searchBarangayLocation(barangay) {
+        if (!currentCity) return;
+        
+        try {
+            const searchQuery = `${barangay.barangay_name}, ${currentCity.city_name}, Cebu, Philippines`;
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ph`
+            );
+            const results = await response.json();
+            
+            if (results.length > 0) {
+                const result = results[0];
+                const lat = parseFloat(result.lat);
+                const lng = parseFloat(result.lon);
+                
+                // Remove old marker
+                if (marker) map.removeLayer(marker);
+                
+                // Add new marker
+                marker = L.marker([lat, lng]).addTo(map)
+                    .bindPopup(`
+                        <strong>${barangay.barangay_name}</strong><br>
+                        ${currentCity.city_name}, Cebu<br>
+                        Central Visayas
+                    `).openPopup();
+                
+                map.setView([lat, lng], 15);
+                
+                // Save coordinates
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lng;
+            } else {
+                // Barangay location not found, but still valid selection
+                console.log('Barangay location not found on map');
+                alert('Barangay selected but location not found on map. You can still proceed with checkout.');
+            }
+        } catch (error) {
+            console.error('Search error:', error);
+        }
+    }
+    
+    // ==========================================
+    // MAP CLICK HANDLER - Auto-detect and change barangay
+    // ==========================================
+    map.on('click', async function(e) {
+        if (!currentCity) {
+            alert('Please select a city from the dropdown first.');
+            return;
+        }
+        
+        const lat = e.latlng.lat;
+        const lng = e.latlng.lng;
+        
+        // Update coordinates
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        
+        // Update marker
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng]).addTo(map);
+        
+        // Try to detect barangay from clicked location
+        const data = await reverseGeocode(lat, lng);
+        
+        if (data && data.address) {
+            const barangayName = data.address.suburb || 
+                                data.address.neighbourhood || 
+                                data.address.quarter ||
+                                data.address.city_district ||
+                                data.address.village;
+            
+            // Find matching barangay in current city's data
+            const matchedBarangay = findMatchingBarangay(barangayName);
+            
+            if (matchedBarangay) {
+                // Update dropdown selection
+                barangaySelect.value = matchedBarangay.id;
+                selectedBarangay = matchedBarangay;
+                
+                // Update address display
+                updateBarangayInfo(matchedBarangay);
+                
+                // Show popup
+                marker.bindPopup(`
+                    <strong>${matchedBarangay.barangay_name}</strong><br>
+                    ${currentCity.city_name}, Cebu<br>
+                    Central Visayas<br>
+                    <small class="text-success">✓ Auto-detected from map</small>
+                `).openPopup();
+            } else {
+                // Location clicked but barangay not found in database
+                marker.bindPopup(`
+                    <div class="text-center">
+                        <i class="bi bi-exclamation-triangle text-warning"></i><br>
+                        <strong>Location selected</strong><br>
+                        <small>Could not auto-detect barangay.<br>Please select from dropdown.</small>
+                    </div>
+                `).openPopup();
+                
+                console.log('Detected location name:', barangayName);
+                console.log('Available barangays:', barangaysData.map(b => b.barangay_name));
+            }
+        } else {
+            // Geocoding failed
+            marker.bindPopup(`
+                <div class="text-center">
+                    <i class="bi bi-geo-alt text-info"></i><br>
+                    <strong>Location marked</strong><br>
+                    <small>Please select barangay from dropdown</small>
+                </div>
+            `).openPopup();
+        }
+    });
+    
+    // ==========================================
+    // REVERSE GEOCODING
+    // ==========================================
     async function reverseGeocode(lat, lng) {
         try {
-            const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`);
-            const data = await response.json();
-            return data;
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1&zoom=18`
+            );
+            return await response.json();
         } catch (error) {
             console.error('Geocoding error:', error);
             return null;
         }
     }
     
-    function fillAddressFields(address) {
-        if (!address) return;
+    // Find matching barangay from location name
+    function findMatchingBarangay(locationName) {
+        if (!locationName || barangaysData.length === 0) return null;
         
-        const locationInfo = document.getElementById('locationInfo');
-        const selectedLocation = document.getElementById('selectedLocation');
+        const searchTerm = locationName.toLowerCase()
+            .replace(/\s+/g, ' ')
+            .trim();
         
-        const street = address.road || address.suburb || '';
-        document.getElementById('street').value = street;
+        // Try exact match
+        let match = barangaysData.find(b => 
+            b.barangay_name.toLowerCase() === searchTerm
+        );
         
-        selectedLocation.textContent = address.display_name || 'Location selected';
-        locationInfo.classList.add('active');
+        // Try partial match (contains)
+        if (!match) {
+            match = barangaysData.find(b => {
+                const barangayLower = b.barangay_name.toLowerCase();
+                return barangayLower.includes(searchTerm) || 
+                       searchTerm.includes(barangayLower);
+            });
+        }
+        
+        // Try word-by-word match
+        if (!match) {
+            const searchWords = searchTerm.split(' ');
+            match = barangaysData.find(b => {
+                const barangayWords = b.barangay_name.toLowerCase().split(' ');
+                return searchWords.some(sw => barangayWords.includes(sw));
+            });
+        }
+        
+        return match;
     }
     
-    map.on('click', async function(e) {
-        const lat = e.latlng.lat;
-        const lng = e.latlng.lng;
+    // ==========================================
+    // FORM VALIDATION
+    // ==========================================
+    document.getElementById('checkoutForm').addEventListener('submit', function(e) {
+        const cityId = citySelect.value;
+        const barangayId = barangaySelect.value;
         
-        document.getElementById('latitude').value = lat;
-        document.getElementById('longitude').value = lng;
-        
-        if (marker) {
-            map.removeLayer(marker);
+        if (!cityId) {
+            e.preventDefault();
+            alert('Please select a city.');
+            citySelect.focus();
+            return false;
         }
         
-        marker = L.marker([lat, lng]).addTo(map);
-        
-        const data = await reverseGeocode(lat, lng);
-        if (data && data.address) {
-            fillAddressFields(data.address);
+        if (!barangayId) {
+            e.preventDefault();
+            alert('Please select a barangay.');
+            barangaySelect.focus();
+            return false;
         }
+        
+        // Coordinates are optional since we're using dropdown selection
+        console.log('Form validated successfully');
     });
     
-    // Map Search
-    const searchInput = document.getElementById('mapSearch');
-    let searchTimeout;
-    
-    searchInput.addEventListener('input', function() {
-        clearTimeout(searchTimeout);
-        const query = this.value.trim();
-        
-        if (query.length < 3) return;
-        
-        searchTimeout = setTimeout(async () => {
-            try {
-                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}&countrycodes=ph&addressdetails=1&limit=1`);
-                const results = await response.json();
-                
-                if (results.length > 0) {
-                    const result = results[0];
-                    const lat = parseFloat(result.lat);
-                    const lng = parseFloat(result.lon);
-                    
-                    if (marker) {
-                        map.removeLayer(marker);
-                    }
-                    
-                    marker = L.marker([lat, lng]).addTo(map);
-                    map.setView([lat, lng], 15);
-                    
-                    document.getElementById('latitude').value = lat;
-                    document.getElementById('longitude').value = lng;
-                    
-                    if (result.address) {
-                        fillAddressFields(result.address);
-                    }
-                }
-            } catch (error) {
-                console.error('Search error:', error);
-            }
-        }, 500);
-    });
-    
-    // Try to get user's location
+    // ==========================================
+    // GEOLOCATION (Try to detect user's location)
+    // ==========================================
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                map.setView([lat, lng], 15);
+                
+                // Check which city the user might be in
+                for (const [cityId, config] of Object.entries(DEFAULT_CITY_BOUNDS)) {
+                    const bounds = config.bounds;
+                    if (lat >= bounds[0][0] && lat <= bounds[1][0] && 
+                        lng >= bounds[0][1] && lng <= bounds[1][1]) {
+                        map.setView([lat, lng], 15);
+                        break;
+                    }
+                }
             },
             function(error) {
-                console.log('Location access denied');
+                console.log('Location access denied or unavailable');
             }
         );
     }
