@@ -7,7 +7,7 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('asset/stylescheckout.css') }}">
+    <!-- <link rel="stylesheet" href="{{ asset('asset/stylescheckout.css') }}"> -->
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
