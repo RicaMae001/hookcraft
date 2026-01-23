@@ -611,131 +611,136 @@ class AdminController extends Controller
     // ORDER MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
-    public function orders()
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+   public function orders()
+{
+    $authCheck = $this->checkAdminAuth();
+    if ($authCheck) return $authCheck;
 
-        $orders = DB::table('orders')->orderBy('created_at', 'desc')->get();
-        
-        $coordinators = DB::table('delivery_coordinator')
-            ->where('status', 'Active')
-            ->orderBy('name', 'asc')
-            ->get();
-        
-        $isAdmin = $this->isAdmin();
-        $isStaff = $this->isStaff();
-        
-        return view('admin.orders', compact('orders', 'coordinators', 'isAdmin', 'isStaff'));
-    }
+    // Paginated orders - 15 per page
+    $orders = DB::table('orders')
+        ->orderBy('created_at', 'desc')
+        ->paginate(15);
+    
+    // Get all orders for stats (not paginated)
+    $allOrders = DB::table('orders')->get();
+    
+    $coordinators = DB::table('delivery_coordinator')
+        ->where('status', 'Active')
+        ->orderBy('name', 'asc')
+        ->get();
+    
+    $isAdmin = $this->isAdmin();
+    $isStaff = $this->isStaff();
+    
+    return view('admin.orders', compact('orders', 'allOrders', 'coordinators', 'isAdmin', 'isStaff'));
+}
 
-    public function updateOrderStatus(Request $request, $id)
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+public function updateOrderStatus(Request $request, $id)
+{
+    $authCheck = $this->checkAdminAuth();
+    if ($authCheck) return $authCheck;
 
-        $validated = $request->validate([
-            'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
-            'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
+    $validated = $request->validate([
+        'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
+        'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
+    ]);
+
+    $currentOrder = DB::table('orders')->where('id', $id)->first();
+    
+    DB::beginTransaction();
+
+    try {
+        DB::table('orders')->where('id', $id)->update([
+            'payment_status' => $validated['payment_status'],
+            'delivery_status' => $validated['delivery_status'],
         ]);
 
-        $currentOrder = DB::table('orders')->where('id', $id)->first();
-        
-        DB::beginTransaction();
-
-        try {
-            DB::table('orders')->where('id', $id)->update([
-                'payment_status' => $validated['payment_status'],
-                'delivery_status' => $validated['delivery_status'],
-            ]);
-
-            if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
-                $this->deductStockFromOrder($id);
-            }
-
-            if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
-                $this->restoreStockFromOrder($id);
-            }
-
-            DB::commit();
-
-            Log::info('Order status updated', [
-                'order_id' => $id,
-                'admin_id' => session('admin_id')
-            ]);
-
-            return redirect()->back()->with('success', 'Order status updated successfully');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Order update failed', [
-                'order_id' => $id,
-                'error' => $e->getMessage()
-            ]);
-            return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
+        if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
+            $this->deductStockFromOrder($id);
         }
-    }
 
-    public function deleteOrder($id)
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
-
-        DB::beginTransaction();
-
-        try {
-            $order = DB::table('orders')->where('id', $id)->first();
-            
-            if ($order && $order->payment_status === 'Paid') {
-                $this->restoreStockFromOrder($id);
-            }
-
-            DB::table('orders')->where('id', $id)->delete();
-
-            DB::commit();
-
-            Log::info('Order deleted', [
-                'order_id' => $id,
-                'admin_id' => session('admin_id')
-            ]);
-
-            return redirect()->back()->with('success', 'Order deleted successfully');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error('Order deletion failed', [
-                'order_id' => $id,
-                'error' => $e->getMessage()
-            ]);
-            return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
+        if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
+            $this->restoreStockFromOrder($id);
         }
-    }
 
-    public function assignCoordinator(Request $request, $id)
-    {
-        $authCheck = $this->checkAdminAuth();
-        if ($authCheck) return $authCheck;
+        DB::commit();
 
-        $validated = $request->validate([
-            'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
-        ]);
-
-        DB::table('orders')
-            ->where('id', $id)
-            ->update([
-                'coordinator_id' => $validated['coordinator_id'],
-                'admin_id' => session('admin_id')
-            ]);
-
-        Log::info('Coordinator assigned', [
+        Log::info('Order status updated', [
             'order_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
+        return redirect()->back()->with('success', 'Order status updated successfully');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Order update failed', [
+            'order_id' => $id,
+            'error' => $e->getMessage()
+        ]);
+        return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
+    }
+}
+
+public function deleteOrder($id)
+{
+    $authCheck = $this->checkAdminAuth();
+    if ($authCheck) return $authCheck;
+
+    DB::beginTransaction();
+
+    try {
+        $order = DB::table('orders')->where('id', $id)->first();
+        
+        if ($order && $order->payment_status === 'Paid') {
+            $this->restoreStockFromOrder($id);
+        }
+
+        DB::table('orders')->where('id', $id)->delete();
+
+        DB::commit();
+
+        Log::info('Order deleted', [
+            'order_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
+        return redirect()->back()->with('success', 'Order deleted successfully');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Order deletion failed', [
+            'order_id' => $id,
+            'error' => $e->getMessage()
+        ]);
+        return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
+    }
+}
+
+public function assignCoordinator(Request $request, $id)
+{
+    $authCheck = $this->checkAdminAuth();
+    if ($authCheck) return $authCheck;
+
+    $validated = $request->validate([
+        'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
+    ]);
+
+    DB::table('orders')
+        ->where('id', $id)
+        ->update([
             'coordinator_id' => $validated['coordinator_id'],
             'admin_id' => session('admin_id')
         ]);
 
-        return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
-    }
+    Log::info('Coordinator assigned', [
+        'order_id' => $id,
+        'coordinator_id' => $validated['coordinator_id'],
+        'admin_id' => session('admin_id')
+    ]);
 
+    return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
+}
     // ============================================
     // STAFF MANAGEMENT - ADMIN ONLY
     // ============================================
