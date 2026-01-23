@@ -1015,5 +1015,155 @@
         /* Status badges mobile */
         .status-badge {
             padding: 0.4rem 0.75rem;
-            font-size: 0.8;
-                                                                }
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Ultra Mobile Optimization for screens below 480px */
+    @media (max-width: 480px) {
+        /* Container adjustments */
+        .container {
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+        
+        /* Profile card adjustments */
+        .profile-card .card-body {
+            padding: 1.5rem 1rem;
+        }
+        
+        .profile-image {
+            width: 70px;
+            height: 70px;
+        }
+        
+        /* Order header mobile optimization */
+        .order-header .row {
+            flex-direction: column;
+            align-items: flex-start !important;
+        }
+        
+        .order-header .col-md-6.text-md-end {
+            margin-top: 1rem;
+            align-self: flex-start;
+        }
+        
+        /* Progress section mobile */
+        .progress-section {
+            padding: 1rem;
+        }
+        
+        .custom-progress {
+            height: 35px;
+            margin-bottom: 1rem;
+        }
+        
+        .progress-text {
+            font-size: 0.75rem;
+        }
+        
+        /* Progress milestones ultra mobile */
+        .progress-milestones {
+            grid-template-columns: repeat(2, 1fr);
+            row-gap: 1rem;
+        }
+        
+        .milestone:nth-child(3),
+        .milestone:nth-child(4) {
+            margin-top: 0.5rem;
+        }
+        
+        /* Modal adjustments */
+        .modal-content {
+            margin: 5px;
+        }
+        
+        .modal-body {
+            padding: 0.75rem;
+        }
+        
+        /* Timeline ultra mobile */
+        .timeline-item-modern {
+            padding-left: 40px;
+            padding-bottom: 1rem;
+        }
+        
+        .timeline-content-modern {
+            padding: 0.75rem;
+        }
+        
+        .timeline-content-modern h6 {
+            font-size: 0.9rem;
+        }
+        
+        .timeline-content-modern small,
+        .timeline-content-modern p {
+            font-size: 0.8rem;
+        }
+        
+        /* Toast notification mobile */
+        .toast-notification {
+            left: 10px;
+            right: 10px;
+            top: 10px;
+            text-align: center;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                transform: translateY(-100px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+    }
+    </style>
+    
+    <script>
+    // Auto-hide toast notifications after 5 seconds
+    document.addEventListener('DOMContentLoaded', function() {
+        const toasts = document.querySelectorAll('.toast-notification');
+        
+        toasts.forEach(toast => {
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(400px)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 5000);
+        });
+        
+        // Add click to dismiss functionality
+        toasts.forEach(toast => {
+            toast.addEventListener('click', function() {
+                this.style.opacity = '0';
+                this.style.transform = 'translateX(400px)';
+                setTimeout(() => {
+                    this.remove();
+                }, 300);
+            });
+        });
+        
+        // Enhanced modal interactions
+        const modals = document.querySelectorAll('.modal');
+        modals.forEach(modal => {
+            modal.addEventListener('shown.bs.modal', function() {
+                // Animate timeline items when modal opens
+                const timelineItems = this.querySelectorAll('.timeline-item-modern');
+                timelineItems.forEach((item, index) => {
+                    setTimeout(() => {
+                        item.style.opacity = '1';
+                        item.style.transform = 'translateX(0)';
+                    }, index * 200);
+                });
+            });
+        });
+    });
+    </script>
+</body>
+</html>
