@@ -21,6 +21,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\DeliveryLiveChatController;
+use App\Http\Controllers\NotificationController; // Added
 
 /*
 |--------------------------------------------------------------------------
@@ -64,6 +65,17 @@ Route::prefix('api/locations')->group(function () {
     Route::get('/cities/{provinceId}', [LocationController::class, 'getCities']);
     Route::get('/barangays/{cityId}', [LocationController::class, 'getBarangays']);
     Route::get('/address/{barangayId}', [LocationController::class, 'getCompleteAddress']);
+});
+
+// ============================================
+// NOTIFICATION API ROUTES (for AJAX calls)
+// ============================================
+Route::prefix('api/notifications')->group(function () {
+    Route::get('/', [NotificationController::class, 'index'])->name('api.notifications.index');
+    Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('api.notifications.unread-count');
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('api.notifications.mark-as-read');
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('api.notifications.mark-all-read');
+    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('api.notifications.destroy');
 });
 
 // ===================================
@@ -207,6 +219,11 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::get('/notifications/mark-all-read', [AdminController::class, 'markAllNotificationsAsRead'])->name('notifications.markAllRead');
     Route::get('/notifications/clear-all', [AdminController::class, 'clearAllNotifications'])->name('notifications.clearAll');
     
+    // ============================================
+    // ADMIN NOTIFICATION PAGES
+    // ============================================
+    Route::get('/notifications', [NotificationController::class, 'adminNotifications'])->name('notifications');
+    
     // ===================================
     // USER MANAGEMENT
     // ===================================
@@ -292,6 +309,11 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
     // Dashboard
     Route::get('/dashboard', [DeliveryController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [DeliveryController::class, 'logout'])->name('logout');
+    
+    // ============================================
+    // DELIVERY NOTIFICATION PAGES
+    // ============================================
+    Route::get('/notifications', [NotificationController::class, 'deliveryNotifications'])->name('notifications');
     
     // ===================================
     // DELIVERY MANAGEMENT
