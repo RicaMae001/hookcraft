@@ -173,17 +173,33 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/purchase-history', [ProfileController::class, 'purchaseHistory'])->name('profile.purchase-history');
     Route::get('/profile/track-order', [ProfileController::class, 'trackOrder'])->name('profile.track-order');
     
-    // ===================================
-    // CUSTOMIZATION ROUTES (UPDATED)
-    // ===================================
-    Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
-    Route::get('/customize/create', [CustomizationController::class, 'create'])->name('customization.create');
-    Route::post('/customize/store', [CustomizationController::class, 'store'])->name('customization.store');
-    Route::get('/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
-    Route::get('/customization/{id}', [CustomizationController::class, 'show'])->name('customization.show');
-    Route::get('/customization/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
-    Route::put('/customization/{id}', [CustomizationController::class, 'update'])->name('customization.update');
-    Route::delete('/customization/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
+  
+Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
+
+// Authenticated User Routes
+Route::middleware(['auth'])->group(function () {
+    // Customization Management
+    Route::get('/customizations/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
+    Route::get('/customizations/create', [CustomizationController::class, 'create'])->name('customization.create');
+    Route::post('/customizations', [CustomizationController::class, 'store'])->name('customization.store');
+    Route::get('/customizations/{id}', [CustomizationController::class, 'show'])->name('customization.show');
+    Route::get('/customizations/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
+    Route::put('/customizations/{id}', [CustomizationController::class, 'update'])->name('customization.update');
+    Route::delete('/customizations/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
+    
+    // Customization Checkout & Cart
+    Route::get('/customizations/{id}/checkout', [CustomizationController::class, 'checkout'])->name('customization.checkout');
+    Route::post('/customizations/{id}/checkout', [CustomizationController::class, 'processCheckout'])->name('customization.process-checkout');
+    Route::post('/customizations/{id}/add-to-cart', [CustomizationController::class, 'addToCart'])->name('customization.add-to-cart');
+});
+
+// Admin Customization Management
+Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/customizations', [CustomizationController::class, 'adminIndex'])->name('customizations.index');
+    Route::get('/customizations/{id}', [CustomizationController::class, 'adminShow'])->name('customizations.show');
+    Route::put('/customizations/{id}', [CustomizationController::class, 'adminUpdate'])->name('customizations.update');
+    Route::delete('/customizations/{id}', [CustomizationController::class, 'adminDestroy'])->name('customizations.destroy');
+});
     
     // ===================================
     // ORDER MANAGEMENT

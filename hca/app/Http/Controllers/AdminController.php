@@ -12,6 +12,7 @@ use App\Models\GalleryImage;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\ProductCustomization;
 
 class AdminController extends Controller
 {
@@ -1094,4 +1095,196 @@ public function assignCoordinator(Request $request, $id)
 
         return back()->with('success', 'Gallery status updated successfully!');
     }
+    // In AdminController.php - ADD THESE METHODS
+// ============================================
+// CUSTOMIZATION MANAGEMENT - ADMIN ONLY
+// ============================================
+// In AdminController.php - Make sure these methods exist
+
+public function customizations()
+{
+    $roleCheck = $this->requireAdmin();
+    if ($roleCheck) return $roleCheck;
+
+    $customizations = ProductCustomization::with(['user', 'product'])
+        ->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
+        ->orderBy('created_at', 'desc')
+        ->paginate(20);
+
+    return view('admin.customizations.index', compact('customizations'));
+}
+
+public function customizationShow($id)
+{
+    $roleCheck = $this->requireAdmin();
+    if ($roleCheck) return $roleCheck;
+
+    $customization = ProductCustomization::with(['user', 'product', 'options'])
+        ->findOrFail($id);
+
+    return view('admin.customizations.show', compact('customization'));
+}
+
+public function customizationUpdate(Request $request, $id)
+{
+    $roleCheck = $this->requireAdmin();
+    if ($roleCheck) return $roleCheck;
+
+    $request->validate([
+        'status' => 'required|in:Pending,Approved,Rejected,Completed',
+        'admin_price' => 'required_if:status,Approved|numeric|min:0',
+        'admin_notes' => 'nullable|string',
+    ]);
+
+    $customization = ProductCustomization::findOrFail($id);
+
+    $updateData = [
+        'status' => $request->status,
+        'admin_notes' => $request->admin_notes,
+        'admin_id' => session('admin_id'),
+    ];
+
+    if ($request->status === 'Approved' && $request->has('admin_price')) {
+        $updateData['admin_price'] = $request->admin_price;
+        $updateData['total_price'] = $request->admin_price;
+    } elseif ($request->status !== 'Approved') {
+        $updateData['admin_price'] = null;
+    }
+
+    $customization->update($updateData);
+
+    return redirect()->route('admin.customizations.index')
+        ->with('success', 'Customization updated successfully');
+}
+
+public function customizationDestroy($id)
+{
+    $roleCheck = $this->requireAdmin();
+    if ($roleCheck) return $roleCheck;
+
+    $customization = ProductCustomization::findOrFail($id);
+    
+    if ($customization->custom_image) {
+        $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
+        if (file_exists($imagePath)) {
+            unlink($imagePath);
+        }
+    }
+
+    $customization->delete();
+
+    return redirect()->route('admin.customizations.index')
+        ->with('success', 'Customization deleted successfully');
+}
+// Add these methods to CustomizationController
+
+/**
+ * Show checkout page for approved customization
+ */
+public function checkout($id)
+{
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $customization = ProductCustomization::where('user_id', Auth::id())
+        ->with('product')
+        ->findOrFail($id);
+
+    // Check if customization is approved
+    if (!$customization->isApproved() || !$customization->admin_price) {
+        return redirect()->route('customization.my-customizations')
+            ->with('error', 'This customization is not yet approved or priced.');
+    }
+
+    // Check if already has order
+    if ($customization->order_id) {
+        return redirect()->route('customization.my-customizations')
+            ->with('info', 'This customization has already been ordered.');
+    }
+
+    return view('customization.checkout', compact('customization'));
+}
+
+/**
+ * Add approved customization to cart
+ */
+public function addToCart(Request $request, $id)
+{
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $customization = ProductCustomization::where('user_id', Auth::id())
+        ->with('product')
+        ->findOrFail($id);
+
+    // Validate customization can be added to cart
+    if (!$customization->isApproved()) {
+        return back()->with('error', 'Customization must be approved before adding to cart.');
+    }
+
+    if ($customization->order_id) {
+        return back()->with('error', 'This customization has already been ordered.');
+    }
+
+    if (!$customization->admin_price) {
+        return back()->with('error', 'No price has been set for this customization.');
+    }
+
+    DB::beginTransaction();
+    
+    try {
+        // Get or create regular cart
+        $cart = Cart::firstOrCreate(
+            ['user_id' => Auth::id(), 'is_buy_now' => 0]
+        );
+
+        // Check if customization is already in cart
+        $existingItem = CartItem::where('cart_id', $cart->id)
+            ->where('product_id', $customization->product_id)
+            ->where('is_customization', 1)
+            ->where('customization_id', $customization->id)
+            ->first();
+
+        if ($existingItem) {
+            return back()->with('info', 'This customization is already in your cart.');
+        }
+
+        // Create cart item for customization
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $customization->product_id,
+            'category_id' => $customization->product->category_id,
+            'quantity' => 1,
+            'price' => $customization->admin_price,
+            'subtotal' => $customization->admin_price,
+            'is_customization' => 1,
+            'customization_id' => $customization->id,
+        ]);
+
+        // Update session cart count
+        $cartCount = CartItem::whereHas('cart', function($query) {
+            $query->where('user_id', Auth::id())
+                  ->where('is_buy_now', 0);
+        })->sum('quantity');
+        
+        session(['cart_count' => $cartCount]);
+
+        DB::commit();
+
+        return redirect()->route('cart.index')
+            ->with('success', 'Customization added to cart successfully!');
+
+    } catch (\Exception $e) {
+        DB::rollBack();
+        Log::error('Failed to add customization to cart', [
+            'error' => $e->getMessage(),
+            'customization_id' => $id,
+            'user_id' => Auth::id()
+        ]);
+        
+        return back()->with('error', 'Failed to add customization to cart.');
+    }
+}
 }
