@@ -619,7 +619,7 @@ class AdminController extends Controller
     // Paginated orders - 15 per page
     $orders = DB::table('orders')
         ->orderBy('created_at', 'desc')
-        ->paginate(15);
+        ->paginate(10);
     
     // Get all orders for stats (not paginated)
     $allOrders = DB::table('orders')->get();
