@@ -66,7 +66,11 @@
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--light-bg);
             color: var(--text-primary);
+<<<<<<< HEAD
             margin-top: 76px;
+=======
+            margin-top: 20px;
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
             line-height: 1.6;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
@@ -369,10 +373,17 @@
         .stat-card {
             background: var(--card-bg);
             border-radius: 16px;
+<<<<<<< HEAD
             padding: 1.75rem;
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
             height: 100%;
+=======
+            padding: 0.30rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            height: 105%;
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         .stat-card:hover {
@@ -389,6 +400,11 @@
             justify-content: center;
             font-size: 1.5rem;
             margin-bottom: 1rem;
+<<<<<<< HEAD
+=======
+            margin-left: 20px;  
+            margin-top: 10px;
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         .stat-card-icon.primary {
@@ -416,12 +432,20 @@
             font-weight: 700;
             color: var(--text-primary);
             margin: 0.5rem 0;
+<<<<<<< HEAD
+=======
+            margin-left: 25px;
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         .stat-card-label {
             color: var(--text-secondary);
             font-size: 0.875rem;
             font-weight: 500;
+<<<<<<< HEAD
+=======
+            margin-left: 20px;
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         /* Content Cards - EXACT from your dashboard */
@@ -482,7 +506,11 @@
         }
 
         .badge-info {
+<<<<<<< HEAD
             background: rgba(99, 179, 237, 0.15);
+=======
+            background: rgba(211, 214, 216, 0.15);
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
             color: var(--info);
         }
 
@@ -694,6 +722,17 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+<<<<<<< HEAD
+=======
+
+        .address-text {
+    color: #bfcfdd; /* clean medium gray for light mode */
+}
+
+.dark-mode .address-text {
+    color: #d5e0ec; /* soft cool gray for dark mode */
+}
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
     </style>
 </head>
 <body>
@@ -884,10 +923,18 @@
                                             <span class="badge bg-secondary me-2">#{{ $log->order_id }}</span>
                                             <strong>{{ $log->customer_name }}</strong>
                                         </h6>
+<<<<<<< HEAD
                                         <p class="mb-2 text-muted">
                                             <i class="fas fa-map-marker-alt me-2"></i>
                                             {{ Str::limit($log->address, 60) }}
                                         </p>
+=======
+                                   <p class="mb-2 address-text">
+    <i class="fas fa-map-marker-alt me-2"></i>
+    {{ Str::limit($log->address, 60) }}
+</p>
+
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
                                         <div class="status-change">
                                             <span class="badge-modern 
                                                 @if($log->old_status == 'Delivered') badge-success
