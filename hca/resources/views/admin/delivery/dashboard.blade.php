@@ -67,7 +67,7 @@
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--light-bg);
             color: var(--text-primary);
-            margin-top: 76px;
+            margin-top: 20px;
             line-height: 1.6;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
@@ -374,6 +374,7 @@
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
             height: 100%;
+            margin-left: 20px;
         }
 
         .stat-card:hover {
