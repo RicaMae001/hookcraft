@@ -21,7 +21,7 @@ use App\Http\Controllers\OrderController;
 use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\DeliveryLiveChatController;
-use App\Http\Controllers\NotificationController; // Added
+use App\Http\Controllers\NotificationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -68,14 +68,14 @@ Route::prefix('api/locations')->group(function () {
 });
 
 // ============================================
-// NOTIFICATION API ROUTES (for AJAX calls)
+// NOTIFICATION API ROUTES (Universal - works for all user types)
 // ============================================
-Route::prefix('api/notifications')->group(function () {
-    Route::get('/', [NotificationController::class, 'index'])->name('api.notifications.index');
-    Route::get('/unread-count', [NotificationController::class, 'unreadCount'])->name('api.notifications.unread-count');
-    Route::post('/{id}/read', [NotificationController::class, 'markAsRead'])->name('api.notifications.mark-as-read');
-    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('api.notifications.mark-all-read');
-    Route::delete('/{id}', [NotificationController::class, 'destroy'])->name('api.notifications.destroy');
+Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+    Route::get('/', [NotificationController::class, 'index']);
+    Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
+    Route::delete('/{id}', [NotificationController::class, 'destroy']);
 });
 
 // ===================================
@@ -84,7 +84,7 @@ Route::prefix('api/notifications')->group(function () {
 Route::middleware(['auth'])->group(function () {
     
     // ===================================
-    // CUSTOMER LIVE CHAT ROUTES (FIXED)
+    // CUSTOMER LIVE CHAT ROUTES
     // ===================================
     // Request STAFF chat
     Route::post('/livechat/request', [LiveChatController::class, 'request'])->name('livechat.request');
@@ -117,7 +117,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/livechat/check-unread', [LiveChatController::class, 'checkUnread'])->name('livechat.check-unread');
 
     // ===================================
-    // CUSTOMER ORDERS ENDPOINT (NEW - FOR ORDER DISPLAY IN CHAT)
+    // CUSTOMER ORDERS ENDPOINT
     // ===================================
     Route::get('/customer/orders/ongoing', [LiveChatController::class, 'getCustomerOngoingOrders'])->name('customer.orders.ongoing');
 
@@ -137,7 +137,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
 
     // ===================================
-    // THANK YOU PAGE - COMPLETE WITH ORDER DATA
+    // THANK YOU PAGE
     // ===================================
     Route::get('/thankyou/{order_id}', function ($order_id) {
         // Fetch the order with related items and products
@@ -171,7 +171,7 @@ Route::middleware(['auth'])->group(function () {
             'order_date' => $order->created_at->format('F d, Y h:i A'),
             'order_items' => $orderItems,
             'subtotal' => $subtotal,
-            'shipping_fee' => 0.00, // You can add your shipping calculation logic here
+            'shipping_fee' => 0.00,
             'cartCount' => $cartCount
         ]);
     })->name('thankyou');
@@ -186,7 +186,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/track-order', [ProfileController::class, 'trackOrder'])->name('profile.track-order');
     
     // ===================================
-    // CUSTOMIZATION ROUTES (UPDATED)
+    // USER NOTIFICATIONS PAGE
+    // ===================================
+    Route::get('/notifications', [NotificationController::class, 'userNotifications'])->name('user.notifications');
+    
+    // ===================================
+    // CUSTOMIZATION ROUTES
     // ===================================
     Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
     Route::get('/customize/create', [CustomizationController::class, 'create'])->name('customization.create');
@@ -213,15 +218,8 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::post('/logout', [AdminController::class, 'logout'])->name('logout');
     
     // ===================================
-    // NOTIFICATION ROUTES
+    // ADMIN NOTIFICATION PAGE
     // ===================================
-    Route::post('/notifications/{id}/read', [AdminController::class, 'markNotificationAsRead'])->name('notifications.markRead');
-    Route::get('/notifications/mark-all-read', [AdminController::class, 'markAllNotificationsAsRead'])->name('notifications.markAllRead');
-    Route::get('/notifications/clear-all', [AdminController::class, 'clearAllNotifications'])->name('notifications.clearAll');
-    
-    // ============================================
-    // ADMIN NOTIFICATION PAGES
-    // ============================================
     Route::get('/notifications', [NotificationController::class, 'adminNotifications'])->name('notifications');
     
     // ===================================
@@ -285,7 +283,7 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     });
 
     // ===================================
-    // ADMIN LIVE CHAT ROUTES - FIXED TO USE LiveChatController
+    // ADMIN LIVE CHAT ROUTES
     // ===================================
     Route::prefix('livechat')->name('livechat.')->group(function () {
         Route::get('/', [LiveChatController::class, 'adminIndex'])->name('index');
@@ -310,9 +308,9 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
     Route::get('/dashboard', [DeliveryController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [DeliveryController::class, 'logout'])->name('logout');
     
-    // ============================================
-    // DELIVERY NOTIFICATION PAGES
-    // ============================================
+    // ===================================
+    // DELIVERY NOTIFICATION PAGE
+    // ===================================
     Route::get('/notifications', [NotificationController::class, 'deliveryNotifications'])->name('notifications');
     
     // ===================================
@@ -329,7 +327,7 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
     Route::get('/history', [DeliveryController::class, 'history'])->name('history');
     
     // ===================================
-    // DELIVERY LIVE CHAT ROUTES (FIXED + ENHANCED WITH ORDER DISPLAY)
+    // DELIVERY LIVE CHAT ROUTES
     // ===================================
     Route::prefix('livechat')->name('livechat.')->group(function () {
         Route::get('/', [DeliveryLiveChatController::class, 'index'])->name('index');

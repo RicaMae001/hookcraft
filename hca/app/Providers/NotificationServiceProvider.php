@@ -3,7 +3,6 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use App\Services\NotificationService;
 
 class NotificationServiceProvider extends ServiceProvider
 {
@@ -12,15 +11,14 @@ class NotificationServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        $this->app->singleton(NotificationService::class, function ($app) {
-            return new NotificationService();
-        });
+        // No longer needed - we're using NotificationHelper instead
+        // You can delete this entire file or leave it empty
     }
 
     /**
      * Bootstrap services.
      */
-    public function boot(): void
+    public function bootstrap(): void
     {
         //
     }

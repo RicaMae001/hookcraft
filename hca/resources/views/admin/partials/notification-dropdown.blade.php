@@ -2,7 +2,7 @@
 <!-- Include this in your navbar -->
 
 <div class="dropdown notification-dropdown">
-    <button class="btn btn-link notification-bell" data-bs-toggle="dropdown" aria-expanded="false">
+    <button class="btn btn-link notification-bell" data-bs-toggle="dropdown" aria-expanded="false" id="notificationBell">
         <i class="fas fa-bell fa-lg"></i>
         <span class="notification-badge" id="notificationCount" style="display: none;">0</span>
     </button>
@@ -15,7 +15,7 @@
                 Notifications
             </h6>
             <div>
-                <button class="btn btn-sm btn-link text-primary" onclick="markAllAsRead()" title="Mark all as read">
+                <button class="btn btn-sm btn-link text-primary" onclick="markAllAsRead()" title="Mark all as read" id="markAllReadBtn" style="display: none;">
                     <i class="fas fa-check-double"></i>
                 </button>
                 @if(session('admin_id'))
@@ -24,6 +24,10 @@
                 </a>
                 @elseif(session('coordinator_id'))
                 <a href="{{ route('delivery.notifications') }}" class="btn btn-sm btn-link" title="View all">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                @elseif(session('user_id'))
+                <a href="{{ route('user.notifications') }}" class="btn btn-sm btn-link" title="View all">
                     <i class="fas fa-external-link-alt"></i>
                 </a>
                 @endif
@@ -45,7 +49,7 @@
                 <p style="color: var(--text-secondary);">No notifications</p>
             </div>
             
-            <!-- Notifications will be inserted here -->
+            <!-- Notifications will be inserted here by JavaScript -->
         </div>
     </div>
 </div>
@@ -92,6 +96,9 @@
     cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
+    text-decoration: none;
+    display: block;
+    color: inherit;
 }
 
 .notification-item:hover {
@@ -167,6 +174,25 @@
     color: var(--text-secondary);
     font-size: 0.75rem;
 }
+
+.notification-priority-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+}
+
+.notification-priority-badge.urgent {
+    background: rgba(252, 129, 129, 0.2);
+    color: var(--danger);
+}
+
+.notification-priority-badge.high {
+    background: rgba(246, 173, 85, 0.2);
+    color: var(--warning);
+}
 </style>
 
 <script>
@@ -177,11 +203,15 @@ async function fetchNotifications() {
     try {
         const response = await fetch('/api/notifications?limit=10', {
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json'
             }
         });
         
-        if (!response.ok) throw new Error('Failed to fetch notifications');
+        if (!response.ok) {
+            console.error('Failed to fetch notifications:', response.status);
+            return;
+        }
         
         const data = await response.json();
         
@@ -191,17 +221,26 @@ async function fetchNotifications() {
         }
     } catch (error) {
         console.error('Error fetching notifications:', error);
+        // Hide loading, show empty state on error
+        document.getElementById('notificationsLoading')?.classList.add('d-none');
+        document.getElementById('notificationsEmpty')?.classList.remove('d-none');
     }
 }
 
 // Update notification badge
 function updateNotificationBadge(count) {
     const badge = document.getElementById('notificationCount');
-    if (count > 0) {
-        badge.textContent = count > 99 ? '99+' : count;
-        badge.style.display = 'block';
-    } else {
-        badge.style.display = 'none';
+    const markAllBtn = document.getElementById('markAllReadBtn');
+    
+    if (badge) {
+        if (count > 0) {
+            badge.textContent = count > 99 ? '99+' : count;
+            badge.style.display = 'block';
+            if (markAllBtn) markAllBtn.style.display = 'inline-block';
+        } else {
+            badge.style.display = 'none';
+            if (markAllBtn) markAllBtn.style.display = 'none';
+        }
     }
 }
 
@@ -211,34 +250,52 @@ function displayNotifications(notifications) {
     const loading = document.getElementById('notificationsLoading');
     const empty = document.getElementById('notificationsEmpty');
     
-    loading.classList.add('d-none');
+    if (loading) loading.classList.add('d-none');
     
-    if (notifications.length === 0) {
-        empty.classList.remove('d-none');
+    if (!notifications || notifications.length === 0) {
+        if (empty) empty.classList.remove('d-none');
+        container.innerHTML = '';
         return;
     }
     
-    empty.classList.add('d-none');
+    if (empty) empty.classList.add('d-none');
     
-    const html = notifications.map(notification => `
-        <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
-             onclick="handleNotificationClick(${notification.id}, '${notification.action_url || '#'}')">
-            <div class="d-flex gap-3">
-                <div class="notification-icon ${notification.color_class}">
-                    <i class="fas ${notification.icon}"></i>
-                </div>
-                <div class="flex-grow-1">
-                    <div class="notification-title">${notification.title}</div>
-                    <div class="notification-message">${notification.message}</div>
-                    <div class="notification-time">
-                        <i class="fas fa-clock me-1"></i>${notification.time_ago}
+    const html = notifications.map(notification => {
+        const priorityBadge = (notification.priority === 'urgent' || notification.priority === 'high') 
+            ? `<span class="notification-priority-badge ${notification.priority}">${notification.priority.toUpperCase()}</span>` 
+            : '';
+        
+        return `
+            <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
+                 onclick="handleNotificationClick(${notification.id}, '${notification.action_url || '#'}')">
+                <div class="d-flex gap-3">
+                    <div class="notification-icon ${notification.color_class}">
+                        <i class="fas ${notification.icon}"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        <div class="notification-title">
+                            ${escapeHtml(notification.title)}
+                            ${priorityBadge}
+                        </div>
+                        <div class="notification-message">${escapeHtml(notification.message)}</div>
+                        <div class="notification-time">
+                            <i class="fas fa-clock me-1"></i>${notification.time_ago}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
     
     container.innerHTML = html;
+}
+
+// Escape HTML to prevent XSS
+function escapeHtml(text) {
+    if (!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
 }
 
 // Handle notification click
@@ -249,7 +306,8 @@ async function handleNotificationClick(notificationId, actionUrl) {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
         
@@ -257,7 +315,7 @@ async function handleNotificationClick(notificationId, actionUrl) {
         await fetchNotifications();
         
         // Navigate to action URL if exists
-        if (actionUrl && actionUrl !== '#') {
+        if (actionUrl && actionUrl !== '#' && actionUrl !== 'null') {
             window.location.href = actionUrl;
         }
     } catch (error) {
@@ -272,7 +330,8 @@ async function markAllAsRead() {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
             }
         });
         
@@ -293,9 +352,11 @@ document.addEventListener('DOMContentLoaded', function() {
     notificationUpdateInterval = setInterval(fetchNotifications, 30000);
     
     // Fetch when dropdown is opened
-    const notificationDropdown = document.querySelector('.notification-dropdown');
-    if (notificationDropdown) {
-        notificationDropdown.addEventListener('show.bs.dropdown', fetchNotifications);
+    const notificationBell = document.getElementById('notificationBell');
+    if (notificationBell) {
+        notificationBell.addEventListener('click', function() {
+            fetchNotifications();
+        });
     }
 });
 

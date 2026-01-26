@@ -7,29 +7,64 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use App\Services\NotificationService;
 
 class DeliveryController extends Controller
 {
-    // Add notification to admin session
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
+    // Add notification to admin - FIXED VERSION
     private function addAdminNotification($orderId, $coordinatorName, $customerName, $oldStatus, $newStatus)
     {
-        $notifications = Session::get('admin_notifications', []);
-        
-        $notification = [
-            'id' => uniqid(),
-            'type' => 'delivery_status_change',
+        // Use the correct NotificationService method: create()
+        $this->notificationService->create([
+            'recipient_type' => 'admin',
+            'recipient_id' => null, // null = broadcast to all admins
+            'sender_type' => 'delivery',
+            'sender_id' => session('coordinator_id'),
+            'type' => 'delivery_status_changed',
             'title' => "Order #{$orderId} Status Updated",
             'message' => "{$coordinatorName} changed delivery status from '{$oldStatus}' to '{$newStatus}' for Order #{$orderId} (Customer: {$customerName})",
-            'order_id' => $orderId,
-            'coordinator_name' => $coordinatorName,
-            'timestamp' => now()->format('Y-m-d H:i:s'),
-            'is_read' => false
-        ];
-        
-        array_unshift($notifications, $notification);
-        $notifications = array_slice($notifications, 0, 50); // Keep last 50
-        
-        Session::put('admin_notifications', $notifications);
+            'entity_type' => 'order',
+            'entity_id' => $orderId,
+            'action_url' => "/admin/orders/{$orderId}",
+            'priority' => 'normal',
+            'metadata' => [
+                'order_id' => $orderId,
+                'coordinator_name' => $coordinatorName,
+                'customer_name' => $customerName,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+            ]
+        ]);
+    }
+
+    // Add notification for payment proof upload - FIXED VERSION
+    private function addPaymentProofNotification($orderId, $coordinatorName, $customerName)
+    {
+        $this->notificationService->create([
+            'recipient_type' => 'admin',
+            'recipient_id' => null,
+            'sender_type' => 'delivery',
+            'sender_id' => session('coordinator_id'),
+            'type' => 'payment_proof_uploaded',
+            'title' => "GCash Payment Proof Uploaded - Order #{$orderId}",
+            'message' => "{$coordinatorName} uploaded GCash payment proof for Order #{$orderId} (Customer: {$customerName}). Payment status automatically updated to 'Paid'.",
+            'entity_type' => 'order',
+            'entity_id' => $orderId,
+            'action_url' => "/admin/orders/{$orderId}",
+            'priority' => 'high',
+            'metadata' => [
+                'order_id' => $orderId,
+                'coordinator_name' => $coordinatorName,
+                'customer_name' => $customerName,
+            ]
+        ]);
     }
 
     // Login with role-based verification
@@ -278,7 +313,7 @@ class DeliveryController extends Controller
             'new_status' => $newStatus
         ]);
 
-        // Create notification for admin
+        // Create notification for admin using FIXED method
         $this->addAdminNotification(
             $id,
             $coordinatorName,
@@ -372,23 +407,8 @@ class DeliveryController extends Controller
                     Log::error("Failed to update payment proof for Order #{$id}");
                 }
                 
-                // Create notification for admin about payment proof upload
-                $notifications = Session::get('admin_notifications', []);
-                
-                $notification = [
-                    'id' => uniqid(),
-                    'type' => 'payment_proof_uploaded',
-                    'title' => "GCash Payment Proof Uploaded - Order #{$id}",
-                    'message' => "{$coordinatorName} uploaded GCash payment proof for Order #{$id} (Customer: {$order->customer_name}). Payment status automatically updated to 'Paid'.",
-                    'order_id' => $id,
-                    'coordinator_name' => $coordinatorName,
-                    'timestamp' => now()->format('Y-m-d H:i:s'),
-                    'is_read' => false
-                ];
-                
-                array_unshift($notifications, $notification);
-                $notifications = array_slice($notifications, 0, 50);
-                Session::put('admin_notifications', $notifications);
+                // Create notification for admin using FIXED method
+                $this->addPaymentProofNotification($id, $coordinatorName, $order->customer_name);
                 
                 // Verify the update was successful
                 $verifyOrder = DB::table('orders')->where('id', $id)->first();
