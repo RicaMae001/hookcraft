@@ -782,46 +782,170 @@
     }
 
     // ==========================================
+    // CITY CONFIGURATIONS
+    // ==========================================
+    const CITY_CONFIGS = {
+        1: { // Cebu City
+            name: 'Cebu City',
+            center: [10.3157, 123.8854],
+            bounds: [[10.25, 123.80], [10.38, 123.97]],
+            minZoom: 12,
+            maxZoom: 18
+        },
+        2: { // Lapu-Lapu City
+            name: 'Lapu-Lapu City',
+            center: [10.3103, 123.9494],
+            bounds: [[10.27, 123.90], [10.35, 124.00]],
+            minZoom: 13,
+            maxZoom: 18
+        },
+        3: { // Mandaue City
+            name: 'Mandaue City',
+            center: [10.3237, 123.9227],
+            bounds: [[10.28, 123.88], [10.37, 123.97]],
+            minZoom: 13,
+            maxZoom: 18
+        },
+        4: { // Talisay City
+            name: 'Talisay City',
+            center: [10.2444, 123.8493],
+            bounds: [[10.20, 123.81], [10.29, 123.89]],
+            minZoom: 13,
+            maxZoom: 18
+        }
+    };
+
+    // ==========================================
     // DATA STRUCTURES
     // ==========================================
     let citiesData = [];
     let barangaysData = [];
     let currentCity = null;
     let selectedBarangay = null;
-    
-    // LAPU-LAPU CITY ONLY (ID: 2)
-    const LAPULAPU_CITY_ID = 2;
-    
-    // Lapu-Lapu City bounds
-    const LAPULAPU_BOUNDS = {
-        center: [10.3103, 123.9494],
-        bounds: [[10.27, 123.90], [10.35, 124.00]],
-        minZoom: 13,
-        maxZoom: 18
-    };
+    let userLocation = null; // Store user's detected location
     
     // ==========================================
     // DOM ELEMENTS
     // ==========================================
     const citySelect = document.getElementById('citySelect');
     const barangaySelect = document.getElementById('barangaySelect');
+    const locationInfo = document.querySelector('.location-info');
     
     // ==========================================
-    // LOAD CITIES (LAPU-LAPU ONLY)
+    // DETECT USER LOCATION & LOAD CITIES
     // ==========================================
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/api/locations/cities/1')
-            .then(res => res.json())
-            .then(data => {
-                // Filter to only show Lapu-Lapu City
-                citiesData = data.filter(city => city.id === LAPULAPU_CITY_ID);
-                citiesData.forEach(city => {
-                    const option = new Option(city.city_name, city.id);
-                    citySelect.add(option);
-                });
-            })
-            .catch(err => console.error('Error loading cities:', err));
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Try to get user's location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async function(position) {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    // Detect which city the user is in
+                    const detectedCity = detectUserCity(userLocation.lat, userLocation.lng);
+                    
+                    // Load only the detected city
+                    await loadCities(detectedCity);
+                    
+                    // Auto-select the city
+                    if (detectedCity && citiesData.length > 0) {
+                        citySelect.value = detectedCity;
+                        citySelect.dispatchEvent(new Event('change'));
+                    }
+                },
+                function(error) {
+                    console.log('Geolocation error:', error);
+                    // Load all cities if location detection fails
+                    loadAllCities();
+                }
+            );
+        } else {
+            // Load all cities if geolocation not supported
+            loadAllCities();
+        }
     });
+
+    // ==========================================
+    // DETECT USER'S CITY
+    // ==========================================
+    function detectUserCity(lat, lng) {
+        for (const [cityId, config] of Object.entries(CITY_CONFIGS)) {
+            const bounds = config.bounds;
+            if (lat >= bounds[0][0] && lat <= bounds[1][0] && 
+                lng >= bounds[0][1] && lng <= bounds[1][1]) {
+                return parseInt(cityId);
+            }
+        }
+        return null; // User not in any service area
+    }
+
+    // ==========================================
+    // LOAD SPECIFIC CITY ONLY
+    // ==========================================
+    async function loadCities(cityId) {
+        try {
+            const response = await fetch('/api/locations/cities/1'); // Province ID = 1 (Cebu)
+            const data = await response.json();
+            
+            // Filter to show only the detected city
+            if (cityId && CITY_CONFIGS[cityId]) {
+                citiesData = data.filter(city => city.id === cityId);
+                locationInfo.innerHTML = `
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Service Area:</strong> We currently deliver within ${CITY_CONFIGS[cityId].name} only
+                `;
+            } else {
+                citiesData = data;
+            }
+            
+            // Populate city dropdown
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            citiesData.forEach(city => {
+                const option = new Option(city.city_name, city.id);
+                citySelect.add(option);
+            });
+            
+            // If only one city available, show info message
+            if (citiesData.length === 1) {
+                locationInfo.classList.add('alert', 'alert-info');
+                locationInfo.innerHTML = `
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Great!</strong> You're in our service area: ${citiesData[0].city_name}
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading cities:', error);
+        }
+    }
+
+    // ==========================================
+    // LOAD ALL CITIES (FALLBACK)
+    // ==========================================
+    async function loadAllCities() {
+        try {
+            const response = await fetch('/api/locations/cities/1');
+            const data = await response.json();
+            
+            // Show only configured cities
+            citiesData = data.filter(city => CITY_CONFIGS[city.id]);
+            
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            citiesData.forEach(city => {
+                const option = new Option(city.city_name, city.id);
+                citySelect.add(option);
+            });
+            
+            locationInfo.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                <strong>Service Areas:</strong> Cebu City, Lapu-Lapu City, Mandaue City, Talisay City
+            `;
+        } catch (error) {
+            console.error('Error loading cities:', error);
+        }
+    }
     
     // ==========================================
     // CITY SELECTION
@@ -834,12 +958,17 @@
         }
         
         currentCity = citiesData.find(c => c.id === cityId);
-        if (!currentCity) return;
+        if (!currentCity || !CITY_CONFIGS[cityId]) return;
         
-        // Zoom to Lapu-Lapu City
-        map.setView(LAPULAPU_BOUNDS.center, 13);
-        drawCityBoundary(LAPULAPU_BOUNDS.bounds);
+        const config = CITY_CONFIGS[cityId];
         
+        // Update map bounds and center
+        map.setView(config.center, config.minZoom);
+        map.setMinZoom(config.minZoom);
+        map.setMaxZoom(config.maxZoom);
+        map.setMaxBounds(config.bounds);
+        
+        drawCityBoundary(config.bounds);
         updateCityInfo(currentCity);
         loadBarangays(cityId);
         resetBarangaySelection();
@@ -914,14 +1043,14 @@
     }
     
     // ==========================================
-    // MAP SETUP (RESTRICTED TO LAPU-LAPU)
+    // MAP SETUP
     // ==========================================
     const map = L.map('map', {
-        center: LAPULAPU_BOUNDS.center,
-        zoom: 13,
-        minZoom: LAPULAPU_BOUNDS.minZoom,
-        maxZoom: LAPULAPU_BOUNDS.maxZoom,
-        maxBounds: LAPULAPU_BOUNDS.bounds,
+        center: [10.3157, 123.8854], // Default: Cebu City center
+        zoom: 12,
+        minZoom: 11,
+        maxZoom: 18,
+        maxBounds: [[10.15, 123.75], [10.45, 124.05]], // Greater Cebu area
         maxBoundsViscosity: 1.0
     });
     
@@ -943,9 +1072,6 @@
         }).addTo(map);
     }
     
-    // Draw Lapu-Lapu boundary on load
-    drawCityBoundary(LAPULAPU_BOUNDS.bounds);
-    
     // ==========================================
     // SEARCH BARANGAY ON MAP
     // ==========================================
@@ -953,9 +1079,9 @@
         if (!currentCity) return;
         
         try {
-            const searchQuery = `${barangay.barangay_name}, Lapu-Lapu City, Cebu, Philippines`;
+            const searchQuery = `${barangay.barangay_name}, ${currentCity.city_name}, Cebu, Philippines`;
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ph&bounded=1&viewbox=${LAPULAPU_BOUNDS.bounds[0][1]},${LAPULAPU_BOUNDS.bounds[1][0]},${LAPULAPU_BOUNDS.bounds[1][1]},${LAPULAPU_BOUNDS.bounds[0][0]}`
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ph`
             );
             const results = await response.json();
             
@@ -963,11 +1089,11 @@
                 const lat = parseFloat(results[0].lat);
                 const lng = parseFloat(results[0].lon);
                 
-                // Verify location is within Lapu-Lapu bounds
-                if (isWithinLapulapuBounds(lat, lng)) {
-                    placeMarker(lat, lng, `${barangay.barangay_name}, Lapu-Lapu City`);
+                // Verify location is within current city bounds
+                if (isWithinCityBounds(lat, lng, currentCity.id)) {
+                    placeMarker(lat, lng, `${barangay.barangay_name}, ${currentCity.city_name}`);
                 } else {
-                    alert('Location outside Lapu-Lapu City. Please select a valid location.');
+                    alert(`Location outside ${currentCity.city_name}. Please select a valid location.`);
                 }
             }
         } catch (error) {
@@ -976,20 +1102,20 @@
     }
     
     // ==========================================
-    // MAP CLICK HANDLER (RESTRICTED)
+    // MAP CLICK HANDLER
     // ==========================================
     map.on('click', async function(e) {
         if (!currentCity) {
-            alert('Please select Lapu-Lapu City first.');
+            alert('Please select your city first.');
             return;
         }
         
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         
-        // Check if click is within Lapu-Lapu bounds
-        if (!isWithinLapulapuBounds(lat, lng)) {
-            alert('Please select a location within Lapu-Lapu City only.');
+        // Check if click is within current city bounds
+        if (!isWithinCityBounds(lat, lng, currentCity.id)) {
+            alert(`Please select a location within ${currentCity.city_name} only.`);
             return;
         }
         
@@ -1013,8 +1139,9 @@
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
-    function isWithinLapulapuBounds(lat, lng) {
-        const bounds = LAPULAPU_BOUNDS.bounds;
+    function isWithinCityBounds(lat, lng, cityId) {
+        if (!CITY_CONFIGS[cityId]) return false;
+        const bounds = CITY_CONFIGS[cityId].bounds;
         return lat >= bounds[0][0] && lat <= bounds[1][0] && 
                lng >= bounds[0][1] && lng <= bounds[1][1];
     }
@@ -1026,7 +1153,9 @@
         if (marker) map.removeLayer(marker);
         marker = L.marker([lat, lng], {
             icon: L.divIcon({
-                html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>'
+                html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
             })
         }).addTo(map);
         
@@ -1064,43 +1193,19 @@
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         if (!citySelect.value || !barangaySelect.value) {
             e.preventDefault();
-            alert('Please select Lapu-Lapu City and a barangay.');
+            alert('Please select your city and barangay.');
             return false;
         }
         
         const lat = parseFloat(document.getElementById('latitude').value);
         const lng = parseFloat(document.getElementById('longitude').value);
         
-        if (lat && lng && !isWithinLapulapuBounds(lat, lng)) {
+        if (lat && lng && !isWithinCityBounds(lat, lng, parseInt(citySelect.value))) {
             e.preventDefault();
-            alert('Selected location must be within Lapu-Lapu City.');
+            alert(`Selected location must be within ${currentCity.city_name}.`);
             return false;
         }
     });
-    
-    // ==========================================
-    // GEOLOCATION (RESTRICTED TO LAPU-LAPU)
-    // ==========================================
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                
-                // Only use geolocation if within Lapu-Lapu
-                if (isWithinLapulapuBounds(lat, lng)) {
-                    map.setView([lat, lng], 15);
-                } else {
-                    // Stay at default Lapu-Lapu center
-                    map.setView(LAPULAPU_BOUNDS.center, 13);
-                }
-            },
-            function() {
-                console.log('Location access denied or unavailable');
-                map.setView(LAPULAPU_BOUNDS.center, 13);
-            }
-        );
-    }
 </script>
 </body>
 </html>
