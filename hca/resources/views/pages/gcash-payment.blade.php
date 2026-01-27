@@ -11,207 +11,386 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <style>
-        :root {
-            --primary-pink: #d63384;
-            --accent-rose: #e91e63;
-            --success-green: #198754;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
 
         body {
-            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f5f7fa;
             min-height: 100vh;
-            padding: 2rem 0;
         }
 
-        .payment-container {
-            max-width: 600px;
+        .payment-wrapper {
+            max-width: 480px;
             margin: 0 auto;
+            padding: 1rem;
+            padding-top: 2rem;
         }
 
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e6ed;
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e6ed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .step.active .step-label {
+            color: #0f172a;
+        }
+
+        /* Main Card */
         .payment-card {
             background: white;
-            border-radius: 20px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
             overflow: hidden;
-            margin-bottom: 2rem;
         }
 
-        .payment-header {
-            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
-            color: white;
-            padding: 2rem;
-            text-align: center;
+        /* Order Summary */
+        .order-summary {
+            padding: 1.5rem;
+            border-bottom: 1px solid #f1f5f9;
         }
 
-        .payment-header h2 {
-            margin: 0 0 0.5rem 0;
-            font-weight: 700;
-        }
-
-        .payment-header p {
-            margin: 0;
-            opacity: 0.9;
-        }
-
-        .payment-body {
-            padding: 2rem;
-        }
-
-        .qr-section {
-            text-align: center;
-            margin-bottom: 2rem;
-            padding: 2rem;
-            background: #f8f9fa;
-            border-radius: 12px;
-        }
-
-        .qr-code {
-            max-width: 300px;
-            width: 100%;
-            height: auto;
-            border: 4px solid white;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+        .order-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
             margin-bottom: 1rem;
         }
 
-        .gcash-number {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--primary-pink);
-            margin: 1rem 0;
+        .order-id {
+            font-size: 0.875rem;
+            color: #64748b;
+            font-weight: 500;
         }
 
-        .amount-display {
-            background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-            padding: 1.5rem;
+        .order-status {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            background: #fef3c7;
+            color: #92400e;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .amount-box {
+            background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+            padding: 1.25rem;
             border-radius: 12px;
             text-align: center;
-            margin-bottom: 2rem;
+            color: white;
         }
 
         .amount-label {
             font-size: 0.875rem;
-            color: #2e7d32;
-            margin-bottom: 0.5rem;
+            opacity: 0.9;
+            margin-bottom: 0.25rem;
         }
 
         .amount-value {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
-            color: #1b5e20;
+            letter-spacing: -0.02em;
         }
 
-        .instructions {
-            background: #fff3cd;
-            border-left: 4px solid #ffc107;
+        /* Payment Section */
+        .payment-section {
             padding: 1.5rem;
-            border-radius: 8px;
-            margin-bottom: 2rem;
         }
 
-        .instructions h5 {
-            color: #856404;
-            margin-bottom: 1rem;
+        .section-title {
+            font-size: 0.875rem;
             font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .instructions ol {
+        .gcash-info {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .qr-container {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .qr-image {
+            width: 200px;
+            height: 200px;
+            border-radius: 8px;
+            border: 3px solid white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .gcash-details {
+            text-align: center;
+            padding-top: 1rem;
+            border-top: 1px dashed #cbd5e1;
+        }
+
+        .gcash-number {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #0f172a;
+            margin: 0.5rem 0 0.25rem;
+            letter-spacing: 0.02em;
+        }
+
+        .gcash-name {
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        /* Steps List */
+        .steps-list {
+            background: #f1f5f9;
+            border-radius: 12px;
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .steps-list ol {
             margin: 0;
             padding-left: 1.25rem;
         }
 
-        .instructions li {
+        .steps-list li {
+            color: #334155;
+            font-size: 0.875rem;
             margin-bottom: 0.5rem;
-            color: #856404;
+            line-height: 1.6;
         }
 
-        .upload-section {
-            border: 2px dashed var(--primary-pink);
+        .steps-list li:last-child {
+            margin-bottom: 0;
+        }
+
+        .steps-list strong {
+            color: #0f172a;
+        }
+
+        /* Upload Area */
+        .upload-area {
+            position: relative;
+            border: 2px dashed #cbd5e1;
             border-radius: 12px;
-            padding: 2rem;
+            padding: 2rem 1.5rem;
             text-align: center;
-            transition: all 0.3s ease;
             cursor: pointer;
+            transition: all 0.2s ease;
+            background: #fafbfc;
         }
 
-        .upload-section:hover {
-            background: #fce7f3;
-            border-color: var(--accent-rose);
+        .upload-area:hover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+
+        .upload-area.has-file {
+            border-color: #10b981;
+            background: #f0fdf4;
         }
 
         .upload-icon {
-            font-size: 3rem;
-            color: var(--primary-pink);
-            margin-bottom: 1rem;
-        }
-
-        #imagePreview {
-            max-width: 100%;
-            max-height: 300px;
-            border-radius: 8px;
-            margin-top: 1rem;
-            display: none;
-        }
-
-        .btn-submit {
-            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
-            color: white;
-            border: none;
-            padding: 1rem 3rem;
-            border-radius: 12px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            width: 100%;
-            transition: all 0.3s ease;
-        }
-
-        .btn-submit:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(214, 51, 132, 0.3);
-        }
-
-        .btn-submit:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-        }
-
-        .order-info {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 12px;
-            margin-bottom: 2rem;
-        }
-
-        .order-info-row {
-            display: flex;
-            justify-content: space-between;
+            font-size: 2.5rem;
+            color: #94a3b8;
             margin-bottom: 0.75rem;
         }
 
-        .order-info-row:last-child {
-            margin-bottom: 0;
-            padding-top: 0.75rem;
-            border-top: 2px solid #dee2e6;
-            font-weight: 700;
+        .upload-area.has-file .upload-icon {
+            color: #10b981;
         }
 
-        @media (max-width: 768px) {
-            .payment-container {
-                padding: 0 1rem;
-            }
+        .upload-text h6 {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            color: #0f172a;
+            margin-bottom: 0.25rem;
+        }
 
-            .payment-body {
-                padding: 1.5rem;
+        .upload-text p {
+            font-size: 0.8125rem;
+            color: #64748b;
+            margin: 0;
+        }
+
+        .file-preview {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+        }
+
+        .preview-image {
+            max-width: 100%;
+            max-height: 200px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .file-name {
+            display: none;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #0f172a;
+            margin-top: 0.75rem;
+            font-weight: 500;
+        }
+
+        .file-name i {
+            color: #10b981;
+        }
+
+        /* Submit Button */
+        .btn-submit {
+            width: 100%;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            transition: all 0.2s ease;
+            margin-top: 1.5rem;
+        }
+
+        .btn-submit:hover:not(:disabled) {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        .btn-submit:disabled {
+            background: #cbd5e1;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Footer */
+        .payment-footer {
+            text-align: center;
+            padding: 1.5rem;
+            font-size: 0.8125rem;
+            color: #64748b;
+        }
+
+        .security-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            color: #10b981;
+            font-weight: 500;
+        }
+
+        /* Alert */
+        .alert-custom {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .alert-custom i {
+            color: #dc2626;
+            flex-shrink: 0;
+        }
+
+        .alert-custom-text {
+            font-size: 0.875rem;
+            color: #991b1b;
+        }
+
+        @media (max-width: 576px) {
+            .payment-wrapper {
+                padding: 0.75rem;
+                padding-top: 1.5rem;
             }
 
             .amount-value {
-                font-size: 2rem;
+                font-size: 1.75rem;
             }
 
-            .gcash-number {
-                font-size: 1.25rem;
+            .qr-image {
+                width: 180px;
+                height: 180px;
+            }
+
+            .step-label {
+                font-size: 0.7rem;
             }
         }
     </style>
@@ -220,73 +399,78 @@
 
 @include('components.navbar')
 
-<div class="payment-container">
-    <!-- Payment Card -->
-    <div class="payment-card">
-        <div class="payment-header">
-            <i class="bi bi-phone fs-1 mb-3"></i>
-            <h2>GCash Payment</h2>
-            <p>Order #{{ $order->id }}</p>
+<div class="payment-wrapper">
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step completed">
+            <div class="step-circle"><i class="bi bi-check"></i></div>
+            <div class="step-label">Order</div>
         </div>
+        <div class="step active">
+            <div class="step-circle">2</div>
+            <div class="step-label">Payment</div>
+        </div>
+        <div class="step">
+            <div class="step-circle">3</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
 
-        <div class="payment-body">
-            <!-- Order Information -->
-            <div class="order-info">
-                <h5 class="mb-3"><i class="bi bi-receipt me-2"></i>Order Details</h5>
-                <div class="order-info-row">
-                    <span>Customer:</span>
-                    <strong>{{ $order->customer_name }}</strong>
-                </div>
-                <div class="order-info-row">
-                    <span>Phone:</span>
-                    <strong>{{ $order->phone }}</strong>
-                </div>
-                <div class="order-info-row">
-                    <span>Order Date:</span>
-                    <strong>{{ $order->created_at->format('M d, Y h:i A') }}</strong>
-                </div>
-                <div class="order-info-row">
-                    <span>Total Amount:</span>
-                    <strong class="text-success">₱{{ number_format($order->total, 2) }}</strong>
+    <!-- Main Payment Card -->
+    <div class="payment-card">
+        <!-- Order Summary -->
+        <div class="order-summary">
+            <div class="order-header">
+                <div class="order-id">Order #{{ $order->id }}</div>
+                <div class="order-status">
+                    <i class="bi bi-clock me-1"></i> Pending Payment
                 </div>
             </div>
-
-            <!-- Amount Display -->
-            <div class="amount-display">
-                <div class="amount-label">Amount to Pay</div>
+            
+            <div class="amount-box">
+                <div class="amount-label">Total Amount</div>
                 <div class="amount-value">₱{{ number_format($order->total, 2) }}</div>
             </div>
+        </div>
 
-            <!-- QR Code Section -->
-            <div class="qr-section">
-                <h5 class="mb-3">Scan QR Code</h5>
-                <img src="{{ asset('asset/images/gcash-qr.png') }}" alt="GCash QR Code" class="qr-code">
-                <p class="text-muted mb-2">or send to</p>
-                <div class="gcash-number">09123456789</div>
-                <small class="text-muted">Jane Doe</small>
+        <!-- Payment Instructions -->
+        <div class="payment-section">
+            <div class="section-title">
+                <i class="bi bi-1-circle"></i> Send payment via GCash
             </div>
 
-            <!-- Instructions -->
-            <div class="instructions">
-                <h5><i class="bi bi-info-circle me-2"></i>Payment Instructions</h5>
+            <div class="gcash-info">
+                <div class="qr-container">
+                    <img src="{{ asset('asset/images/qr.jpg') }}" alt="GCash QR Code" class="qr-image">
+                </div>
+                <div class="gcash-details">
+                    <div style="font-size: 0.8125rem; color: #64748b;">Send to</div>
+                    <div class="gcash-number">09567032464</div>
+                    <div class="gcash-name">ST****N C</div>
+                </div>
+            </div>
+
+            <div class="steps-list">
                 <ol>
-                    <li>Open your GCash app</li>
-                    <li>Scan the QR code above or send to <strong>09123456789</strong></li>
-                    <li>Enter the exact amount: <strong>₱{{ number_format($order->total, 2) }}</strong></li>
-                    <li>Complete the payment</li>
-                    <li>Take a screenshot of the payment confirmation</li>
-                    <li>Upload the screenshot below</li>
+                    <li>Open GCash app and scan QR or enter number</li>
+                    <li>Send exactly <strong>₱{{ number_format($order->total, 2) }}</strong></li>
+                    <li>Screenshot the confirmation</li>
                 </ol>
             </div>
 
-            <!-- Upload Section -->
+            <div class="section-title">
+                <i class="bi bi-2-circle"></i> Upload payment proof
+            </div>
+
             <form action="{{ route('checkout.gcash.submit', $order->id) }}" method="POST" enctype="multipart/form-data" id="paymentForm">
                 @csrf
                 
-                <div class="upload-section" onclick="document.getElementById('paymentProof').click()">
-                    <i class="bi bi-cloud-upload upload-icon"></i>
-                    <h5>Upload Payment Proof</h5>
-                    <p class="text-muted mb-0">Click to select screenshot (JPG, PNG, max 5MB)</p>
+                <div class="upload-area" onclick="document.getElementById('paymentProof').click()" id="uploadArea">
+                    <i class="bi bi-cloud-arrow-up upload-icon" id="uploadIcon"></i>
+                    <div class="upload-text">
+                        <h6>Tap to upload screenshot</h6>
+                        <p>JPG or PNG, max 5MB</p>
+                    </div>
                     <input type="file" 
                            id="paymentProof" 
                            name="payment_proof" 
@@ -294,32 +478,37 @@
                            required 
                            style="display: none;"
                            onchange="previewImage(event)">
-                    <img id="imagePreview" alt="Preview">
+                    
+                    <div class="file-preview">
+                        <img id="imagePreview" class="preview-image" alt="Preview">
+                        <div class="file-name" id="fileName">
+                            <i class="bi bi-check-circle-fill"></i>
+                            <span id="fileNameText"></span>
+                        </div>
+                    </div>
                 </div>
 
                 @error('payment_proof')
-                    <div class="alert alert-danger mt-3">{{ $message }}</div>
+                    <div class="alert-custom">
+                        <i class="bi bi-exclamation-circle"></i>
+                        <div class="alert-custom-text">{{ $message }}</div>
+                    </div>
                 @enderror
 
-                <button type="submit" class="btn btn-submit mt-4" id="submitBtn" disabled>
-                    <i class="bi bi-check-circle me-2"></i>Submit Payment Proof
+                <button type="submit" class="btn-submit" id="submitBtn" disabled>
+                    <i class="bi bi-check-circle"></i>
+                    <span>Submit Payment</span>
                 </button>
             </form>
+        </div>
 
-            <div class="text-center mt-3">
-                <small class="text-muted">
-                    <i class="bi bi-shield-check me-1"></i>
-                    Your payment information is secure
-                </small>
+        <!-- Footer -->
+        <div class="payment-footer">
+            <div class="security-badge">
+                <i class="bi bi-shield-check"></i>
+                Secure payment processing
             </div>
         </div>
-    </div>
-
-    <!-- Help Section -->
-    <div class="text-center">
-        <p class="text-muted">
-            Need help? <a href="#" class="fw-bold" style="color: var(--primary-pink);">Contact Support</a>
-        </p>
     </div>
 </div>
 
@@ -329,6 +518,10 @@
         const file = event.target.files[0];
         const preview = document.getElementById('imagePreview');
         const submitBtn = document.getElementById('submitBtn');
+        const uploadArea = document.getElementById('uploadArea');
+        const uploadIcon = document.getElementById('uploadIcon');
+        const fileName = document.getElementById('fileName');
+        const fileNameText = document.getElementById('fileNameText');
         
         if (file) {
             // Validate file size (5MB max)
@@ -349,6 +542,10 @@
             reader.onload = function(e) {
                 preview.src = e.target.result;
                 preview.style.display = 'block';
+                uploadArea.classList.add('has-file');
+                uploadIcon.className = 'bi bi-check-circle-fill upload-icon';
+                fileName.style.display = 'flex';
+                fileNameText.textContent = file.name;
                 submitBtn.disabled = false;
             }
             reader.readAsDataURL(file);
@@ -356,9 +553,10 @@
     }
 
     // Prevent form resubmission
-    document.getElementById('paymentForm').addEventListener('submit', function() {
-        document.getElementById('submitBtn').disabled = true;
-        document.getElementById('submitBtn').innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Submitting...';
+    document.getElementById('paymentForm').addEventListener('submit', function(e) {
+        const submitBtn = document.getElementById('submitBtn');
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i><span>Processing...</span>';
     });
 </script>
 
