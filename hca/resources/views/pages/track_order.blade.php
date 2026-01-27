@@ -48,10 +48,10 @@
             <div class="col-lg-9">
                 <div class="card shadow-sm border-0 main-card">
                     <div class="card-header border-0 p-4 gradient-header">
-                        <h4 class="mb-0 text-white fw-bold">
+                        <h4 class="mb-0 text-black fw-bold">
                             <i class="fas fa-map-marked-alt me-2"></i> Track Your Orders
                         </h4>
-                        <p class="mb-0 text-white opacity-75 small mt-1">Monitor your order status in real-time</p>
+                        <p class="mb-0 text-black opacity-75 small mt-1">Monitor your order status in real-time</p>
                     </div>
                     <div class="card-body p-4">
                         @if($orders->count() > 0)
@@ -394,7 +394,7 @@
     }
 
     body {
-        background: linear-gradient(135deg, #fef5f7 0%, #fff 100%);
+        background: linear-gradient(135deg, #e7c9cf 50%, #beb2b2 100%);
         min-height: 100vh;
     }
 

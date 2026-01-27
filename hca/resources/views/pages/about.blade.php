@@ -765,7 +765,7 @@
 </section>
 
 <!-- Gallery Preview -->
-<section class="gallery-preview">
+<!-- <section class="gallery-preview">
     <div class="container">
         <div class="section-header">
             <span class="section-label">Our Work</span>
@@ -784,7 +784,7 @@
             </a>
         </div>
     </div>
-</section>
+</section> -->
 
 <!-- CTA Section -->
 <section class="cta-section">

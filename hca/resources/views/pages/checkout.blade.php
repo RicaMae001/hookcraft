@@ -7,10 +7,6 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-<<<<<<< HEAD
-=======
-    <!-- <link rel="stylesheet" href="{{ asset('asset/stylescheckout.css') }}"> -->
->>>>>>> 7dc2d524f3cec44cb92d5f2e525f214c572b9626
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
@@ -141,6 +137,40 @@
             border-color: var(--primary-pink);
             box-shadow: 0 0 0 0.2rem rgba(214, 51, 132, 0.15);
             outline: none;
+        }
+
+        .form-control:disabled, .form-control[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        /* User Info Display */
+        .user-info-display {
+            background: linear-gradient(135deg, #fce7f3, #fce7f3);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-pink);
+        }
+
+        .user-info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .user-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-info-row i {
+            color: var(--primary-pink);
+            width: 24px;
+            margin-right: 0.75rem;
+        }
+
+        .user-info-row strong {
+            font-weight: 600;
+            color: var(--dark-navy);
         }
 
         /* Location Info */
@@ -500,29 +530,40 @@
             <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm" class="checkout-form">
                 @csrf
                 
-                <!-- Customer Information -->
+                <!-- Customer Information (Read-only) -->
                 <div class="card">
                     <div class="card-header">
                         <i class="bi bi-person-circle"></i>
-                        Contact Information
+                        Your Information
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="bi bi-person"></i>
-                                    Full Name *
-                                </label>
-                                <input type="text" class="form-control" name="name" value="{{ old('name') }}" placeholder="Enter your full name" required>
+                        <div class="user-info-display">
+                            <div class="user-info-row">
+                                <i class="bi bi-person-fill"></i>
+                                <div>
+                                    <strong>Name:</strong> {{ Auth::user()->name }}
+                                </div>
                             </div>
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="bi bi-phone"></i>
-                                    Phone Number *
-                                </label>
-                                <input type="tel" class="form-control" name="phone" value="{{ old('phone') }}" placeholder="09123456789" pattern="[0-9]{11}" maxlength="11" required>
-                                <small class="text-muted">Format: 09123456789</small>
+                            <div class="user-info-row">
+                                <i class="bi bi-envelope-fill"></i>
+                                <div>
+                                    <strong>Email:</strong> {{ Auth::user()->email }}
+                                </div>
                             </div>
+                        </div>
+                        
+                        <!-- Hidden inputs to pass user data -->
+                        <input type="hidden" name="name" value="{{ Auth::user()->name }}">
+                        <input type="hidden" name="email" value="{{ Auth::user()->email }}">
+                        
+                        <!-- Phone number input -->
+                        <div class="form-group mt-3">
+                            <label class="form-label">
+                                <i class="bi bi-phone"></i>
+                                Phone Number *
+                            </label>
+                            <input type="tel" class="form-control" name="phone" value="{{ old('phone', Auth::user()->phone ?? '') }}" placeholder="09123456789" pattern="[0-9]{11}" maxlength="11" required>
+                            <small class="text-muted">Format: 09123456789</small>
                         </div>
                     </div>
                 </div>
@@ -536,7 +577,7 @@
                     <div class="card-body">
                         <div class="location-info">
                             <i class="bi bi-info-circle"></i>
-                            <strong>Service Area:</strong> We currently deliver within Central Visayas, Cebu Province
+                            <strong>Service Area:</strong> We currently deliver within Lapu-Lapu City only
                         </div>
                         
                         <div class="row">
@@ -569,7 +610,7 @@
                                 Location Map
                             </label>
                             <div id="map"></div>
-                            <small class="text-muted">Click on the map or select barangay to mark your location</small>
+                            <small class="text-muted">Click on the map or select barangay to mark your location (Lapu-Lapu City only)</small>
                         </div>
                         
                         <!-- Location Display -->
@@ -592,7 +633,7 @@
                     </div>
                 </div>
 
-                <!-- Payment Method (Inside Form) -->
+                <!-- Payment Method -->
                 <div class="card">
                     <div class="card-header">
                         <i class="bi bi-credit-card"></i>
@@ -644,8 +685,6 @@
 
         <!-- Right Column: Order Summary -->
         <div class="col-lg-4">
-
-            <!-- Order Summary -->
             <div class="card order-summary">
                 <div class="card-header">
                     <i class="bi bi-receipt"></i>
@@ -750,13 +789,15 @@
     let currentCity = null;
     let selectedBarangay = null;
     
-    const METRO_CEBU_CITY_IDS = [1, 2, 3, 4];
+    // LAPU-LAPU CITY ONLY (ID: 2)
+    const LAPULAPU_CITY_ID = 2;
     
-    const DEFAULT_CITY_BOUNDS = {
-        1: { center: [10.3157, 123.8854], bounds: [[10.24, 123.78], [10.42, 123.98]] },
-        2: { center: [10.3103, 123.9494], bounds: [[10.27, 123.90], [10.35, 124.00]] },
-        3: { center: [10.3237, 123.9227], bounds: [[10.29, 123.90], [10.36, 123.95]] },
-        4: { center: [10.2449, 123.8493], bounds: [[10.20, 123.82], [10.29, 123.88]] }
+    // Lapu-Lapu City bounds
+    const LAPULAPU_BOUNDS = {
+        center: [10.3103, 123.9494],
+        bounds: [[10.27, 123.90], [10.35, 124.00]],
+        minZoom: 13,
+        maxZoom: 18
     };
     
     // ==========================================
@@ -766,13 +807,14 @@
     const barangaySelect = document.getElementById('barangaySelect');
     
     // ==========================================
-    // LOAD CITIES
+    // LOAD CITIES (LAPU-LAPU ONLY)
     // ==========================================
     document.addEventListener('DOMContentLoaded', function() {
         fetch('/api/locations/cities/1')
             .then(res => res.json())
             .then(data => {
-                citiesData = data.filter(city => METRO_CEBU_CITY_IDS.includes(city.id));
+                // Filter to only show Lapu-Lapu City
+                citiesData = data.filter(city => city.id === LAPULAPU_CITY_ID);
                 citiesData.forEach(city => {
                     const option = new Option(city.city_name, city.id);
                     citySelect.add(option);
@@ -794,11 +836,9 @@
         currentCity = citiesData.find(c => c.id === cityId);
         if (!currentCity) return;
         
-        const cityConfig = DEFAULT_CITY_BOUNDS[cityId];
-        if (cityConfig) {
-            map.setView(cityConfig.center, 13);
-            drawCityBoundary(cityConfig.bounds);
-        }
+        // Zoom to Lapu-Lapu City
+        map.setView(LAPULAPU_BOUNDS.center, 13);
+        drawCityBoundary(LAPULAPU_BOUNDS.bounds);
         
         updateCityInfo(currentCity);
         loadBarangays(cityId);
@@ -874,12 +914,15 @@
     }
     
     // ==========================================
-    // MAP SETUP
+    // MAP SETUP (RESTRICTED TO LAPU-LAPU)
     // ==========================================
     const map = L.map('map', {
-        center: [10.3157, 123.8854],
-        zoom: 12,
-        minZoom: 11
+        center: LAPULAPU_BOUNDS.center,
+        zoom: 13,
+        minZoom: LAPULAPU_BOUNDS.minZoom,
+        maxZoom: LAPULAPU_BOUNDS.maxZoom,
+        maxBounds: LAPULAPU_BOUNDS.bounds,
+        maxBoundsViscosity: 1.0
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -900,6 +943,9 @@
         }).addTo(map);
     }
     
+    // Draw Lapu-Lapu boundary on load
+    drawCityBoundary(LAPULAPU_BOUNDS.bounds);
+    
     // ==========================================
     // SEARCH BARANGAY ON MAP
     // ==========================================
@@ -907,9 +953,9 @@
         if (!currentCity) return;
         
         try {
-            const searchQuery = `${barangay.barangay_name}, ${currentCity.city_name}, Cebu, Philippines`;
+            const searchQuery = `${barangay.barangay_name}, Lapu-Lapu City, Cebu, Philippines`;
             const response = await fetch(
-                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ph`
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}&limit=1&countrycodes=ph&bounded=1&viewbox=${LAPULAPU_BOUNDS.bounds[0][1]},${LAPULAPU_BOUNDS.bounds[1][0]},${LAPULAPU_BOUNDS.bounds[1][1]},${LAPULAPU_BOUNDS.bounds[0][0]}`
             );
             const results = await response.json();
             
@@ -917,18 +963,12 @@
                 const lat = parseFloat(results[0].lat);
                 const lng = parseFloat(results[0].lon);
                 
-                if (marker) map.removeLayer(marker);
-                marker = L.marker([lat, lng], {
-                    icon: L.divIcon({
-                        html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>'
-                    })
-                }).addTo(map)
-                    .bindPopup(`<strong>${barangay.barangay_name}</strong><br>${currentCity.city_name}, Cebu`)
-                    .openPopup();
-                
-                map.setView([lat, lng], 15);
-                document.getElementById('latitude').value = lat;
-                document.getElementById('longitude').value = lng;
+                // Verify location is within Lapu-Lapu bounds
+                if (isWithinLapulapuBounds(lat, lng)) {
+                    placeMarker(lat, lng, `${barangay.barangay_name}, Lapu-Lapu City`);
+                } else {
+                    alert('Location outside Lapu-Lapu City. Please select a valid location.');
+                }
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -936,26 +976,24 @@
     }
     
     // ==========================================
-    // MAP CLICK HANDLER
+    // MAP CLICK HANDLER (RESTRICTED)
     // ==========================================
     map.on('click', async function(e) {
         if (!currentCity) {
-            alert('Please select a city first.');
+            alert('Please select Lapu-Lapu City first.');
             return;
         }
         
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         
-        document.getElementById('latitude').value = lat;
-        document.getElementById('longitude').value = lng;
+        // Check if click is within Lapu-Lapu bounds
+        if (!isWithinLapulapuBounds(lat, lng)) {
+            alert('Please select a location within Lapu-Lapu City only.');
+            return;
+        }
         
-        if (marker) map.removeLayer(marker);
-        marker = L.marker([lat, lng], {
-            icon: L.divIcon({
-                html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>'
-            })
-        }).addTo(map);
+        placeMarker(lat, lng);
         
         const data = await reverseGeocode(lat, lng);
         if (data && data.address) {
@@ -975,6 +1013,30 @@
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
+    function isWithinLapulapuBounds(lat, lng) {
+        const bounds = LAPULAPU_BOUNDS.bounds;
+        return lat >= bounds[0][0] && lat <= bounds[1][0] && 
+               lng >= bounds[0][1] && lng <= bounds[1][1];
+    }
+    
+    function placeMarker(lat, lng, popupText = null) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng], {
+            icon: L.divIcon({
+                html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>'
+            })
+        }).addTo(map);
+        
+        if (popupText) {
+            marker.bindPopup(`<strong>${popupText}</strong>`).openPopup();
+        }
+        
+        map.setView([lat, lng], 15);
+    }
+    
     async function reverseGeocode(lat, lng) {
         try {
             const response = await fetch(
@@ -1002,30 +1064,40 @@
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         if (!citySelect.value || !barangaySelect.value) {
             e.preventDefault();
-            alert('Please select both city and barangay.');
+            alert('Please select Lapu-Lapu City and a barangay.');
+            return false;
+        }
+        
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lng = parseFloat(document.getElementById('longitude').value);
+        
+        if (lat && lng && !isWithinLapulapuBounds(lat, lng)) {
+            e.preventDefault();
+            alert('Selected location must be within Lapu-Lapu City.');
             return false;
         }
     });
     
     // ==========================================
-    // GEOLOCATION
+    // GEOLOCATION (RESTRICTED TO LAPU-LAPU)
     // ==========================================
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(
             function(position) {
                 const lat = position.coords.latitude;
                 const lng = position.coords.longitude;
-                for (const [cityId, config] of Object.entries(DEFAULT_CITY_BOUNDS)) {
-                    const bounds = config.bounds;
-                    if (lat >= bounds[0][0] && lat <= bounds[1][0] && 
-                        lng >= bounds[0][1] && lng <= bounds[1][1]) {
-                        map.setView([lat, lng], 15);
-                        break;
-                    }
+                
+                // Only use geolocation if within Lapu-Lapu
+                if (isWithinLapulapuBounds(lat, lng)) {
+                    map.setView([lat, lng], 15);
+                } else {
+                    // Stay at default Lapu-Lapu center
+                    map.setView(LAPULAPU_BOUNDS.center, 13);
                 }
             },
             function() {
-                console.log('Location access denied');
+                console.log('Location access denied or unavailable');
+                map.setView(LAPULAPU_BOUNDS.center, 13);
             }
         );
     }

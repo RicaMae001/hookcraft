@@ -659,7 +659,7 @@
 </section>
 
 <!-- Gallery Section -->
-<section class="gallery">
+<!-- <section class="gallery">
     <div class="container">
         <div class="section-header">
             <span class="section-label">Inspiration</span>
@@ -679,7 +679,7 @@
             </a>
         </div>
     </div>
-</section>
+</section> -->
 
 <!-- Customize Section -->
 <!-- Customize Section -->

@@ -47,7 +47,7 @@
                 <li class="nav-item"><a class="nav-link" href="{{ route('home') }}">Home</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('shop') }}">Shop</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ route('about') }}">About</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ route('gallery') }}">Gallery</a></li>
+                
                 <li class="nav-item"><a class="nav-link" href="{{ route('contact') }}">Contact</a></li>
             </ul>
 
@@ -179,7 +179,7 @@
 }
 
 .brand-text {
-    background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+    background: linear-gradient(135deg, #FF69B4 0%, #f1677c 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

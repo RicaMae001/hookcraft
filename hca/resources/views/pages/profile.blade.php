@@ -26,11 +26,11 @@
             --info: #3b82f6;
             --warning: #f59e0b;
             --danger: #ef4444;
-            --light-bg: #f8f9fa;
+            --light-bg: #f8c2e8;
         }
 
         body {
-            background: linear-gradient(135deg, #fef5f7 0%, #fff 100%);
+            background: linear-gradient(135deg, #e7c9cf 50%, #beb2b2 100%);
             min-height: 100vh;
         }
 
@@ -385,10 +385,10 @@
 <div class="col-lg-9">
     <div class="card shadow-sm border-0 main-card">
         <div class="card-header border-0 p-4 gradient-header">
-            <h4 class="mb-0 text-white fw-bold">
+            <h4 class="mb-0 text-black fw-bold">
                 <i class="fas fa-user-cog me-2"></i> My Profile
             </h4>
-            <p class="mb-0 text-white opacity-75 small mt-1">Manage your account information and security</p>
+            <p class="mb-0 text-black opacity-75 small mt-1">Manage your account information and security</p>
         </div>
         <div class="card-body p-4">
 
