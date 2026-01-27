@@ -540,7 +540,7 @@
         <div class="hero-content-wrapper">
             <div class="hero-text">
                 <h1>Welcome to Hookcraft Avenue</h1>
-                <p>Where creativity meets craftsmanship. Founded by Alysssa Monterde, Hookcraft Avenue brings you beautiful handmade flowers crafted with love and attention to detail. Each piece is a unique work of art, perfect for gifts and special moments.</p>
+                <p>Where creativity meets craftsmanship. Founded by Alyssa Monterde, Hookcraft Avenue brings you beautiful handmade flowers crafted with love and attention to detail. Each piece is a unique work of art, perfect for gifts and special moments.</p>
             </div>
             <div class="hero-image">
                 <img src="{{ asset('asset/images/about1.jpg') }}" alt="About Hookcraft Avenue">
