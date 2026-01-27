@@ -42,7 +42,7 @@
                             
                             <!-- Category Tag -->
                             <div class="mb-3">
-                                <span class="badge bg-pink bg-opacity-20 text-pink-dark fw-medium px-3 py-2 rounded-pill" id="modalProductCategory"></span>
+                                <span class="badge bg-pink bg-opacity-20 text-white fw-medium px-3 py-2 rounded-pill" id="modalProductCategory"></span>
                             </div>
 
                             <!-- Price Display -->
@@ -77,9 +77,7 @@
                                             <i class="fas fa-plus text-pink"></i>
                                         </button>
                                     </div>
-                                    <div class="ms-3">
-                                        <small class="text-pink-muted d-block">Max: <span id="maxQuantity" class="fw-bold text-pink">0</span></small>
-                                    </div>
+                                   
                                 </div>
                             </div>
 
