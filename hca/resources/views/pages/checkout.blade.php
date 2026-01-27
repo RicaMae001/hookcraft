@@ -139,6 +139,40 @@
             outline: none;
         }
 
+        .form-control:disabled, .form-control[readonly] {
+            background-color: #f8f9fa;
+            cursor: not-allowed;
+        }
+
+        /* User Info Display */
+        .user-info-display {
+            background: linear-gradient(135deg, #fce7f3, #fce7f3);
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary-pink);
+        }
+
+        .user-info-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.75rem;
+        }
+
+        .user-info-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-info-row i {
+            color: var(--primary-pink);
+            width: 24px;
+            margin-right: 0.75rem;
+        }
+
+        .user-info-row strong {
+            font-weight: 600;
+            color: var(--dark-navy);
+        }
+
         /* Location Info */
         .location-info {
             background: linear-gradient(135deg, #fce7f3, #fce7f3);
@@ -496,29 +530,40 @@
             <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm" class="checkout-form">
                 @csrf
                 
-                <!-- Customer Information -->
+                <!-- Customer Information (Read-only) -->
                 <div class="card">
                     <div class="card-header">
                         <i class="bi bi-person-circle"></i>
-                        Contact Information
+                        Your Information
                     </div>
                     <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="bi bi-person"></i>
-                                    Full Name *
-                                </label>
-                                <input type="text" class="form-control" name="name" value="{{ old('name') }}" placeholder="Enter your full name" required>
+                        <div class="user-info-display">
+                            <div class="user-info-row">
+                                <i class="bi bi-person-fill"></i>
+                                <div>
+                                    <strong>Name:</strong> {{ Auth::user()->name }}
+                                </div>
                             </div>
-                            <div class="col-md-6 form-group">
-                                <label class="form-label">
-                                    <i class="bi bi-phone"></i>
-                                    Phone Number *
-                                </label>
-                                <input type="tel" class="form-control" name="phone" value="{{ old('phone') }}" placeholder="09123456789" pattern="[0-9]{11}" maxlength="11" required>
-                                <small class="text-muted">Format: 09123456789</small>
+                            <div class="user-info-row">
+                                <i class="bi bi-envelope-fill"></i>
+                                <div>
+                                    <strong>Email:</strong> {{ Auth::user()->email }}
+                                </div>
                             </div>
+                        </div>
+                        
+                        <!-- Hidden inputs to pass user data -->
+                        <input type="hidden" name="name" value="{{ Auth::user()->name }}">
+                        <input type="hidden" name="email" value="{{ Auth::user()->email }}">
+                        
+                        <!-- Phone number input -->
+                        <div class="form-group mt-3">
+                            <label class="form-label">
+                                <i class="bi bi-phone"></i>
+                                Phone Number *
+                            </label>
+                            <input type="tel" class="form-control" name="phone" value="{{ old('phone', Auth::user()->phone ?? '') }}" placeholder="09123456789" pattern="[0-9]{11}" maxlength="11" required>
+                            <small class="text-muted">Format: 09123456789</small>
                         </div>
                     </div>
                 </div>
@@ -532,7 +577,7 @@
                     <div class="card-body">
                         <div class="location-info">
                             <i class="bi bi-info-circle"></i>
-                            <strong>Service Area:</strong> We currently deliver within Central Visayas, Cebu Province
+                            <strong>Service Area:</strong> We currently deliver within Lapu-Lapu City only
                         </div>
                         
                         <div class="row">
@@ -565,7 +610,7 @@
                                 Location Map
                             </label>
                             <div id="map"></div>
-                            <small class="text-muted">Click on the map or select barangay to mark your location</small>
+                            <small class="text-muted">Click on the map or select barangay to mark your location (Lapu-Lapu City only)</small>
                         </div>
                         
                         <!-- Location Display -->
@@ -588,7 +633,7 @@
                     </div>
                 </div>
 
-                <!-- Payment Method (Inside Form) -->
+                <!-- Payment Method -->
                 <div class="card">
                     <div class="card-header">
                         <i class="bi bi-credit-card"></i>
@@ -640,8 +685,6 @@
 
         <!-- Right Column: Order Summary -->
         <div class="col-lg-4">
-
-            <!-- Order Summary -->
             <div class="card order-summary">
                 <div class="card-header">
                     <i class="bi bi-receipt"></i>
@@ -739,43 +782,170 @@
     }
 
     // ==========================================
+    // CITY CONFIGURATIONS
+    // ==========================================
+    const CITY_CONFIGS = {
+        1: { // Cebu City
+            name: 'Cebu City',
+            center: [10.3157, 123.8854],
+            bounds: [[10.25, 123.80], [10.38, 123.97]],
+            minZoom: 12,
+            maxZoom: 18
+        },
+        2: { // Lapu-Lapu City
+            name: 'Lapu-Lapu City',
+            center: [10.3103, 123.9494],
+            bounds: [[10.27, 123.90], [10.35, 124.00]],
+            minZoom: 13,
+            maxZoom: 18
+        },
+        3: { // Mandaue City
+            name: 'Mandaue City',
+            center: [10.3237, 123.9227],
+            bounds: [[10.28, 123.88], [10.37, 123.97]],
+            minZoom: 13,
+            maxZoom: 18
+        },
+        4: { // Talisay City
+            name: 'Talisay City',
+            center: [10.2444, 123.8493],
+            bounds: [[10.20, 123.81], [10.29, 123.89]],
+            minZoom: 13,
+            maxZoom: 18
+        }
+    };
+
+    // ==========================================
     // DATA STRUCTURES
     // ==========================================
     let citiesData = [];
     let barangaysData = [];
     let currentCity = null;
     let selectedBarangay = null;
-    
-    const METRO_CEBU_CITY_IDS = [1, 2, 3, 4];
-    
-    const DEFAULT_CITY_BOUNDS = {
-        1: { center: [10.3157, 123.8854], bounds: [[10.24, 123.78], [10.42, 123.98]] },
-        2: { center: [10.3103, 123.9494], bounds: [[10.27, 123.90], [10.35, 124.00]] },
-        3: { center: [10.3237, 123.9227], bounds: [[10.29, 123.90], [10.36, 123.95]] },
-        4: { center: [10.2449, 123.8493], bounds: [[10.20, 123.82], [10.29, 123.88]] }
-    };
+    let userLocation = null; // Store user's detected location
     
     // ==========================================
     // DOM ELEMENTS
     // ==========================================
     const citySelect = document.getElementById('citySelect');
     const barangaySelect = document.getElementById('barangaySelect');
+    const locationInfo = document.querySelector('.location-info');
     
     // ==========================================
-    // LOAD CITIES
+    // DETECT USER LOCATION & LOAD CITIES
     // ==========================================
-    document.addEventListener('DOMContentLoaded', function() {
-        fetch('/api/locations/cities/1')
-            .then(res => res.json())
-            .then(data => {
-                citiesData = data.filter(city => METRO_CEBU_CITY_IDS.includes(city.id));
-                citiesData.forEach(city => {
-                    const option = new Option(city.city_name, city.id);
-                    citySelect.add(option);
-                });
-            })
-            .catch(err => console.error('Error loading cities:', err));
+    document.addEventListener('DOMContentLoaded', async function() {
+        // Try to get user's location
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async function(position) {
+                    userLocation = {
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude
+                    };
+                    
+                    // Detect which city the user is in
+                    const detectedCity = detectUserCity(userLocation.lat, userLocation.lng);
+                    
+                    // Load only the detected city
+                    await loadCities(detectedCity);
+                    
+                    // Auto-select the city
+                    if (detectedCity && citiesData.length > 0) {
+                        citySelect.value = detectedCity;
+                        citySelect.dispatchEvent(new Event('change'));
+                    }
+                },
+                function(error) {
+                    console.log('Geolocation error:', error);
+                    // Load all cities if location detection fails
+                    loadAllCities();
+                }
+            );
+        } else {
+            // Load all cities if geolocation not supported
+            loadAllCities();
+        }
     });
+
+    // ==========================================
+    // DETECT USER'S CITY
+    // ==========================================
+    function detectUserCity(lat, lng) {
+        for (const [cityId, config] of Object.entries(CITY_CONFIGS)) {
+            const bounds = config.bounds;
+            if (lat >= bounds[0][0] && lat <= bounds[1][0] && 
+                lng >= bounds[0][1] && lng <= bounds[1][1]) {
+                return parseInt(cityId);
+            }
+        }
+        return null; // User not in any service area
+    }
+
+    // ==========================================
+    // LOAD SPECIFIC CITY ONLY
+    // ==========================================
+    async function loadCities(cityId) {
+        try {
+            const response = await fetch('/api/locations/cities/1'); // Province ID = 1 (Cebu)
+            const data = await response.json();
+            
+            // Filter to show only the detected city
+            if (cityId && CITY_CONFIGS[cityId]) {
+                citiesData = data.filter(city => city.id === cityId);
+                locationInfo.innerHTML = `
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Service Area:</strong> We currently deliver within ${CITY_CONFIGS[cityId].name} only
+                `;
+            } else {
+                citiesData = data;
+            }
+            
+            // Populate city dropdown
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            citiesData.forEach(city => {
+                const option = new Option(city.city_name, city.id);
+                citySelect.add(option);
+            });
+            
+            // If only one city available, show info message
+            if (citiesData.length === 1) {
+                locationInfo.classList.add('alert', 'alert-info');
+                locationInfo.innerHTML = `
+                    <i class="bi bi-check-circle me-2"></i>
+                    <strong>Great!</strong> You're in our service area: ${citiesData[0].city_name}
+                `;
+            }
+        } catch (error) {
+            console.error('Error loading cities:', error);
+        }
+    }
+
+    // ==========================================
+    // LOAD ALL CITIES (FALLBACK)
+    // ==========================================
+    async function loadAllCities() {
+        try {
+            const response = await fetch('/api/locations/cities/1');
+            const data = await response.json();
+            
+            // Show only configured cities
+            citiesData = data.filter(city => CITY_CONFIGS[city.id]);
+            
+            citySelect.innerHTML = '<option value="">Select City</option>';
+            citiesData.forEach(city => {
+                const option = new Option(city.city_name, city.id);
+                citySelect.add(option);
+            });
+            
+            locationInfo.innerHTML = `
+                <i class="bi bi-info-circle"></i>
+                <strong>Service Areas:</strong> Cebu City, Lapu-Lapu City, Mandaue City, Talisay City
+            `;
+        } catch (error) {
+            console.error('Error loading cities:', error);
+        }
+    }
     
     // ==========================================
     // CITY SELECTION
@@ -788,14 +958,17 @@
         }
         
         currentCity = citiesData.find(c => c.id === cityId);
-        if (!currentCity) return;
+        if (!currentCity || !CITY_CONFIGS[cityId]) return;
         
-        const cityConfig = DEFAULT_CITY_BOUNDS[cityId];
-        if (cityConfig) {
-            map.setView(cityConfig.center, 13);
-            drawCityBoundary(cityConfig.bounds);
-        }
+        const config = CITY_CONFIGS[cityId];
         
+        // Update map bounds and center
+        map.setView(config.center, config.minZoom);
+        map.setMinZoom(config.minZoom);
+        map.setMaxZoom(config.maxZoom);
+        map.setMaxBounds(config.bounds);
+        
+        drawCityBoundary(config.bounds);
         updateCityInfo(currentCity);
         loadBarangays(cityId);
         resetBarangaySelection();
@@ -873,9 +1046,12 @@
     // MAP SETUP
     // ==========================================
     const map = L.map('map', {
-        center: [10.3157, 123.8854],
+        center: [10.3157, 123.8854], // Default: Cebu City center
         zoom: 12,
-        minZoom: 11
+        minZoom: 11,
+        maxZoom: 18,
+        maxBounds: [[10.15, 123.75], [10.45, 124.05]], // Greater Cebu area
+        maxBoundsViscosity: 1.0
     });
     
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -913,18 +1089,12 @@
                 const lat = parseFloat(results[0].lat);
                 const lng = parseFloat(results[0].lon);
                 
-                if (marker) map.removeLayer(marker);
-                marker = L.marker([lat, lng], {
-                    icon: L.divIcon({
-                        html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>'
-                    })
-                }).addTo(map)
-                    .bindPopup(`<strong>${barangay.barangay_name}</strong><br>${currentCity.city_name}, Cebu`)
-                    .openPopup();
-                
-                map.setView([lat, lng], 15);
-                document.getElementById('latitude').value = lat;
-                document.getElementById('longitude').value = lng;
+                // Verify location is within current city bounds
+                if (isWithinCityBounds(lat, lng, currentCity.id)) {
+                    placeMarker(lat, lng, `${barangay.barangay_name}, ${currentCity.city_name}`);
+                } else {
+                    alert(`Location outside ${currentCity.city_name}. Please select a valid location.`);
+                }
             }
         } catch (error) {
             console.error('Search error:', error);
@@ -936,22 +1106,20 @@
     // ==========================================
     map.on('click', async function(e) {
         if (!currentCity) {
-            alert('Please select a city first.');
+            alert('Please select your city first.');
             return;
         }
         
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
         
-        document.getElementById('latitude').value = lat;
-        document.getElementById('longitude').value = lng;
+        // Check if click is within current city bounds
+        if (!isWithinCityBounds(lat, lng, currentCity.id)) {
+            alert(`Please select a location within ${currentCity.city_name} only.`);
+            return;
+        }
         
-        if (marker) map.removeLayer(marker);
-        marker = L.marker([lat, lng], {
-            icon: L.divIcon({
-                html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>'
-            })
-        }).addTo(map);
+        placeMarker(lat, lng);
         
         const data = await reverseGeocode(lat, lng);
         if (data && data.address) {
@@ -971,6 +1139,33 @@
     // ==========================================
     // HELPER FUNCTIONS
     // ==========================================
+    function isWithinCityBounds(lat, lng, cityId) {
+        if (!CITY_CONFIGS[cityId]) return false;
+        const bounds = CITY_CONFIGS[cityId].bounds;
+        return lat >= bounds[0][0] && lat <= bounds[1][0] && 
+               lng >= bounds[0][1] && lng <= bounds[1][1];
+    }
+    
+    function placeMarker(lat, lng, popupText = null) {
+        document.getElementById('latitude').value = lat;
+        document.getElementById('longitude').value = lng;
+        
+        if (marker) map.removeLayer(marker);
+        marker = L.marker([lat, lng], {
+            icon: L.divIcon({
+                html: '<div style="background: #d63384; width: 20px; height: 20px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);"></div>',
+                iconSize: [20, 20],
+                iconAnchor: [10, 10]
+            })
+        }).addTo(map);
+        
+        if (popupText) {
+            marker.bindPopup(`<strong>${popupText}</strong>`).openPopup();
+        }
+        
+        map.setView([lat, lng], 15);
+    }
+    
     async function reverseGeocode(lat, lng) {
         try {
             const response = await fetch(
@@ -998,33 +1193,19 @@
     document.getElementById('checkoutForm').addEventListener('submit', function(e) {
         if (!citySelect.value || !barangaySelect.value) {
             e.preventDefault();
-            alert('Please select both city and barangay.');
+            alert('Please select your city and barangay.');
+            return false;
+        }
+        
+        const lat = parseFloat(document.getElementById('latitude').value);
+        const lng = parseFloat(document.getElementById('longitude').value);
+        
+        if (lat && lng && !isWithinCityBounds(lat, lng, parseInt(citySelect.value))) {
+            e.preventDefault();
+            alert(`Selected location must be within ${currentCity.city_name}.`);
             return false;
         }
     });
-    
-    // ==========================================
-    // GEOLOCATION
-    // ==========================================
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            function(position) {
-                const lat = position.coords.latitude;
-                const lng = position.coords.longitude;
-                for (const [cityId, config] of Object.entries(DEFAULT_CITY_BOUNDS)) {
-                    const bounds = config.bounds;
-                    if (lat >= bounds[0][0] && lat <= bounds[1][0] && 
-                        lng >= bounds[0][1] && lng <= bounds[1][1]) {
-                        map.setView([lat, lng], 15);
-                        break;
-                    }
-                }
-            },
-            function() {
-                console.log('Location access denied');
-            }
-        );
-    }
 </script>
 </body>
 </html>

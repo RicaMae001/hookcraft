@@ -1,9 +1,5 @@
 <?php
 
-// ============================================
-// app/Models/ProductCustomization.php
-// ============================================
-
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
@@ -22,10 +18,14 @@ class ProductCustomization extends Model
         'custom_image',
         'total_price',
         'status',
+        'admin_price',
+        'admin_notes',
+        'admin_id',
     ];
 
     protected $casts = [
         'total_price' => 'decimal:2',
+        'admin_price' => 'decimal:2',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -51,9 +51,46 @@ class ProductCustomization extends Model
         return $this->hasMany(CustomizationOption::class, 'customization_id');
     }
 
-    // Accessor: Get total price including product base price
-    public function getTotalWithProductAttribute()
+    public function admin()
     {
-        return $this->product->price + $this->total_price;
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
+    }
+    
+    // ✅ NEW: Relationship to cart items
+    public function cartItems()
+    {
+        return $this->hasMany(CartItem::class, 'customization_id');
+    }
+
+    // Status methods
+    public function isPending()
+    {
+        return $this->status === 'Pending';
+    }
+
+    public function isApproved()
+    {
+        return $this->status === 'Approved';
+    }
+
+    public function isRejected()
+    {
+        return $this->status === 'Rejected';
+    }
+
+    public function getFinalPriceAttribute()
+    {
+        return $this->admin_price ?? $this->total_price;
+    }
+
+    public function canCheckout()
+    {
+        return $this->isApproved() && !$this->order_id && $this->admin_price;
+    }
+    
+    // ✅ NEW: Check if in cart
+    public function isInCart()
+    {
+        return $this->cartItems()->exists();
     }
 }

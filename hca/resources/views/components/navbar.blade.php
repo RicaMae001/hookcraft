@@ -179,7 +179,7 @@
 }
 
 .brand-text {
-    background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
+    background: linear-gradient(135deg, #FF69B4 0%, #f1677c 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

@@ -696,7 +696,7 @@
                 @endfor
             </div>
             <!-- CHANGED: From old product-based route to new landing page -->
-            <a href="{{ route('customization.landing') }}" class="btn-white-custom">
+            <a href="{{ route('customization.create') }}" class="btn-white-custom">
                 <i class="bi bi-palette me-2"></i>Start Customizing
             </a>
         </div>

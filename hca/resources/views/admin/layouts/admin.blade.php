@@ -660,9 +660,9 @@
                 <span>Customers</span>
             </a>
 
-            <a href="{{ route('admin.gallery.index') }}" class="sidebar-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
                 <i class="fas fa-images"></i>
-                <span>Gallery</span>
+                <span>Customize</span>
             </a>
 
             <a href="{{ route('admin.livechat.index') }}" class="sidebar-link {{ request()->routeIs('admin.livechat.*') ? 'active' : '' }}">
