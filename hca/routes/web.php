@@ -121,8 +121,14 @@ Route::middleware(['auth'])->group(function () {
     // ===================================
     // CHECKOUT ROUTES
     // ===================================
+  Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
+    
+    // GCash payment routes
+    Route::get('/checkout/gcash/{order}', [CheckoutController::class, 'showGCashPayment'])->name('checkout.gcash');
+    Route::post('/checkout/gcash/{order}', [CheckoutController::class, 'submitGCashPayment'])->name('checkout.gcash.submit');
+});
 
     // ===================================
     // THANK YOU PAGE - COMPLETE WITH ORDER DATA
