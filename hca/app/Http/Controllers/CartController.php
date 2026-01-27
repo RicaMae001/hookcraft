@@ -362,4 +362,76 @@ class CartController extends Controller
 
         return back()->with('success', 'Item removed!');
     }
+    /**
+ * Add customization to cart
+ */
+public function addCustomization(Request $request, $id)
+{
+    try {
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login first.');
+        }
+
+        // Get the customization
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
+            ->findOrFail($id);
+
+        // Check if customization is approved
+        if (!$customization->isApproved()) {
+            return back()->with('error', 'This customization is not yet approved.');
+        }
+
+        if (!$customization->admin_price) {
+            return back()->with('error', 'No price has been set for this customization.');
+        }
+
+        // Check if already ordered
+        if ($customization->order_id) {
+            return back()->with('error', 'This customization has already been ordered.');
+        }
+
+        // Check if already in cart
+        if ($customization->isInCart()) {
+            return back()->with('info', 'This customization is already in your cart.');
+        }
+
+        // Get or create REGULAR cart (not buy-now)
+        $cart = Cart::firstOrCreate(
+            ['user_id' => Auth::id(), 'is_buy_now' => 0]
+        );
+
+        // Create cart item for customization
+        CartItem::create([
+            'cart_id' => $cart->id,
+            'product_id' => $customization->product_id,
+            'category_id' => $customization->product->category_id ?? null,
+            'quantity' => 1, // Customizations are always quantity 1
+            'price' => $customization->admin_price,
+            'subtotal' => $customization->admin_price,
+            'is_customization' => 1,
+            'customization_id' => $customization->id,
+        ]);
+
+        // Update session cart count
+        $cartCount = CartItem::whereHas('cart', function($query) {
+            $query->where('user_id', Auth::id())
+                  ->where('is_buy_now', 0);
+        })->sum('quantity');
+        
+        session(['cart_count' => $cartCount]);
+
+        return redirect()->route('cart.index')
+            ->with('success', 'Customization added to cart successfully!');
+
+    } catch (\Exception $e) {
+        Log::error('Failed to add customization to cart', [
+            'error' => $e->getMessage(),
+            'customization_id' => $id,
+            'user_id' => Auth::id()
+        ]);
+        
+        return back()->with('error', 'Failed to add customization to cart.');
+    }
+}
 }

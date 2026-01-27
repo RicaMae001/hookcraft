@@ -2,39 +2,28 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
 use App\Models\ProductCustomization;
-use App\Models\CustomizationOption;
+use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CustomizationController extends Controller
 {
-    // Customization landing page - Choose what to customize
-    public function landing()
-    {
-        // Get all products
-        $products = Product::with('category')->get();
-        
-        return view('customization.landing', compact('products'));
-    }
-
-    // Show customization creation page (no product ID needed)
+    // ==================== EXISTING METHODS ====================
+    
     public function create(Request $request)
     {
-        // Get product ID from query parameter if provided
-        $productId = $request->query('product_id');
         $product = null;
-        
-        if ($productId) {
-            $product = Product::with('category')->find($productId);
+        if ($request->has('product_id')) {
+            $product = Product::find($request->product_id);
         }
-        
+
         return view('customization.create', compact('product'));
     }
 
-    // Store customization (no product ID in route)
     public function store(Request $request)
     {
         $request->validate([
@@ -42,55 +31,24 @@ class CustomizationController extends Controller
             'customization_name' => 'required|string|max:255',
             'customization_details' => 'required|string',
             'special_instructions' => 'nullable|string',
-            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'canvas_data' => 'nullable|string',
-            'canvas_image' => 'nullable|string',
-            'options.*.type' => 'nullable|string',
-            'options.*.value' => 'nullable|string',
-            'options.*.price' => 'nullable|numeric|min:0',
+            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
         ]);
 
-        // Check if user is logged in
         if (!Auth::check()) {
-            return redirect()->route('login')->with('error', 'Please login to customize products.');
+            return redirect()->route('login')->with('error', 'Please login to submit customization requests.');
         }
 
         DB::beginTransaction();
         
         try {
-            // Handle canvas image (base64)
             $imagePath = null;
-            if ($request->filled('canvas_image')) {
-                $imageData = $request->canvas_image;
-                if (preg_match('/^data:image\/(\w+);base64,/', $imageData, $type)) {
-                    $imageData = substr($imageData, strpos($imageData, ',') + 1);
-                    $type = strtolower($type[1]);
-                    
-                    $imageData = base64_decode($imageData);
-                    $imageName = time() . '_canvas.' . $type;
-                    file_put_contents(public_path('uploads/customizations/' . $imageName), $imageData);
-                    $imagePath = $imageName;
-                }
-            }
-            // Handle regular image upload
-            elseif ($request->hasFile('custom_image')) {
+            if ($request->hasFile('custom_image')) {
                 $image = $request->file('custom_image');
                 $imageName = time() . '_' . $image->getClientOriginalName();
                 $image->move(public_path('uploads/customizations'), $imageName);
                 $imagePath = $imageName;
             }
 
-            // Calculate total price
-            $totalPrice = 50.00; // Base customization price
-            if ($request->has('options')) {
-                foreach ($request->options as $option) {
-                    if (!empty($option['price'])) {
-                        $totalPrice += floatval($option['price']);
-                    }
-                }
-            }
-
-            // Create customization
             $customization = ProductCustomization::create([
                 'user_id' => Auth::id(),
                 'product_id' => $request->product_id,
@@ -98,180 +56,88 @@ class CustomizationController extends Controller
                 'customization_details' => $request->customization_details,
                 'special_instructions' => $request->special_instructions,
                 'custom_image' => $imagePath,
-                'total_price' => $totalPrice,
-                'status' => $request->status ?? 'Draft',
+                'total_price' => 0,
+                'status' => 'Pending',
+                'admin_price' => null,
+                'admin_notes' => null,
+                'admin_id' => null,
             ]);
 
-            // Save canvas data as customization option if provided
-            if ($request->filled('canvas_data')) {
-                CustomizationOption::create([
-                    'customization_id' => $customization->id,
-                    'option_type' => 'canvas_design',
-                    'option_value' => $request->canvas_data,
-                    'additional_price' => 50.00,
-                ]);
-            }
-
-            // Save customization options
-            if ($request->has('options')) {
-                foreach ($request->options as $option) {
-                    if (!empty($option['type']) && !empty($option['value'])) {
-                        CustomizationOption::create([
-                            'customization_id' => $customization->id,
-                            'option_type' => $option['type'],
-                            'option_value' => $option['value'],
-                            'additional_price' => $option['price'] ?? 0,
-                        ]);
-                    }
-                }
-            }
+            Log::info('Customization request submitted', [
+                'user_id' => Auth::id(),
+                'customization_id' => $customization->id,
+                'product_id' => $request->product_id,
+            ]);
 
             DB::commit();
 
-            if ($request->status == 'Draft') {
-                return redirect()->route('customization.my-customizations')
-                    ->with('success', 'Customization saved as draft!');
-            }
-
-            // Redirect to cart
-            return redirect()->route('cart.index')
-                ->with('success', 'Product customization created! Add to cart to proceed.');
+            return redirect()->route('customization.my-customizations')
+                ->with('success', 'Customization request submitted! Our team will review it and provide pricing within 24 hours.');
 
         } catch (\Exception $e) {
             DB::rollBack();
+            Log::error('Customization creation failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
+                'product_id' => $request->product_id ?? 'not provided',
+            ]);
+            
             return redirect()->back()
-                ->with('error', 'Error creating customization: ' . $e->getMessage())
+                ->with('error', 'Error submitting customization request: ' . $e->getMessage())
                 ->withInput();
         }
     }
 
-    // Show user's customizations
     public function myCustomizations()
     {
-        $customizations = ProductCustomization::with(['product', 'options', 'order'])
-            ->where('user_id', Auth::id())
+        if (!Auth::check()) {
+            return redirect()->route('login')->with('error', 'Please login to view customizations.');
+        }
+
+        $customizations = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
             ->orderBy('created_at', 'desc')
             ->get();
 
         return view('customization.my-customizations', compact('customizations'));
     }
 
-    // Show single customization
     public function show($id)
     {
-        $customization = ProductCustomization::with(['product', 'options', 'order', 'user'])
-            ->where('user_id', Auth::id())
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
             ->findOrFail($id);
 
         return view('customization.show', compact('customization'));
     }
 
-    // Edit customization
     public function edit($id)
     {
-        $customization = ProductCustomization::with(['product', 'options'])
-            ->where('user_id', Auth::id())
-            ->where('order_id', null)
-            ->findOrFail($id);
-
-        $canvasOption = $customization->options()
-            ->where('option_type', 'canvas_design')
-            ->first();
-
-        return view('customization.edit', compact('customization', 'canvasOption'));
-    }
-
-    // Update customization
-    public function update(Request $request, $id)
-    {
-        $customization = ProductCustomization::where('user_id', Auth::id())
-            ->where('order_id', null)
-            ->findOrFail($id);
-
-        $request->validate([
-            'customization_name' => 'required|string|max:255',
-            'customization_details' => 'required|string',
-            'special_instructions' => 'nullable|string',
-            'custom_image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'canvas_data' => 'nullable|string',
-        ]);
-
-        DB::beginTransaction();
-
-        try {
-            // Handle image upload
-            if ($request->hasFile('custom_image')) {
-                // Delete old image
-                if ($customization->custom_image) {
-                    $oldImagePath = public_path('uploads/customizations/' . $customization->custom_image);
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
-                }
-
-                $image = $request->file('custom_image');
-                $imageName = time() . '_' . $image->getClientOriginalName();
-                $image->move(public_path('uploads/customizations'), $imageName);
-                $customization->custom_image = $imageName;
-            }
-
-            // Calculate total price
-            $totalPrice = 50.00;
-            if ($request->has('options')) {
-                foreach ($request->options as $option) {
-                    if (!empty($option['price'])) {
-                        $totalPrice += floatval($option['price']);
-                    }
-                }
-            }
-
-            // Update customization
-            $customization->update([
-                'customization_name' => $request->customization_name,
-                'customization_details' => $request->customization_details,
-                'special_instructions' => $request->special_instructions,
-                'total_price' => $totalPrice,
-            ]);
-
-            // Update canvas data if provided
-            if ($request->filled('canvas_data')) {
-                $canvasOption = $customization->options()
-                    ->where('option_type', 'canvas_design')
-                    ->first();
-                    
-                if ($canvasOption) {
-                    $canvasOption->update(['option_value' => $request->canvas_data]);
-                } else {
-                    CustomizationOption::create([
-                        'customization_id' => $customization->id,
-                        'option_type' => 'canvas_design',
-                        'option_value' => $request->canvas_data,
-                        'additional_price' => 50.00,
-                    ]);
-                }
-            }
-
-            DB::commit();
-
-            return redirect()->route('customization.my-customizations')
-                ->with('success', 'Customization updated successfully!');
-
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return redirect()->back()
-                ->with('error', 'Error updating customization: ' . $e->getMessage())
-                ->withInput();
+        if (!Auth::check()) {
+            return redirect()->route('login');
         }
+
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->where('status', 'Pending')
+            ->findOrFail($id);
+
+        return view('customization.edit', compact('customization'));
     }
 
-    // Delete customization
     public function destroy($id)
     {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
         $customization = ProductCustomization::where('user_id', Auth::id())
-            ->where('order_id', null)
+            ->where('status', 'Pending')
             ->findOrFail($id);
 
-        // Delete image if exists
         if ($customization->custom_image) {
             $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
             if (file_exists($imagePath)) {
@@ -283,5 +149,272 @@ class CustomizationController extends Controller
 
         return redirect()->route('customization.my-customizations')
             ->with('success', 'Customization deleted successfully!');
+    }
+
+    // ==================== NEW METHODS FOR ROUTES ====================
+    
+    /**
+     * Show checkout page for approved customization
+     */
+    public function checkout($id)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
+            ->findOrFail($id);
+
+        // Check if customization is approved
+        if (!$customization->isApproved()) {
+            return redirect()->route('customization.my-customizations')
+                ->with('error', 'This customization is not yet approved or priced.');
+        }
+
+        if (!$customization->admin_price) {
+            return redirect()->route('customization.my-customizations')
+                ->with('error', 'No price has been set for this customization yet.');
+        }
+
+        // Check if already has order
+        if ($customization->order_id) {
+            return redirect()->route('customization.my-customizations')
+                ->with('info', 'This customization has already been ordered.');
+        }
+
+        return view('customization.checkout', compact('customization'));
+    }
+
+    /**
+     * Add approved customization to cart
+     */
+    public function addToCart(Request $request, $id)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
+            ->findOrFail($id);
+
+        // Validate customization can be added to cart
+        if (!$customization->isApproved()) {
+            return back()->with('error', 'Customization must be approved before adding to cart.');
+        }
+
+        if ($customization->order_id) {
+            return back()->with('error', 'This customization has already been ordered.');
+        }
+
+        if (!$customization->admin_price) {
+            return back()->with('error', 'No price has been set for this customization.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // Get or create regular cart
+            $cart = \App\Models\Cart::firstOrCreate(
+                ['user_id' => Auth::id(), 'is_buy_now' => 0]
+            );
+
+            // Check if customization is already in cart
+            $existingItem = \App\Models\CartItem::where('cart_id', $cart->id)
+                ->where('product_id', $customization->product_id)
+                ->where('is_customization', 1)
+                ->where('customization_id', $customization->id)
+                ->first();
+
+            if ($existingItem) {
+                return back()->with('info', 'This customization is already in your cart.');
+            }
+
+            // Create cart item for customization
+            \App\Models\CartItem::create([
+                'cart_id' => $cart->id,
+                'product_id' => $customization->product_id,
+                'category_id' => $customization->product->category_id ?? null,
+                'quantity' => 1,
+                'price' => $customization->admin_price,
+                'subtotal' => $customization->admin_price,
+                'is_customization' => 1,
+                'customization_id' => $customization->id,
+            ]);
+
+            // Update session cart count
+            $cartCount = \App\Models\CartItem::whereHas('cart', function($query) {
+                $query->where('user_id', Auth::id())
+                      ->where('is_buy_now', 0);
+            })->sum('quantity');
+            
+            session(['cart_count' => $cartCount]);
+
+            DB::commit();
+
+            return redirect()->route('cart.index')
+                ->with('success', 'Customization added to cart successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add customization to cart', [
+                'error' => $e->getMessage(),
+                'customization_id' => $id,
+                'user_id' => Auth::id()
+            ]);
+            
+            return back()->with('error', 'Failed to add customization to cart.');
+        }
+    }
+
+    // ==================== ADMIN METHODS ====================
+    
+    /**
+     * Check if user is admin
+     */
+    private function requireAdmin()
+    {
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login')->with('error', 'Please login first');
+        }
+
+        $admin = DB::table('admin')->where('id', session('admin_id'))->first();
+        
+        if (!$admin) {
+            session()->forget(['admin_id', 'admin_name', 'admin_role', 'user_type']);
+            return redirect()->route('staff.login')->with('error', 'Session expired. Please login again.');
+        }
+
+        if ($admin->role !== 'Admin') {
+            return redirect()->route('admin.dashboard')
+                ->with('error', 'Access denied. Admin role required.');
+        }
+
+        return null;
+    }
+
+    /**
+     * Admin: View all customizations
+     */
+    public function adminIndex(Request $request)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $status = $request->get('status');
+        
+        $query = ProductCustomization::with(['user', 'product']);
+        
+        if ($status) {
+            $query->where('status', $status);
+        }
+        
+        $customizations = $query->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+
+        return view('admin.customizations.index', compact('customizations'));
+    }
+
+    /**
+     * Admin: View single customization
+     */
+    public function adminShow($id)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $customization = ProductCustomization::with(['user', 'product'])
+            ->findOrFail($id);
+
+        return view('admin.customizations.show', compact('customization'));
+    }
+
+    /**
+     * Admin: Update customization status and price
+     */
+    public function adminUpdate(Request $request, $id)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $request->validate([
+            'status' => 'required|in:Pending,Approved,Rejected,Completed',
+            'admin_price' => 'required_if:status,Approved|nullable|numeric|min:0',
+            'admin_notes' => 'nullable|string',
+        ]);
+
+        $customization = ProductCustomization::findOrFail($id);
+
+        DB::beginTransaction();
+        try {
+            $updateData = [
+                'status' => $request->status,
+                'admin_notes' => $request->admin_notes,
+                'admin_id' => session('admin_id'),
+            ];
+
+            // Only update price if status is Approved
+            if ($request->status === 'Approved' && $request->has('admin_price')) {
+                $updateData['admin_price'] = $request->admin_price;
+                $updateData['total_price'] = $request->admin_price;
+            } elseif ($request->status !== 'Approved') {
+                $updateData['admin_price'] = null;
+            }
+
+            $customization->update($updateData);
+
+            Log::info('Customization status updated by admin', [
+                'admin_id' => session('admin_id'),
+                'customization_id' => $customization->id,
+                'status' => $request->status,
+                'price' => $request->admin_price ?? 'N/A'
+            ]);
+
+            DB::commit();
+
+            return redirect()->route('admin.customizations.index')
+                ->with('success', 'Customization updated successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Customization update failed', [
+                'error' => $e->getMessage(),
+                'admin_id' => session('admin_id')
+            ]);
+            
+            return redirect()->back()
+                ->with('error', 'Error updating customization: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Admin: Delete customization
+     */
+    public function adminDestroy($id)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $customization = ProductCustomization::findOrFail($id);
+        
+        // Delete image if exists
+        if ($customization->custom_image) {
+            $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+
+        $customization->delete();
+
+        Log::info('Customization deleted by admin', [
+            'customization_id' => $id,
+            'admin_id' => session('admin_id')
+        ]);
+
+        return redirect()->route('admin.customizations.index')
+            ->with('success', 'Customization deleted successfully');
     }
 }
