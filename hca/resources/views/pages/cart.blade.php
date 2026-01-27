@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Hookcraft Avenue - Cart</title>
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
@@ -695,14 +696,15 @@
                                     <button class="quantity-btn" onclick="updateQuantity({{ $item->id }}, {{ $item->quantity - 1 }})" type="button">
                                         <i class="bi bi-dash"></i>
                                     </button>
-                                    <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-inline quantity-form-{{ $item->id }}">
-                                        @csrf @method('PUT')
+                                    <!-- FIXED: Removed @method('POST') and added onsubmit event -->
+                                    <form action="{{ route('cart.update', $item->id) }}" method="POST" class="d-inline quantity-form-{{ $item->id }}" onsubmit="event.preventDefault(); updateQuantityByForm({{ $item->id }})">
+                                        @csrf
                                         <input type="number" 
                                                name="quantity" 
                                                value="{{ $item->quantity }}" 
                                                min="1" 
                                                class="quantity-input"
-                                               onchange="this.form.submit()"
+                                               onchange="updateQuantityByInput({{ $item->id }})"
                                                readonly>
                                     </form>
                                     <button class="quantity-btn" onclick="updateQuantity({{ $item->id }}, {{ $item->quantity + 1 }})" type="button">
@@ -790,7 +792,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
-    // Update quantity function
+    // Update quantity using plus/minus buttons
     function updateQuantity(itemId, newQuantity) {
         if (newQuantity < 1) return;
         
@@ -801,10 +803,140 @@
         // Show loading overlay
         document.getElementById('loadingOverlay').style.display = 'flex';
         
-        form.submit();
+        // Submit the form via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            if (data.success) {
+                // Reload the page to show updated quantities and totals
+                window.location.reload();
+            } else {
+                alert('Error updating quantity: ' + (data.message || 'Unknown error'));
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            console.error('Error:', error);
+            alert('Error updating quantity. Please try again.');
+            window.location.reload();
+        });
     }
 
-    // Confirm remove with SweetAlert-style confirmation
+    // Update quantity when input is changed directly
+    function updateQuantityByInput(itemId) {
+        const form = document.querySelector(`.quantity-form-${itemId}`);
+        const input = form.querySelector('input[name="quantity"]');
+        const newQuantity = parseInt(input.value);
+        
+        if (newQuantity < 1) {
+            input.value = 1;
+            return;
+        }
+        
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        // Submit the form via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            if (data.success) {
+                // Reload the page to show updated quantities and totals
+                window.location.reload();
+            } else {
+                alert('Error updating quantity: ' + (data.message || 'Unknown error'));
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            console.error('Error:', error);
+            alert('Error updating quantity. Please try again.');
+            window.location.reload();
+        });
+    }
+
+    // Update quantity when form is submitted
+    function updateQuantityByForm(itemId) {
+        const form = document.querySelector(`.quantity-form-${itemId}`);
+        const input = form.querySelector('input[name="quantity"]');
+        const newQuantity = parseInt(input.value);
+        
+        if (newQuantity < 1) {
+            input.value = 1;
+            return;
+        }
+        
+        // Show loading overlay
+        document.getElementById('loadingOverlay').style.display = 'flex';
+        
+        // Submit the form via AJAX
+        fetch(form.action, {
+            method: 'POST',
+            body: new FormData(form),
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            // Hide loading overlay
+            document.getElementById('loadingOverlay').style.display = 'none';
+            
+            if (data.success) {
+                // Reload the page to show updated quantities and totals
+                window.location.reload();
+            } else {
+                alert('Error updating quantity: ' + (data.message || 'Unknown error'));
+                window.location.reload();
+            }
+        })
+        .catch(error => {
+            document.getElementById('loadingOverlay').style.display = 'none';
+            console.error('Error:', error);
+            alert('Error updating quantity. Please try again.');
+            window.location.reload();
+        });
+    }
+
+    // Confirm remove with confirmation
     function confirmRemove(button) {
         const form = button.closest('.remove-form');
         const productName = button.closest('.cart-item').querySelector('.product-name').textContent;
@@ -813,11 +945,35 @@
             button.innerHTML = '<i class="bi bi-hourglass-split"></i>';
             button.disabled = true;
             
+            // Show loading overlay
             document.getElementById('loadingOverlay').style.display = 'flex';
             
-            setTimeout(() => {
-                form.submit();
-            }, 300);
+            // Submit via AJAX
+            fetch(form.action, {
+                method: 'POST',
+                body: new FormData(form),
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.text();
+            })
+            .then(html => {
+                // Hide loading overlay and reload page
+                document.getElementById('loadingOverlay').style.display = 'none';
+                window.location.reload();
+            })
+            .catch(error => {
+                document.getElementById('loadingOverlay').style.display = 'none';
+                console.error('Error:', error);
+                alert('Error removing item. Please try again.');
+                window.location.reload();
+            });
         }
     }
 
@@ -830,6 +986,9 @@
                 bsAlert.close();
             }, 5000);
         });
+
+        // Smooth scroll to top on page load
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 
     // Prevent double submission
@@ -847,11 +1006,6 @@
                 isSubmitting = false;
             }, 2000);
         });
-    });
-
-    // Smooth scroll to top on page load
-    window.addEventListener('load', function() {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     });
 </script>
 </body>

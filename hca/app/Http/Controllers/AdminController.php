@@ -12,9 +12,17 @@ use App\Models\GalleryImage;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Product;
+use App\Services\NotificationService;
 
 class AdminController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     // ============================================
     // ROLE-BASED AUTHORIZATION HELPERS
     // ============================================
@@ -89,45 +97,44 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // NOTIFICATION METHODS
+    // NOTIFICATION METHODS (Updated for database-based service)
     // ============================================
     
     private function getAllNotifications()
     {
-        return Session::get('admin_notifications', []);
+        // Using NotificationService with database storage
+        $adminId = session('admin_id');
+        if (!$adminId) {
+            return collect(); // Return empty collection if not logged in
+        }
+        
+        return $this->notificationService->getNotifications('admin', $adminId, 50, false);
     }
 
     private function getUnreadCount()
     {
-        $notifications = $this->getAllNotifications();
-        return count(array_filter($notifications, function($n) {
-            return !$n['is_read'];
-        }));
+        // Using NotificationService with database storage
+        $adminId = session('admin_id');
+        if (!$adminId) {
+            return 0; // Return 0 if not logged in
+        }
+        
+        return $this->notificationService->getUnreadCount('admin', $adminId);
     }
 
     private function markAsRead($notificationId)
     {
-        $notifications = $this->getAllNotifications();
-        
-        foreach ($notifications as &$notification) {
-            if ($notification['id'] === $notificationId) {
-                $notification['is_read'] = true;
-                break;
-            }
-        }
-        
-        Session::put('admin_notifications', $notifications);
+        // Using NotificationService with database storage
+        $this->notificationService->markAsRead($notificationId);
     }
 
     private function markAllRead()
     {
-        $notifications = $this->getAllNotifications();
-        
-        foreach ($notifications as &$notification) {
-            $notification['is_read'] = true;
+        // Using NotificationService with database storage
+        $adminId = session('admin_id');
+        if ($adminId) {
+            $this->notificationService->markAllAsRead('admin', $adminId);
         }
-        
-        Session::put('admin_notifications', $notifications);
     }
 
     // ============================================
@@ -149,6 +156,23 @@ class AdminController extends Controller
                 }
 
                 $product->update(['stock' => $newStock]);
+
+                // Check for low stock notification
+                if ($newStock <= 5 && $newStock > 0) {
+                    $this->notificationService->productLowStock(
+                        $product->id, 
+                        $product->name, 
+                        $newStock
+                    );
+                }
+                
+                // Check for out of stock notification
+                if ($newStock <= 0) {
+                    $this->notificationService->productOutOfStock(
+                        $product->id, 
+                        $product->name
+                    );
+                }
             }
         }
     }
@@ -322,25 +346,28 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // NOTIFICATION ACTIONS
+    // NOTIFICATION ACTIONS (Updated for database)
     // ============================================
     
     public function markNotificationAsRead($notificationId)
     {
-        $this->markAsRead($notificationId);
-        return response()->json(['success' => true]);
+        $success = $this->notificationService->markAsRead($notificationId);
+        return response()->json(['success' => $success]);
     }
 
     public function markAllNotificationsAsRead()
     {
-        $this->markAllRead();
+        $adminId = session('admin_id');
+        if ($adminId) {
+            $this->notificationService->markAllAsRead('admin', $adminId);
+        }
         return redirect()->back()->with('success', 'All notifications marked as read');
     }
 
-    public function clearAllNotifications()
+    public function deleteNotification($notificationId)
     {
-        Session::forget('admin_notifications');
-        return redirect()->back()->with('success', 'All notifications cleared');
+        $success = $this->notificationService->delete($notificationId);
+        return response()->json(['success' => $success]);
     }
 
     // ============================================
@@ -433,7 +460,7 @@ class AdminController extends Controller
         $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
         $request->file('image')->move(public_path('asset/images'), $imageName);
 
-        Product::create([
+        $product = Product::create([
             'category_id' => $validated['category_id'],
             'name' => $validated['name'],
             'price' => $validated['price'],
@@ -442,6 +469,13 @@ class AdminController extends Controller
             'image' => $imageName,
             'admin_id' => session('admin_id'),
         ]);
+
+        // Send product created notification
+        $this->notificationService->productCreated(
+            $product->id,
+            $validated['name'],
+            session('admin_name')
+        );
 
         Log::info('Product created', [
             'product_name' => $validated['name'],
@@ -489,6 +523,20 @@ class AdminController extends Controller
         }
 
         $product->update($updateData);
+
+        // Check stock levels for notifications
+        if ($product->stock <= 5 && $product->stock > 0) {
+            $this->notificationService->productLowStock(
+                $product->id, 
+                $product->name, 
+                $product->stock
+            );
+        } elseif ($product->stock <= 0) {
+            $this->notificationService->productOutOfStock(
+                $product->id, 
+                $product->name
+            );
+        }
 
         Log::info('Product updated', [
             'product_id' => $id,
@@ -657,10 +705,30 @@ public function updateOrderStatus(Request $request, $id)
 
         if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
             $this->deductStockFromOrder($id);
+            
+            // Send payment received notification
+            if ($currentOrder->customer_name && $currentOrder->total) {
+                $this->notificationService->paymentReceived(
+                    $id,
+                    $currentOrder->customer_name,
+                    $currentOrder->total
+                );
+            }
         }
 
         if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
             $this->restoreStockFromOrder($id);
+        }
+
+        // Send order updated notification
+        if ($currentOrder->customer_name) {
+            $this->notificationService->orderUpdated(
+                $id,
+                $currentOrder->customer_name,
+                $currentOrder->payment_status,
+                $validated['payment_status'],
+                session('admin_name')
+            );
         }
 
         DB::commit();
@@ -696,6 +764,15 @@ public function deleteOrder($id)
             $this->restoreStockFromOrder($id);
         }
 
+        // Send order cancelled notification if applicable
+        if ($order && $order->customer_name && $order->delivery_status !== 'Cancelled') {
+            $this->notificationService->orderCancelled(
+                $id,
+                $order->customer_name,
+                'Order deleted by admin'
+            );
+        }
+
         DB::table('orders')->where('id', $id)->delete();
 
         DB::commit();
@@ -726,12 +803,25 @@ public function assignCoordinator(Request $request, $id)
         'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
     ]);
 
+    $order = DB::table('orders')->where('id', $id)->first();
+    $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
+
     DB::table('orders')
         ->where('id', $id)
         ->update([
             'coordinator_id' => $validated['coordinator_id'],
             'admin_id' => session('admin_id')
         ]);
+
+    // Send delivery assignment notification
+    if ($order && $coordinator) {
+        $this->notificationService->deliveryAssigned(
+            $id,
+            $coordinator->coordinator_id,
+            $coordinator->name,
+            $order->customer_name ?? 'Customer'
+        );
+    }
 
     Log::info('Coordinator assigned', [
         'order_id' => $id,

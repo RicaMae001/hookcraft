@@ -1,0 +1,252 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Services\NotificationService;
+
+class NotificationController extends Controller
+{
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
+    /**
+     * Get current user's recipient type and ID
+     */
+    private function getCurrentRecipient(Request $request = null)
+    {
+        // If called from API and referer contains /delivery/, prioritize coordinator session
+        if ($request) {
+            $referer = $request->header('referer', '');
+            if (str_contains($referer, '/delivery/') && session('coordinator_id')) {
+                return ['type' => 'delivery', 'id' => session('coordinator_id')];
+            }
+        }
+        
+        // Check for admin first
+        if (session('admin_id')) {
+            return ['type' => 'admin', 'id' => session('admin_id')];
+        } 
+        // Then check for delivery coordinator
+        elseif (session('coordinator_id')) {
+            return ['type' => 'delivery', 'id' => session('coordinator_id')];
+        } 
+        // Finally check for regular user
+        elseif (session('user_id')) {
+            return ['type' => 'user', 'id' => session('user_id')];
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Get all notifications for current user (API)
+     */
+    public function index(Request $request)
+    {
+        $recipient = $this->getCurrentRecipient($request);
+        
+        if (!$recipient) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Not authenticated',
+                'notifications' => [],
+                'unread_count' => 0
+            ], 401);
+        }
+
+        $unreadOnly = $request->get('unread_only', false);
+        $limit = $request->get('limit', 50);
+
+        try {
+            $notifications = $this->notificationService->getNotifications(
+                $recipient['type'],
+                $recipient['id'],
+                $limit,
+                $unreadOnly
+            );
+
+            $unreadCount = $this->notificationService->getUnreadCount(
+                $recipient['type'], 
+                $recipient['id']
+            );
+
+            // Log for debugging
+            \Log::info('Notifications fetched', [
+                'recipient_type' => $recipient['type'],
+                'recipient_id' => $recipient['id'],
+                'count' => count($notifications),
+                'unread_count' => $unreadCount,
+                'referer' => $request->header('referer', 'none')
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'notifications' => $notifications,
+                'unread_count' => $unreadCount,
+                'recipient_type' => $recipient['type'],
+                'recipient_id' => $recipient['id']
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Error fetching notifications: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error' => 'Error fetching notifications',
+                'notifications' => [],
+                'unread_count' => 0
+            ], 500);
+        }
+    }
+    
+    /**
+     * Get unread count (API)
+     */
+    public function unreadCount(Request $request)
+    {
+        $recipient = $this->getCurrentRecipient($request);
+        
+        if (!$recipient) {
+            return response()->json([
+                'success' => false,
+                'count' => 0
+            ], 401);
+        }
+
+        $count = $this->notificationService->getUnreadCount($recipient['type'], $recipient['id']);
+
+        return response()->json([
+            'success' => true,
+            'count' => $count
+        ]);
+    }
+
+    /**
+     * Mark notification as read (API)
+     */
+    public function markAsRead($id, Request $request)
+    {
+        $recipient = $this->getCurrentRecipient($request);
+        
+        if (!$recipient) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        $success = $this->notificationService->markAsRead($id);
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification marked as read'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Notification not found'
+        ], 404);
+    }
+
+    /**
+     * Mark all notifications as read (API)
+     */
+    public function markAllAsRead(Request $request)
+    {
+        $recipient = $this->getCurrentRecipient($request);
+        
+        if (!$recipient) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        $count = $this->notificationService->markAllAsRead($recipient['type'], $recipient['id']);
+
+        return response()->json([
+            'success' => true,
+            'message' => "{$count} notifications marked as read",
+            'count' => $count
+        ]);
+    }
+
+    /**
+     * Delete notification (API)
+     */
+    public function destroy($id, Request $request)
+    {
+        $recipient = $this->getCurrentRecipient($request);
+        
+        if (!$recipient) {
+            return response()->json([
+                'success' => false,
+                'error' => 'Unauthorized'
+            ], 401);
+        }
+
+        $success = $this->notificationService->delete($id);
+
+        if ($success) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Notification deleted'
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'Notification not found'
+        ], 404);
+    }
+
+    /**
+     * Show all notifications page for admin
+     */
+    public function adminNotifications()
+    {
+        if (!session('admin_id')) {
+            return redirect()->route('staff.login');
+        }
+
+        $notifications = $this->notificationService->getNotifications('admin', session('admin_id'), 100);
+        $unreadCount = $this->notificationService->getUnreadCount('admin', session('admin_id'));
+
+        return view('admin.notifications', compact('notifications', 'unreadCount'));
+    }
+
+    /**
+     * Show all notifications page for delivery
+     */
+    public function deliveryNotifications()
+    {
+        if (!session('coordinator_id')) {
+            return redirect()->route('staff.login');
+        }
+
+        $notifications = $this->notificationService->getNotifications('delivery', session('coordinator_id'), 100);
+        $unreadCount = $this->notificationService->getUnreadCount('delivery', session('coordinator_id'));
+
+        return view('admin.delivery.notifications', compact('notifications', 'unreadCount'));
+    }
+
+    /**
+     * Show all notifications page for users
+     */
+    public function userNotifications()
+    {
+        if (!session('user_id')) {
+            return redirect()->route('login');
+        }
+
+        $notifications = $this->notificationService->getNotifications('user', session('user_id'), 100);
+        $unreadCount = $this->notificationService->getUnreadCount('user', session('user_id'));
+
+        return view('user.notifications', compact('notifications', 'unreadCount'));
+    }
+}

@@ -24,8 +24,8 @@
         }
 
         .main-container {
-            width: 100%;
-            max-width: 1400px;
+            width: 110%;
+            max-width: 950px;
             display: flex;
             gap: 20px;
         }
@@ -607,13 +607,14 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 1024px) {
+        @media (max-width: 950px) {
             .main-container {
                 flex-direction: column;
+                width: 90%;
             }
             
             .orders-sidebar {
-                width: 100%;
+                width: 150%;
                 max-height: 300px;
             }
             
@@ -627,6 +628,7 @@
                 height: 100vh;
                 max-height: 100vh;
                 border-radius: 0;
+                width: 380px;
             }
 
             .message-content {
@@ -740,9 +742,9 @@
                         required
                     >
                     <button type="submit" class="send-btn" id="sendBtn">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+  <path d="M2 21L23 12 2 3v7l15 2L2 14z" fill="white"/>
+</svg>
                     </button>
                 </form>
             </div>
