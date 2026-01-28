@@ -397,6 +397,61 @@
             margin-bottom: 1rem;
             opacity: 0.5;
         }
+<<<<<<<<< Temporary merge branch 1
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .main-content {
+                margin-left: 0;
+                padding: 6rem 1rem 1rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .stat-card-value {
+                font-size: 1.5rem;
+            }
+            
+            .timeline-item {
+                padding-left: 40px;
+            }
+            
+            .timeline-icon {
+                width: 28px;
+                height: 28px;
+            }
+        }
+=========
+<<<<<<< HEAD
+=======
+
+        .address-text {
+    color: #bfcfdd; /* clean medium gray for light mode */
+}
+
+.dark-mode .address-text {
+    color: #d5e0ec; /* soft cool gray for dark mode */
+}
+>>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
+>>>>>>>>> Temporary merge branch 2
     </style>
 </head>
 <body>
@@ -446,58 +501,10 @@
     </nav>
 
     <!-- Modern Sidebar -->
-    <aside class="modern-sidebar" id="sidebar">
-        <div class="sidebar-logo">
-            <h2><i class="fas fa-truck-fast"></i> HCA Delivery</h2>
-            <p>Coordinator Dashboard</p>
-        </div>
+    @include('admin.delivery.layouts.sidebar')
 
-        <!-- User Profile in Sidebar -->
-        <div class="sidebar-section">
-            <div class="text-center mb-3" style="padding: 0 1rem;">
-                <div class="user-avatar" style="width: 60px; height: 60px; margin: 0 auto 1rem; font-size: 1.5rem;">
-                    {{ strtoupper(substr(session('coordinator_name', 'D'), 0, 1)) }}
-                </div>
-                <h6 style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.25rem;">
-                    {{ session('coordinator_name') ?? 'Delivery Coordinator' }}
-                </h6>
-                <small style="color: var(--text-secondary);">Delivery Coordinator</small>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Main Menu</div>
-            
-            <a href="{{ route('delivery.dashboard') }}" class="sidebar-link {{ request()->routeIs('delivery.dashboard') ? 'active' : '' }}">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('delivery.deliveries') }}" class="sidebar-link {{ request()->routeIs('delivery.deliveries') ? 'active' : '' }}">
-                <i class="fas fa-box"></i>
-                <span>My Deliveries</span>
-            </a>
-
-            <a href="{{ route('delivery.livechat.index') }}" class="sidebar-link {{ request()->routeIs('delivery.livechat.*') ? 'active' : '' }}">
-                <i class="fas fa-comments"></i>
-                <span>Live Chat Support</span>
-            </a>
-
-            <a href="{{ route('delivery.history') }}" class="sidebar-link {{ request()->routeIs('delivery.history') ? 'active' : '' }}">
-                <i class="fas fa-history"></i>
-                <span>Delivery History</span>
-            </a>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Account</div>
-
-            <a href="#" class="sidebar-link text-danger" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </div>
-    </aside>
+    <!-- Modern Navbar -->
+    @include('admin.delivery.layouts.navbar')
 
     <!-- Main Content -->
     <main class="main-content">
@@ -587,18 +594,11 @@
                                             <span class="badge bg-secondary me-2">#{{ $log->order_id }}</span>
                                             <strong>{{ $log->customer_name }}</strong>
                                         </h6>
-<<<<<<< HEAD
-                                        <p class="mb-2 text-muted">
-                                            <i class="fas fa-map-marker-alt me-2"></i>
-                                            {{ Str::limit($log->address, 60) }}
-                                        </p>
-=======
                                    <p class="mb-2 address-text">
     <i class="fas fa-map-marker-alt me-2"></i>
     {{ Str::limit($log->address, 60) }}
 </p>
 
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
                                         <div class="status-change">
                                             <span class="badge-modern 
                                                 @if($log->old_status == 'Delivered') badge-success

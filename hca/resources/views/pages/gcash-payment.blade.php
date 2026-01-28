@@ -452,9 +452,12 @@
 
             <div class="steps-list">
                 <ol>
-                    <li>Open GCash app and scan QR or enter number</li>
-                    <li>Send exactly <strong>₱{{ number_format($order->total, 2) }}</strong></li>
-                    <li>Screenshot the confirmation</li>
+                    <li>Open your GCash app</li>
+                    <li>Scan the QR code above or send to <strong>09123456789</strong></li>
+                    <li>Enter the exact amount: <strong>₱{{ number_format($order->total, 2) }}</strong></li>
+                    <li>Complete the payment</li>
+                    <li>Take a screenshot of the payment confirmation</li>
+                    <li>Upload the screenshot below</li>
                 </ol>
             </div>
 

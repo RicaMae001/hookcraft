@@ -54,6 +54,11 @@
             color: #155724;
         }
 
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+
         .customization-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -115,10 +120,32 @@
             margin: 10px 0;
         }
 
+        .admin-price-box {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 10px 0;
+            border: 2px solid #f59e0b;
+        }
+
+        .admin-price-label {
+            font-size: 0.9em;
+            color: #92400e;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .admin-price-value {
+            font-size: 1.5em;
+            color: #92400e;
+            font-weight: 700;
+        }
+
         .card-actions {
             display: flex;
             gap: 10px;
             margin-top: 15px;
+            flex-wrap: wrap;
         }
 
         .btn {
@@ -131,23 +158,58 @@
             display: inline-block;
             flex: 1;
             color: white;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #FF6B9D 0%, #C06C84 100%);
+            min-width: 100px;
         }
 
         .btn-secondary {
             background: #667eea;
+            min-width: 80px;
         }
 
-        .btn-success {
-            background: #26de81;
+        .btn-checkout {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            width: 100%;
+            font-size: 1em;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-add-cart {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            width: 100%;
+            font-size: 0.9em;
+            padding: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 8px;
         }
 
         .empty-state {
             text-align: center;
             padding: 60px 20px;
+        }
+
+        @media (max-width: 768px) {
+            .customization-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
@@ -165,6 +227,10 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
+        @if(session('info'))
+            <div class="alert alert-info">{{ session('info') }}</div>
+        @endif
+
         @if($customizations->count())
             <div class="customization-grid">
 
@@ -174,8 +240,9 @@
                         <img
                             src="{{ $custom->custom_image
                                 ? asset('uploads/customizations/' . $custom->custom_image)
-                                : asset('uploads/' . $custom->product->image) }}"
+                                : asset('asset/images/' . $custom->product->image) }}"
                             class="card-image"
+                            alt="{{ $custom->customization_name }}"
                         >
 
                         <div class="card-body">
@@ -194,46 +261,63 @@
                                 <strong>Created:</strong> {{ $custom->created_at->format('M d, Y') }}
                             </div>
 
-                            {{-- BASE / ESTIMATED PRICE --}}
-                            <div class="price">
-                                ₱{{ number_format($custom->product->price + $custom->total_price, 2) }}
-                            </div>
-
-                            {{-- ADMIN STATUS LOGIC --}}
+                            {{-- SHOW DIFFERENT INFO BASED ON STATUS --}}
                             @if($custom->isApproved() && !$custom->order_id)
-                                <div class="card-details" style="color:#26de81;font-weight:600;">
-                                    ✅ Approved! Final Price: ₱{{ number_format($custom->admin_price, 2) }}
+                                {{-- APPROVED - SHOW ADMIN PRICE AND CHECKOUT --}}
+                                <div class="admin-price-box">
+                                    <div class="admin-price-label">✅ Final Price (Approved)</div>
+                                    <div class="admin-price-value">₱{{ number_format($custom->admin_price, 2) }}</div>
                                 </div>
 
                                 @if($custom->admin_notes)
-                                    <div class="card-details">
-                                        <strong>Admin Notes:</strong> {{ $custom->admin_notes }}
+                                    <div class="card-details" style="background: #e0f2fe; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                        <strong>Note from Admin:</strong><br>
+                                        {{ $custom->admin_notes }}
                                     </div>
                                 @endif
 
-                                <a href="{{ route('customization.checkout', $custom->id) }}"
-                                   class="btn btn-success" style="margin-top:10px;">
-                                    🛒 Proceed to Checkout
-                                </a>
+                                {{-- PROCEED TO CHECKOUT BUTTON - Goes directly to unified checkout page --}}
+                                <form action="{{ route('customization.proceed-checkout', $custom->id) }}" method="POST" style="margin-top: 10px;">
+                                    @csrf
+                                    <button type="submit" class="btn btn-checkout">
+                                        🛒 Proceed to Checkout
+                                    </button>
+                                </form>
+
+                                {{-- ADD TO CART BUTTON - Just adds to cart without checkout --}}
+                                <form action="{{ route('customization.add-to-cart', $custom->id) }}" method="POST">
+                                    @csrf
+                                    <button type="submit" class="btn btn-add-cart">
+                                        🛍️ Add to Cart
+                                    </button>
+                                </form>
 
                             @elseif($custom->isPending())
-                                <div class="card-details" style="color:#ffd93d;">
-                                    ⏳ Waiting for admin review
+                                {{-- PENDING - SHOW ESTIMATED PRICE --}}
+                                <div class="price">
+                                    Estimated: ₱{{ number_format($custom->product->price + $custom->total_price, 2) }}
+                                </div>
+                                <div class="card-details" style="color:#ffa500; font-weight:600;">
+                                    ⏳ Waiting for admin review and final pricing
                                 </div>
 
                             @elseif($custom->isRejected())
-                                <div class="card-details" style="color:#fc5c65;">
+                                {{-- REJECTED - SHOW REASON --}}
+                                <div class="card-details" style="color:#fc5c65; font-weight:600;">
                                     ❌ Request rejected
                                 </div>
 
                                 @if($custom->admin_notes)
-                                    <div class="card-details">
-                                        <strong>Reason:</strong> {{ $custom->admin_notes }}
+                                    <div class="card-details" style="background: #fee2e2; padding: 10px; border-radius: 8px; margin: 10px 0;">
+                                        <strong>Reason:</strong><br>
+                                        {{ $custom->admin_notes }}
                                     </div>
                                 @endif
 
                             @elseif($custom->order_id)
-                                <div class="card-details" style="color:#667eea;">
+                                {{-- ORDERED - SHOW ORDER INFO --}}
+                                <div class="price">₱{{ number_format($custom->admin_price, 2) }}</div>
+                                <div class="card-details" style="color:#667eea; font-weight:600;">
                                     📦 Ordered (Order #{{ $custom->order_id }})
                                 </div>
                             @endif
@@ -263,7 +347,7 @@
                 <h3>🎨 No Customizations Yet</h3>
                 <p>Start creating your personalized flower arrangements!</p>
                 <a href="{{ route('customization.landing') }}"
-                   class="btn btn-primary">
+                   class="btn btn-primary" style="margin-top: 20px; width: auto; padding: 15px 30px;">
                     Start Customizing
                 </a>
             </div>

@@ -7,7 +7,6 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="{{ asset('asset/stylesthankyou.css') }}"> -->
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <style>
         .receipt-container {
@@ -126,10 +125,83 @@
             border: 2px solid #e0e0e0;
         }
         
+        .customization-image {
+            border-color: #667eea;
+            border-style: dashed;
+        }
+        
         .item-image:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             border-color: #667eea;
+        }
+        
+        /* Category Badge */
+        .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1565c0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-left: 5px;
+            border: 1px solid #90caf9;
+        }
+        
+        /* Customization Badge */
+        .customization-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+        
+        /* Customization Details */
+        .customization-details {
+            background: #f8f9ff;
+            border-left: 3px solid #667eea;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .customization-details h6 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .customization-details p {
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        .customization-option {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 5px;
+        }
+        
+        /* Product Details */
+        .product-details {
+            margin-top: 5px;
+        }
+        
+        .product-category {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+        
+        .product-category i {
+            color: #667eea;
+            margin-right: 3px;
         }
         
         /* Image Modal Styles */
@@ -489,14 +561,24 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            @if($item->product && $item->product->image)
-                                             <img src="{{ asset('asset/images/' . $item->product->image) }}" 
-                                                 alt="{{ $item->product->name }}" 
-                                                 class="item-image me-3"
-                                                 data-title="{{ $item->product->name }}"
-                                                 data-description="{{ $item->product->description ? Str::limit($item->product->description, 100) : 'No description available' }}"
-                                                 title="Click to view"
-                                                 crossorigin="anonymous">
+                                            @if($item->is_customization && $item->customization && $item->customization->custom_image)
+                                                <!-- Customized product image -->
+                                                <img src="{{ asset('uploads/customizations/' . $item->customization->custom_image) }}" 
+                                                     alt="{{ $item->customization->customization_name }}" 
+                                                     class="item-image customization-image me-3"
+                                                     data-title="{{ $item->customization->customization_name }}"
+                                                     data-description="{{ $item->customization->customization_details }}"
+                                                     title="Click to view customization"
+                                                     crossorigin="anonymous">
+                                            @elseif($item->product && $item->product->image)
+                                                <!-- Regular product image -->
+                                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
+                                                     alt="{{ $item->product->name }}" 
+                                                     class="item-image me-3"
+                                                     data-title="{{ $item->product->name }}"
+                                                     data-description="{{ $item->product->description ? Str::limit($item->product->description, 100) : 'No description available' }}"
+                                                     title="Click to view"
+                                                     crossorigin="anonymous">
                                             @else
                                             <div class="item-image me-3 d-flex align-items-center justify-content-center bg-light" 
                                                  style="width: 80px; height: 80px; border-radius: 8px; cursor: not-allowed;"
@@ -505,16 +587,92 @@
                                             </div>
                                             @endif
                                             <div>
-                                                <strong>{{ $item->product->name ?? 'Product' }}</strong>
-                                                @if($item->product && $item->product->description)
-                                                <br><small class="text-muted">{{ Str::limit($item->product->description, 50) }}</small>
-                                                @endif
+                                                <div class="d-flex align-items-center">
+                                                    @if($item->is_customization)
+                                                        <strong>{{ $item->customization->customization_name ?? 'Customized Product' }}</strong>
+                                                        <span class="customization-badge">CUSTOMIZED</span>
+                                                        @if($item->product->category)
+                                                            <span class="category-badge">
+                                                                <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
+                                                            </span>
+                                                        @endif
+                                                    @else
+                                                        <strong>{{ $item->product->name ?? 'Product' }}</strong>
+                                                        @if($item->product->category)
+                                                            <span class="category-badge">
+                                                                <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
+                                                            </span>
+                                                        @endif
+                                                    @endif
+                                                </div>
+                                                
+                                                <div class="product-details">
+                                                    @if($item->product->category)
+                                                        <div class="product-category">
+                                                            <i class="bi bi-tags"></i> {{ $item->product->category->name }}
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if($item->is_customization && $item->customization)
+                                                        <small class="text-muted">Based on: {{ $item->product->name ?? 'Product' }}</small>
+                                                    @elseif($item->product && $item->product->description)
+                                                        <small class="text-muted">{{ Str::limit($item->product->description, 50) }}</small>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
+                                        
+                                        <!-- Customization Details -->
+                                        @if($item->is_customization && $item->customization)
+                                        <div class="customization-details mt-2">
+                                            <h6>Customization Details:</h6>
+                                            <p><strong>Name:</strong> {{ $item->customization->customization_name }}</p>
+                                            <p><strong>Details:</strong> {{ $item->customization->customization_details }}</p>
+                                            
+                                            @if($item->customization->special_instructions)
+                                            <p><strong>Special Instructions:</strong> {{ $item->customization->special_instructions }}</p>
+                                            @endif
+                                            
+                                            @if($item->customization->options && $item->customization->options->count() > 0)
+                                            <div class="mt-2">
+                                                <strong>Options:</strong>
+                                                @foreach($item->customization->options as $option)
+                                                <div class="customization-option">
+                                                    <small>
+                                                        <strong>{{ ucfirst($option->option_type) }}:</strong> 
+                                                        {{ $option->option_value }}
+                                                        @if($option->additional_price > 0)
+                                                        <span class="text-success">(+₱{{ number_format($option->additional_price, 2) }})</span>
+                                                        @endif
+                                                    </small>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                            @endif
+                                            
+                                            @if($item->customization->admin_price)
+                                            <p class="text-success mt-2 mb-0">
+                                                <strong>Customization Price:</strong> ₱{{ number_format($item->customization->admin_price, 2) }}
+                                            </p>
+                                            @endif
+                                        </div>
+                                        @endif
                                     </td>
-                                    <td>₱{{ number_format($item->price, 2) }}</td>
+                                    <td>
+                                        @if($item->is_customization && $item->customization && $item->customization->admin_price)
+                                            ₱{{ number_format($item->customization->admin_price, 2) }}
+                                        @else
+                                            ₱{{ number_format($item->price, 2) }}
+                                        @endif
+                                    </td>
                                     <td>{{ $item->quantity }}</td>
-                                    <td>₱{{ number_format($item->price * $item->quantity, 2) }}</td>
+                                    <td>
+                                        @if($item->is_customization && $item->customization && $item->customization->admin_price)
+                                            ₱{{ number_format($item->customization->admin_price * $item->quantity, 2) }}
+                                        @else
+                                            ₱{{ number_format($item->price * $item->quantity, 2) }}
+                                        @endif
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>

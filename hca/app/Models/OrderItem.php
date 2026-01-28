@@ -34,6 +34,8 @@ class OrderItem extends Model
         'product_id',
         'quantity',
         'price',
+        'is_customization',    // NEW: Flag for customized products
+        'customization_id',    // NEW: Reference to product_customizations
     ];
 
     /**
@@ -44,6 +46,7 @@ class OrderItem extends Model
     protected $casts = [
         'price' => 'decimal:2',
         'quantity' => 'integer',
+        'is_customization' => 'boolean', // Add casting for the new field
     ];
 
     /**
@@ -71,6 +74,14 @@ class OrderItem extends Model
     }
 
     /**
+     * NEW: Get the customization associated with this order item.
+     */
+    public function customization()
+    {
+        return $this->belongsTo(ProductCustomization::class, 'customization_id');
+    }
+
+    /**
      * Get the subtotal for this order item.
      */
     public function getSubtotalAttribute()
@@ -92,5 +103,13 @@ class OrderItem extends Model
     public function getFormattedSubtotalAttribute()
     {
         return 'â‚±' . number_format($this->subtotal, 2);
+    }
+
+    /**
+     * Helper to check if item is a customization
+     */
+    public function isCustomized()
+    {
+        return $this->is_customization && $this->customization_id;
     }
 }

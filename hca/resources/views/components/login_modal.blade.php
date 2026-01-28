@@ -504,7 +504,7 @@
             <h2 class="hookcraft-form-title">Welcome Back</h2>
             <p class="hookcraft-form-subtitle">Log in to continue your journey</p>
             
-            <form method="POST" action="{{ route('login') }}" id="loginForm">
+            <form method="POST" action="{{ route('login.submit') }}">
               @csrf
               
               <div class="hookcraft-input-group">

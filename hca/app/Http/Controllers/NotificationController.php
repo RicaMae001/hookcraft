@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
 
 class NotificationController extends Controller
@@ -35,16 +36,16 @@ class NotificationController extends Controller
         elseif (session('coordinator_id')) {
             return ['type' => 'delivery', 'id' => session('coordinator_id')];
         } 
-        // Finally check for regular user
-        elseif (session('user_id')) {
-            return ['type' => 'user', 'id' => session('user_id')];
+        // Finally check for regular user using Auth facade (UPDATED)
+        elseif (Auth::check()) {
+            return ['type' => 'user', 'id' => Auth::id()];
         }
         
         return null;
     }
     
     /**
-     * Get all notifications for current user (API)
+     * Get all notifications for current user (API) - UPDATED WITH FILTERING
      */
     public function index(Request $request)
     {
@@ -70,10 +71,31 @@ class NotificationController extends Controller
                 $unreadOnly
             );
 
-            $unreadCount = $this->notificationService->getUnreadCount(
-                $recipient['type'], 
-                $recipient['id']
-            );
+            // ====== FILTER OUT RIDER NOTIFICATIONS FOR REGULAR USERS ======
+            if ($recipient['type'] === 'user') {
+                $notifications = collect($notifications)->filter(function ($notification) {
+                    // Get notification type and title
+                    $type = strtolower($notification['type'] ?? '');
+                    $title = strtolower($notification['title'] ?? '');
+                    
+                    // Exclude delivery assignment notifications
+                    $isDeliveryAssignment = 
+                        str_contains($type, 'delivery_assignment') ||
+                        str_contains($type, 'rider') ||
+                        str_contains($title, 'delivery assignment') ||
+                        str_contains($title, 'assigned to you for delivery') ||
+                        str_contains($title, 'new delivery');
+                    
+                    // Only include notifications that are NOT delivery assignments
+                    return !$isDeliveryAssignment;
+                })->values()->all();
+            }
+            // ============================================================
+
+            // Recalculate unread count after filtering
+            $unreadCount = $recipient['type'] === 'user' 
+                ? collect($notifications)->where('is_read', false)->count()
+                : $this->notificationService->getUnreadCount($recipient['type'], $recipient['id']);
 
             // Log for debugging
             \Log::info('Notifications fetched', [
@@ -81,7 +103,8 @@ class NotificationController extends Controller
                 'recipient_id' => $recipient['id'],
                 'count' => count($notifications),
                 'unread_count' => $unreadCount,
-                'referer' => $request->header('referer', 'none')
+                'referer' => $request->header('referer', 'none'),
+                'filtered' => $recipient['type'] === 'user' ? 'yes' : 'no'
             ]);
 
             return response()->json([
@@ -103,7 +126,7 @@ class NotificationController extends Controller
     }
     
     /**
-     * Get unread count (API)
+     * Get unread count (API) - UPDATED WITH FILTERING
      */
     public function unreadCount(Request $request)
     {
@@ -116,7 +139,39 @@ class NotificationController extends Controller
             ], 401);
         }
 
-        $count = $this->notificationService->getUnreadCount($recipient['type'], $recipient['id']);
+        // For users, get notifications and filter them before counting
+        if ($recipient['type'] === 'user') {
+            try {
+                $notifications = $this->notificationService->getNotifications(
+                    $recipient['type'],
+                    $recipient['id'],
+                    100, // Get more to ensure accurate count
+                    true // unread only
+                );
+                
+                // Filter out delivery assignments
+                $filteredNotifications = collect($notifications)->filter(function ($notification) {
+                    $type = strtolower($notification['type'] ?? '');
+                    $title = strtolower($notification['title'] ?? '');
+                    
+                    $isDeliveryAssignment = 
+                        str_contains($type, 'delivery_assignment') ||
+                        str_contains($type, 'rider') ||
+                        str_contains($title, 'delivery assignment') ||
+                        str_contains($title, 'assigned to you for delivery') ||
+                        str_contains($title, 'new delivery');
+                    
+                    return !$isDeliveryAssignment;
+                });
+                
+                $count = $filteredNotifications->count();
+            } catch (\Exception $e) {
+                \Log::error('Error getting filtered unread count: ' . $e->getMessage());
+                $count = 0;
+            }
+        } else {
+            $count = $this->notificationService->getUnreadCount($recipient['type'], $recipient['id']);
+        }
 
         return response()->json([
             'success' => true,
@@ -154,7 +209,7 @@ class NotificationController extends Controller
     }
 
     /**
-     * Mark all notifications as read (API)
+     * Mark all notifications as read (API) - UPDATED WITH FILTERING
      */
     public function markAllAsRead(Request $request)
     {
@@ -167,13 +222,57 @@ class NotificationController extends Controller
             ], 401);
         }
 
-        $count = $this->notificationService->markAllAsRead($recipient['type'], $recipient['id']);
+        // For users, only mark non-delivery notifications as read
+        if ($recipient['type'] === 'user') {
+            try {
+                $notifications = $this->notificationService->getNotifications(
+                    $recipient['type'],
+                    $recipient['id'],
+                    100,
+                    true // unread only
+                );
+                
+                // Filter and mark as read
+                $count = 0;
+                foreach ($notifications as $notification) {
+                    $type = strtolower($notification['type'] ?? '');
+                    $title = strtolower($notification['title'] ?? '');
+                    
+                    $isDeliveryAssignment = 
+                        str_contains($type, 'delivery_assignment') ||
+                        str_contains($type, 'rider') ||
+                        str_contains($title, 'delivery assignment') ||
+                        str_contains($title, 'assigned to you for delivery') ||
+                        str_contains($title, 'new delivery');
+                    
+                    // Only mark non-delivery notifications
+                    if (!$isDeliveryAssignment) {
+                        $this->notificationService->markAsRead($notification['id']);
+                        $count++;
+                    }
+                }
+                
+                return response()->json([
+                    'success' => true,
+                    'message' => "{$count} notifications marked as read",
+                    'count' => $count
+                ]);
+            } catch (\Exception $e) {
+                \Log::error('Error marking all as read: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'error' => 'Error marking notifications as read'
+                ], 500);
+            }
+        } else {
+            $count = $this->notificationService->markAllAsRead($recipient['type'], $recipient['id']);
 
-        return response()->json([
-            'success' => true,
-            'message' => "{$count} notifications marked as read",
-            'count' => $count
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => "{$count} notifications marked as read",
+                'count' => $count
+            ]);
+        }
     }
 
     /**
@@ -240,13 +339,11 @@ class NotificationController extends Controller
      */
     public function userNotifications()
     {
-        if (!session('user_id')) {
-            return redirect()->route('login');
+        if (!Auth::check()) {
+            return redirect()->route('home')->with('error', 'Please login to view notifications');
         }
 
-        $notifications = $this->notificationService->getNotifications('user', session('user_id'), 100);
-        $unreadCount = $this->notificationService->getUnreadCount('user', session('user_id'));
-
-        return view('user.notifications', compact('notifications', 'unreadCount'));
+        // Just return the view - JavaScript will fetch via API (same as navbar)
+        return view('pages.user-notifications');
     }
 }

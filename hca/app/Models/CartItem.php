@@ -15,13 +15,16 @@ class CartItem extends Model
         'category_id',  // ✅ Added back since it exists in DB
         'quantity', 
         'price', 
-        'subtotal'
+        'subtotal',
+        'is_customization',    // NEW: Flag for customized products
+        'customization_id',    // NEW: Reference to product_customizations
     ];
     
     protected $casts = [
         'quantity' => 'integer',
         'price' => 'decimal:2',
         'subtotal' => 'decimal:2',
+        'is_customization' => 'boolean', // Add casting for the new field
     ];
     
     public $timestamps = false; // No created_at / updated_at in cart_item
@@ -40,6 +43,12 @@ class CartItem extends Model
     public function category()
     {
         return $this->belongsTo(Category::class);
+    }
+    
+    // NEW: Relationship with product customization
+    public function customization()
+    {
+        return $this->belongsTo(ProductCustomization::class, 'customization_id');
     }
     
     // You can still access category through product if needed
@@ -64,5 +73,11 @@ class CartItem extends Model
         $this->quantity = max(1, (int) $newQuantity);
         $this->subtotal = $this->quantity * $this->price;
         return $this->save();
+    }
+
+    // Helper to check if item is a customization
+    public function isCustomized()
+    {
+        return $this->is_customization && $this->customization_id;
     }
 }
