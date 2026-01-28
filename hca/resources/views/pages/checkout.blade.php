@@ -758,7 +758,7 @@
                                     </div>
                                 @else
                                     {{-- REGULAR PRODUCT --}}
-                                    <img src="{{ asset('uploads/' . $item->product->image) }}" 
+                                    <img src="{{ asset('asset/images/' . $item->product->image) }}" 
                                          alt="{{ $item->product->name }}" 
                                          class="product-image">
                                     <div class="product-details">

@@ -572,7 +572,7 @@
                                                      crossorigin="anonymous">
                                             @elseif($item->product && $item->product->image)
                                                 <!-- Regular product image -->
-                                                <img src="{{ asset('uploads/' . $item->product->image) }}" 
+                                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
                                                      alt="{{ $item->product->name }}" 
                                                      class="item-image me-3"
                                                      data-title="{{ $item->product->name }}"
