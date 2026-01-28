@@ -45,20 +45,39 @@ Route::get('/contact', [ProductController::class, 'contact'])->name('contact');
 // Product Details
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
 
-// Authentication
-Route::post('/login', [UserController::class, 'login'])->name('login');
+// ===================================
+// AUTHENTICATION ROUTES
+// ===================================
+
+// Show login page (GET) - redirects to home where modal is located
+Route::get('/login', function () {
+    return redirect()->route('home')->with('show_login_modal', true);
+})->name('login');
+
+// Process login (POST)
+Route::post('/login', [UserController::class, 'login'])->name('login.submit');
+
+// Register
 Route::post('/register', [UserController::class, 'register'])->name('register');
+
+// Logout
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
-// Chatbot Routes
+// ===================================
+// CHATBOT ROUTES
+// ===================================
 Route::get('/chatbot', [ChatbotController::class, 'index'])->name('chatbot');
 Route::post('/chatbot/send', [ChatbotController::class, 'send'])->name('chatbot.send');
 
-// Unified Staff Login (Admin & Delivery)
+// ===================================
+// UNIFIED STAFF LOGIN (Admin & Delivery)
+// ===================================
 Route::get('/staff/login', [AdminController::class, 'showLogin'])->name('staff.login');
 Route::post('/staff/login', [AdminController::class, 'login'])->name('staff.login.submit');
 
-// Location API Routes
+// ===================================
+// LOCATION API ROUTES
+// ===================================
 Route::prefix('api/locations')->group(function () {
     Route::get('/regions', [LocationController::class, 'getRegions']);
     Route::get('/provinces/{regionId}', [LocationController::class, 'getProvinces']);
@@ -67,16 +86,19 @@ Route::prefix('api/locations')->group(function () {
     Route::get('/address/{barangayId}', [LocationController::class, 'getCompleteAddress']);
 });
 
-// ============================================
+// ===================================
 // NOTIFICATION API ROUTES (Universal - works for all user types)
-// ============================================
+// Note: These routes check for ANY type of authentication (user, admin, or delivery)
+// ===================================
 Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
+    // These routes will gracefully handle unauthenticated requests
     Route::get('/', [NotificationController::class, 'index']);
     Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
     Route::post('/mark-all-read', [NotificationController::class, 'markAllAsRead']);
     Route::delete('/{id}', [NotificationController::class, 'destroy']);
 });
+
 
 // ===================================
 // CUSTOMER AUTHENTICATED ROUTES
@@ -131,16 +153,14 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/cart/delete/{id}', [CartController::class, 'delete'])->name('cart.delete');
 
     // ===================================
-    // CHECKOUT ROUTES
+    // CHECKOUT ROUTES (handles both regular products and customizations)
     // ===================================
-  Route::middleware(['auth'])->group(function () {
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
     
     // GCash payment routes
     Route::get('/checkout/gcash/{order}', [CheckoutController::class, 'showGCashPayment'])->name('checkout.gcash');
     Route::post('/checkout/gcash/{order}', [CheckoutController::class, 'submitGCashPayment'])->name('checkout.gcash.submit');
-});
 
     // ===================================
     // THANK YOU PAGE
@@ -197,49 +217,46 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'userNotifications'])->name('user.notifications');
     
     // ===================================
-    // CUSTOMIZATION ROUTES
+    // CUSTOMIZATION ROUTES (uses unified checkout page)
     // ===================================
-    Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
-    Route::get('/customize/create', [CustomizationController::class, 'create'])->name('customization.create');
-    Route::post('/customize/store', [CustomizationController::class, 'store'])->name('customization.store');
-    Route::get('/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
-    Route::get('/customization/{id}', [CustomizationController::class, 'show'])->name('customization.show');
-    Route::get('/customization/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
-    Route::put('/customization/{id}', [CustomizationController::class, 'update'])->name('customization.update');
-    Route::delete('/customization/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
-  
-Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
-
-// Authenticated User Routes
-Route::middleware(['auth'])->group(function () {
-    // Customization Management
-    Route::get('/customizations/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
-    Route::get('/customizations/create', [CustomizationController::class, 'create'])->name('customization.create');
-    Route::post('/customizations', [CustomizationController::class, 'store'])->name('customization.store');
-    Route::get('/customizations/{id}', [CustomizationController::class, 'show'])->name('customization.show');
-    Route::get('/customizations/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
-    Route::put('/customizations/{id}', [CustomizationController::class, 'update'])->name('customization.update');
-    Route::delete('/customizations/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
     
-    // Customization Checkout & Cart
-    Route::get('/customizations/{id}/checkout', [CustomizationController::class, 'checkout'])->name('customization.checkout');
-    Route::post('/customizations/{id}/checkout', [CustomizationController::class, 'processCheckout'])->name('customization.process-checkout');
-    Route::post('/customizations/{id}/add-to-cart', [CustomizationController::class, 'addToCart'])->name('customization.add-to-cart');
-});
-
-// Admin Customization Management
-Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function () {
-    Route::get('/customizations', [CustomizationController::class, 'adminIndex'])->name('customizations.index');
-    Route::get('/customizations/{id}', [CustomizationController::class, 'adminShow'])->name('customizations.show');
-    Route::put('/customizations/{id}', [CustomizationController::class, 'adminUpdate'])->name('customizations.update');
-    Route::delete('/customizations/{id}', [CustomizationController::class, 'adminDestroy'])->name('customizations.destroy');
-});
+    // Customization Management Routes
+    Route::prefix('customizations')->group(function () {
+        // My customizations list
+        Route::get('/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
+        
+        // Create new customization
+        Route::get('/create', [CustomizationController::class, 'create'])->name('customization.create');
+        Route::post('/', [CustomizationController::class, 'store'])->name('customization.store');
+        
+        // View single customization
+        Route::get('/{id}', [CustomizationController::class, 'show'])->name('customization.show');
+        
+        // Edit customization
+        Route::get('/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
+        Route::put('/{id}', [CustomizationController::class, 'update'])->name('customization.update');
+        
+        // Delete customization
+        Route::delete('/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
+        
+        // Checkout routes (all redirect to unified checkout page)
+        Route::post('/{id}/proceed-checkout', [CustomizationController::class, 'proceedToCheckout'])->name('customization.proceed-checkout');
+        Route::post('/{id}/add-cart-checkout', [CustomizationController::class, 'addToCartAndCheckout'])->name('customization.add-cart-checkout');
+        
+        // Add to cart without immediate checkout
+        Route::post('/{id}/add-to-cart', [CustomizationController::class, 'addToCart'])->name('customization.add-to-cart');
+    });
     
     // ===================================
     // ORDER MANAGEMENT
     // ===================================
     Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 });
+
+// ===================================
+// PUBLIC CUSTOMIZATION LANDING PAGE
+// ===================================
+Route::get('/customize', [CustomizationController::class, 'landing'])->name('customization.landing');
 
 // ===================================
 // ADMIN ROUTES
@@ -329,6 +346,23 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::delete('/delete/{sessionId}', [LiveChatController::class, 'adminDeleteSession'])->name('delete');
         Route::post('/bulk-delete', [LiveChatController::class, 'adminBulkDelete'])->name('bulk-delete');
         Route::post('/delete-all-closed', [LiveChatController::class, 'adminDeleteAllClosed'])->name('delete-all-closed');
+    });
+    
+    // ===================================
+    // ADMIN CUSTOMIZATION MANAGEMENT ROUTES
+    // ===================================
+    Route::prefix('customizations')->name('customizations.')->group(function () {
+        // List all customizations
+        Route::get('/', [CustomizationController::class, 'adminIndex'])->name('index');
+        
+        // View single customization details
+        Route::get('/{id}', [CustomizationController::class, 'adminShow'])->name('show');
+        
+        // Update customization (status, price, notes)
+        Route::put('/{id}', [CustomizationController::class, 'adminUpdate'])->name('update');
+        
+        // Delete customization
+        Route::delete('/{id}', [CustomizationController::class, 'adminDestroy'])->name('destroy');
     });
 });
 

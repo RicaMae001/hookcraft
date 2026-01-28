@@ -15,7 +15,7 @@ use App\Models\OrderItem;
 class CheckoutController extends Controller
 {
     /**
-     * Display the checkout page
+     * Display the checkout page (handles both regular products and customizations)
      */
     public function index()
     {
@@ -39,11 +39,18 @@ class CheckoutController extends Controller
             ]);
         }
 
-        $cartItems = CartItem::with('product')
+        // Load cart items with product AND customization relationships
+        $cartItems = CartItem::with(['product', 'customization', 'customization.product'])
             ->where('cart_id', $cart->id)
             ->get();
 
-        $total = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
+        // Calculate total considering both regular products and customizations
+        $total = $cartItems->sum(function($item) {
+            if ($item->is_customization && $item->customization) {
+                return $item->quantity * $item->customization->admin_price;
+            }
+            return $item->quantity * $item->product->price;
+        });
 
         $regularCart = Cart::where('user_id', Auth::id())
             ->where('is_buy_now', 0)
@@ -57,7 +64,7 @@ class CheckoutController extends Controller
     }
 
     /**
-     * Process the checkout and create order
+     * Process the checkout and create order (handles both regular and customization items)
      */
     public function store(Request $request)
     {
@@ -83,20 +90,28 @@ class CheckoutController extends Controller
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        $cartItems = CartItem::with('product')->where('cart_id', $cart->id)->get();
+        $cartItems = CartItem::with(['product', 'customization'])->where('cart_id', $cart->id)->get();
 
         if ($cartItems->isEmpty()) {
             return redirect()->route('cart.index')->with('error', 'Your cart is empty.');
         }
 
-        // Validate stock availability
+        // Validate stock availability (only for regular products, not customizations)
         foreach ($cartItems as $item) {
-            if ($item->quantity > $item->product->stock) {
-                return redirect()->back()->with('error', "Insufficient stock for {$item->product->name}");
+            if (!$item->is_customization) {
+                if ($item->quantity > $item->product->stock) {
+                    return redirect()->back()->with('error', "Insufficient stock for {$item->product->name}");
+                }
             }
         }
 
-        $total = $cartItems->sum(fn($item) => $item->quantity * $item->product->price);
+        // Calculate total
+        $total = $cartItems->sum(function($item) {
+            if ($item->is_customization && $item->customization) {
+                return $item->quantity * $item->customization->admin_price;
+            }
+            return $item->quantity * $item->product->price;
+        });
 
         // Get location details
         $region = DB::table('regions')->where('id', $request->region_id)->value('region_name');
@@ -133,19 +148,36 @@ class CheckoutController extends Controller
                 'delivery_status'=> 'Pending',
             ]);
 
-            // Create order items and reduce stock
+            // Create order items and handle both regular products and customizations
             foreach ($cartItems as $item) {
+                $price = $item->is_customization && $item->customization 
+                    ? $item->customization->admin_price 
+                    : $item->product->price;
+
                 OrderItem::create([
                     'order_id'    => $order->id,
                     'product_id'  => $item->product_id,
                     'category_id' => $item->product->category_id ?? null,
                     'quantity'    => $item->quantity,
-                    'price'       => $item->product->price,
+                    'price'       => $price,
+                    'is_customization' => $item->is_customization ?? 0,
+                    'customization_id' => $item->customization_id ?? null,
                 ]);
 
-                DB::table('products')
-                    ->where('id', $item->product_id)
-                    ->decrement('stock', $item->quantity);
+                // Only reduce stock for regular products, not customizations
+                if (!$item->is_customization) {
+                    DB::table('products')
+                        ->where('id', $item->product_id)
+                        ->decrement('stock', $item->quantity);
+                }
+
+                // Link customization to order
+                if ($item->is_customization && $item->customization) {
+                    $item->customization->update([
+                        'order_id' => $order->id,
+                        'status' => 'Completed'
+                    ]);
+                }
             }
 
             // Delete the cart

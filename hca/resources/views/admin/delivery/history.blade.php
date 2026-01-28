@@ -446,17 +446,6 @@
 
     <!-- Modern Navbar -->
     @include('admin.delivery.layouts.navbar')
-<<<<<<< HEAD
-=======
-
-        .address-text {
-    color: #bfcfdd; /* clean medium gray for light mode */
-}
-
-.dark-mode .address-text {
-    color: #d5e0ec; /* soft cool gray for dark mode */
-}
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
     </style>
 </head>
 <body>
@@ -647,18 +636,11 @@
                                             <span class="badge bg-secondary me-2">#{{ $log->order_id }}</span>
                                             <strong>{{ $log->customer_name }}</strong>
                                         </h6>
-<<<<<<< HEAD
-                                        <p class="mb-2 text-muted">
-                                            <i class="fas fa-map-marker-alt me-2"></i>
-                                            {{ Str::limit($log->address, 60) }}
-                                        </p>
-=======
                                    <p class="mb-2 address-text">
     <i class="fas fa-map-marker-alt me-2"></i>
     {{ Str::limit($log->address, 60) }}
 </p>
 
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
                                         <div class="status-change">
                                             <span class="badge-modern 
                                                 @if($log->old_status == 'Delivered') badge-success

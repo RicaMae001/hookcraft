@@ -260,10 +260,10 @@
             <!-- QR Code Section -->
             <div class="qr-section">
                 <h5 class="mb-3">Scan QR Code</h5>
-                <img src="{{ asset('asset/images/gcash-qr.png') }}" alt="GCash QR Code" class="qr-code">
+                <img src="{{ asset('asset/images/qr.jpg') }}" alt="GCash QR Code" class="qr-code">
                 <p class="text-muted mb-2">or send to</p>
-                <div class="gcash-number">09123456789</div>
-                <small class="text-muted">Jane Doe</small>
+                <div class="gcash-number">0956032464</div>
+                <small class="text-muted">ST....N C.</small>
             </div>
 
             <!-- Instructions -->
@@ -271,7 +271,7 @@
                 <h5><i class="bi bi-info-circle me-2"></i>Payment Instructions</h5>
                 <ol>
                     <li>Open your GCash app</li>
-                    <li>Scan the QR code above or send to <strong>09123456789</strong></li>
+                    <li>Scan the QR code above or send to <strong>0956032464</strong></li>
                     <li>Enter the exact amount: <strong>₱{{ number_format($order->total, 2) }}</strong></li>
                     <li>Complete the payment</li>
                     <li>Take a screenshot of the payment confirmation</li>

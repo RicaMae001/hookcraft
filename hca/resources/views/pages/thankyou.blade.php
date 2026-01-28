@@ -126,10 +126,54 @@
             border: 2px solid #e0e0e0;
         }
         
+        .customization-image {
+            border-color: #667eea;
+            border-style: dashed;
+        }
+        
         .item-image:hover {
             transform: scale(1.05);
             box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             border-color: #667eea;
+        }
+        
+        /* Customization Badge */
+        .customization-badge {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            margin-left: 5px;
+        }
+        
+        /* Customization Details */
+        .customization-details {
+            background: #f8f9ff;
+            border-left: 3px solid #667eea;
+            padding: 12px;
+            margin-top: 8px;
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+        
+        .customization-details h6 {
+            color: #667eea;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .customization-details p {
+            margin-bottom: 5px;
+            color: #555;
+        }
+        
+        .customization-option {
+            background: white;
+            border: 1px solid #e0e0e0;
+            border-radius: 4px;
+            padding: 8px;
+            margin-bottom: 5px;
         }
         
         /* Image Modal Styles */
@@ -356,7 +400,7 @@
     <span class="modal-close">&times;</span>
     <div class="modal-content-wrapper">
         <img class="modal-image" id="modalImage" src="" alt="">
-        <div class="modal-caption">
+       
             <h4 id="modalTitle"></h4>
             <p id="modalDescription"></p>
         </div>
@@ -489,14 +533,24 @@
                                 <tr>
                                     <td>
                                         <div class="d-flex align-items-center">
-                                            @if($item->product && $item->product->image)
-                                             <img src="{{ asset('asset/images/' . $item->product->image) }}" 
-                                                 alt="{{ $item->product->name }}" 
-                                                 class="item-image me-3"
-                                                 data-title="{{ $item->product->name }}"
-                                                 data-description="{{ $item->product->description ? Str::limit($item->product->description, 100) : 'No description available' }}"
-                                                 title="Click to view"
-                                                 crossorigin="anonymous">
+                                            @if($item->is_customization && $item->customization && $item->customization->custom_image)
+                                                <!-- Customized product image -->
+                                                <img src="{{ asset('uploads/customizations/' . $item->customization->custom_image) }}" 
+                                                     alt="{{ $item->customization->customization_name }}" 
+                                                     class="item-image customization-image me-3"
+                                                     data-title="{{ $item->customization->customization_name }}"
+                                                     data-description="{{ $item->customization->customization_details }}"
+                                                     title="Click to view customization"
+                                                     crossorigin="anonymous">
+                                            @elseif($item->product && $item->product->image)
+                                                <!-- Regular product image -->
+                                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
+                                                     alt="{{ $item->product->name }}" 
+                                                     class="item-image me-3"
+                                                     data-title="{{ $item->product->name }}"
+                                                     data-description="{{ $item->product->description ? Str::limit($item->product->description, 100) : 'No description available' }}"
+                                                     title="Click to view"
+                                                     crossorigin="anonymous">
                                             @else
                                             <div class="item-image me-3 d-flex align-items-center justify-content-center bg-light" 
                                                  style="width: 80px; height: 80px; border-radius: 8px; cursor: not-allowed;"
@@ -505,16 +559,74 @@
                                             </div>
                                             @endif
                                             <div>
-                                                <strong>{{ $item->product->name ?? 'Product' }}</strong>
-                                                @if($item->product && $item->product->description)
-                                                <br><small class="text-muted">{{ Str::limit($item->product->description, 50) }}</small>
+                                                <div class="d-flex align-items-center">
+                                                    @if($item->is_customization)
+                                                        <strong>{{ $item->customization->customization_name ?? 'Customized Product' }}</strong>
+                                                        <span class="customization-badge">CUSTOMIZED</span>
+                                                    @else
+                                                        <strong>{{ $item->product->name ?? 'Product' }}</strong>
+                                                    @endif
+                                                </div>
+                                                
+                                                @if($item->is_customization && $item->customization)
+                                                    <small class="text-muted">Based on: {{ $item->product->name ?? 'Product' }}</small>
+                                                @elseif($item->product && $item->product->description)
+                                                    <br><small class="text-muted">{{ Str::limit($item->product->description, 50) }}</small>
                                                 @endif
                                             </div>
                                         </div>
+                                        
+                                        <!-- Customization Details -->
+                                        @if($item->is_customization && $item->customization)
+                                        <div class="customization-details mt-2">
+                                            <h6>Customization Details:</h6>
+                                            <p><strong>Name:</strong> {{ $item->customization->customization_name }}</p>
+                                            <p><strong>Details:</strong> {{ $item->customization->customization_details }}</p>
+                                            
+                                            @if($item->customization->special_instructions)
+                                            <p><strong>Special Instructions:</strong> {{ $item->customization->special_instructions }}</p>
+                                            @endif
+                                            
+                                            @if($item->customization->options && $item->customization->options->count() > 0)
+                                            <div class="mt-2">
+                                                <strong>Options:</strong>
+                                                @foreach($item->customization->options as $option)
+                                                <div class="customization-option">
+                                                    <small>
+                                                        <strong>{{ ucfirst($option->option_type) }}:</strong> 
+                                                        {{ $option->option_value }}
+                                                        @if($option->additional_price > 0)
+                                                        <span class="text-success">(+₱{{ number_format($option->additional_price, 2) }})</span>
+                                                        @endif
+                                                    </small>
+                                                </div>
+                                                @endforeach
+                                            </div>
+                                            @endif
+                                            
+                                            @if($item->customization->admin_price)
+                                            <p class="text-success mt-2 mb-0">
+                                                <strong>Customization Price:</strong> ₱{{ number_format($item->customization->admin_price, 2) }}
+                                            </p>
+                                            @endif
+                                        </div>
+                                        @endif
                                     </td>
-                                    <td>₱{{ number_format($item->price, 2) }}</td>
+                                    <td>
+                                        @if($item->is_customization && $item->customization && $item->customization->admin_price)
+                                            ₱{{ number_format($item->customization->admin_price, 2) }}
+                                        @else
+                                            ₱{{ number_format($item->price, 2) }}
+                                        @endif
+                                    </td>
                                     <td>{{ $item->quantity }}</td>
-                                    <td>₱{{ number_format($item->price * $item->quantity, 2) }}</td>
+                                    <td>
+                                        @if($item->is_customization && $item->customization && $item->customization->admin_price)
+                                            ₱{{ number_format($item->customization->admin_price * $item->quantity, 2) }}
+                                        @else
+                                            ₱{{ number_format($item->price * $item->quantity, 2) }}
+                                        @endif
+                                    </td>
                                 </tr>
                                 @endforeach
                             </tbody>
