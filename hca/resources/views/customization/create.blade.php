@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Request Custom Bouquet - Hookcraft Avenue</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
         :root {
             --primary: #FF6B9D;
@@ -21,17 +22,26 @@
             box-sizing: border-box;
         }
 
+        /* ✅ FIXED BODY */
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--background);
             min-height: 100vh;
-            padding: 40px 20px;
+            margin: 0;
+            padding: 0;
+            
+        nav {
+            position: sticky;
+            top: 0;
+            width: 100%;
+            z-index: 9999;
         }
-
         .main-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: 40px auto;
+            padding: 0 20px;
         }
+
 
         /* Header Section */
         .page-header {
@@ -538,6 +548,7 @@
     </style>
 </head>
 <body>
+    @include('components.customization-navbar')
     <div class="main-container">
         <!-- Header -->
         <div class="page-header">
@@ -617,13 +628,6 @@
                                 </div>
                             </a>
                         @endforeach
-                    </div>
-
-                    <div style="text-align: center; margin-top: 30px;">
-                        <a href="{{ route('customization.landing') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i>
-                            Back to Home
-                        </a>
                     </div>
                 @else
                     <!-- Step 2: Customization Form -->
@@ -744,6 +748,11 @@
                             <a href="{{ route('customization.create') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i>
                                 Change Category
+                            </a>
+
+                             <a href="{{ route('customization.my-customizations') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-right"></i>
+                                View My Customization
                             </a>
                         </div>
                     </form>

@@ -680,8 +680,6 @@
         </div>
     </div>
 </section> -->
-
-<!-- Customize Section -->
 <!-- Customize Section -->
 <section class="customize">
     <div class="container">
