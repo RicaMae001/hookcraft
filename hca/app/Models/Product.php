@@ -9,47 +9,29 @@ class Product extends Model
 {
     use HasFactory;
 
-    /**
-     * The table associated with the model.
-     *
-     * @var string
-     */
     protected $table = 'products';
-
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array
-     */
+    
     protected $fillable = [
         'category_id',
         'name',
         'price',
+        'is_available',
         'image',
         'stock',
         'description',
         'admin_id',
     ];
 
-    /**
-     * Indicates if the model should be timestamped.
-     *
-     * @var bool
-     */
-    public $timestamps = false;
-
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array
-     */
     protected $casts = [
         'price' => 'decimal:2',
+        'is_available' => 'boolean',
         'stock' => 'integer',
     ];
 
+    public $timestamps = false;
+
     /**
-     * Get the category that owns the product.
+     * Get the category that owns the product
      */
     public function category()
     {
@@ -57,31 +39,15 @@ class Product extends Model
     }
 
     /**
-     * Get the admin who created/manages the product.
+     * Get the admin who created/manages this product
      */
     public function admin()
     {
-        return $this->belongsTo(Admin::class, 'admin_id');
+        return $this->belongsTo(\App\Models\Admin::class, 'admin_id');
     }
 
     /**
-     * Get the order items for this product.
-     */
-    public function orderItems()
-    {
-        return $this->hasMany(OrderItem::class, 'product_id');
-    }
-
-    /**
-     * Get the cart items for this product.
-     */
-    public function cartItems()
-    {
-        return $this->hasMany(CartItem::class, 'product_id');
-    }
-
-    /**
-     * Get the customizations for this product.
+     * Get customizations using this product as reference
      */
     public function customizations()
     {
@@ -89,23 +55,15 @@ class Product extends Model
     }
 
     /**
-     * Scope a query to only include products in stock.
+     * Scope to get only available products
      */
-    public function scopeInStock($query)
+    public function scopeAvailable($query)
     {
-        return $query->where('stock', '>', 0);
+        return $query->where('is_available', 1);
     }
 
     /**
-     * Scope a query to only include products out of stock.
-     */
-    public function scopeOutOfStock($query)
-    {
-        return $query->where('stock', '<=', 0);
-    }
-
-    /**
-     * Scope a query to filter by category.
+     * Scope to get products by category
      */
     public function scopeByCategory($query, $categoryId)
     {
@@ -113,7 +71,7 @@ class Product extends Model
     }
 
     /**
-     * Check if product is in stock.
+     * Check if product is in stock
      */
     public function isInStock()
     {
@@ -121,49 +79,21 @@ class Product extends Model
     }
 
     /**
-     * Check if product is out of stock.
-     */
-    public function isOutOfStock()
-    {
-        return $this->stock <= 0;
-    }
-
-    /**
-     * Get the formatted price.
+     * Get formatted price
      */
     public function getFormattedPriceAttribute()
     {
-        return 'â‚±' . number_format($this->price, 2);
+        return '₱' . number_format($this->price, 2);
     }
 
     /**
-     * Get the product image URL.
+     * Get image URL
      */
     public function getImageUrlAttribute()
     {
         if ($this->image) {
-            return asset('storage/products/' . $this->image);
+            return asset('uploads/' . $this->image);
         }
-        return asset('asset/images/no-image.png');
-    }
-
-    /**
-     * Reduce stock by a given quantity.
-     */
-    public function reduceStock($quantity)
-    {
-        if ($this->stock >= $quantity) {
-            $this->decrement('stock', $quantity);
-            return true;
-        }
-        return false;
-    }
-
-    /**
-     * Increase stock by a given quantity.
-     */
-    public function increaseStock($quantity)
-    {
-        $this->increment('stock', $quantity);
+        return asset('images/placeholder.jpg');
     }
 }

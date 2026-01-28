@@ -180,6 +180,106 @@
             line-height: 1.6;
         }
 
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .category-card {
+            background: white;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: center;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .category-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--hover-shadow);
+        }
+
+        .category-card.selected {
+            border-color: var(--primary);
+            background: linear-gradient(135deg, #fff5f8 0%, #ffe4ec 100%);
+        }
+
+        .category-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .category-name {
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        .category-count {
+            font-size: 0.9rem;
+            color: #64748b;
+        }
+
+        /* Product Preview */
+        .product-preview {
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .product-preview-flex {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .product-preview img {
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
+            border-radius: 8px;
+        }
+
+        .product-info h4 {
+            font-weight: 600;
+            color: #1e293b;
+            font-size: 1.1rem;
+            margin-bottom: 5px;
+        }
+
+        .product-price {
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+
+        .product-description {
+            color: #64748b;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .reference-note {
+            background: #e7f3ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            color: #004085;
+            font-size: 0.9rem;
+        }
+
         /* Image Upload */
         .upload-area {
             border: 3px dashed var(--primary);
@@ -389,46 +489,6 @@
             margin-top: 2px;
         }
 
-        /* Product Preview */
-        .product-preview {
-            padding: 20px;
-            background: #f8fafc;
-            border-radius: 12px;
-            margin-bottom: 25px;
-        }
-
-        .product-preview-flex {
-            display: flex;
-            gap: 15px;
-            align-items: center;
-        }
-
-        .product-preview img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-        }
-
-        .product-info h4 {
-            font-weight: 600;
-            color: #1e293b;
-            font-size: 1.1rem;
-            margin-bottom: 5px;
-        }
-
-        .product-price {
-            color: var(--primary);
-            font-weight: 700;
-            font-size: 1.3rem;
-        }
-
-        .product-description {
-            color: #64748b;
-            font-size: 0.9rem;
-            margin-top: 5px;
-        }
-
         /* Animations */
         @keyframes fadeInDown {
             from {
@@ -487,21 +547,17 @@
 
         <!-- Progress Steps -->
         <div class="progress-steps">
-            <div class="progress-step active">
+            <div class="progress-step {{ !$category ? 'active' : '' }}">
                 <div class="step-icon">1</div>
-                <div class="step-text">Design</div>
+                <div class="step-text">Choose Category</div>
             </div>
-            <div class="progress-step">
+            <div class="progress-step {{ $category ? 'active' : '' }}">
                 <div class="step-icon">2</div>
-                <div class="step-text">Review</div>
+                <div class="step-text">Customize Design</div>
             </div>
             <div class="progress-step">
                 <div class="step-icon">3</div>
-                <div class="step-text">Approve</div>
-            </div>
-            <div class="progress-step">
-                <div class="step-icon">4</div>
-                <div class="step-text">Checkout</div>
+                <div class="step-text">Submit Request</div>
             </div>
         </div>
 
@@ -538,175 +594,216 @@
         <div class="form-grid">
             <!-- Form -->
             <div class="form-card">
-                <form action="{{ route('customization.store') }}" method="POST" enctype="multipart/form-data" id="customizationForm">
-                    @csrf
-
-                    <!-- Product Selection -->
+                @if(!$category)
+                    <!-- Step 1: Category Selection -->
                     <div class="section-title">
-                        <i class="fas fa-box-open"></i>
-                        Select Base Product
+                        <i class="fas fa-th-large"></i>
+                        Choose a Category
+                    </div>
+                    <p style="color: #64748b; margin-bottom: 25px; font-size: 15px;">
+                        Select a category to get started. We'll use the first available product as a reference for your custom design.
+                    </p>
+
+                    <div class="category-grid">
+                        @foreach($categories as $cat)
+                            <a href="{{ route('customization.create', ['category_id' => $cat->id]) }}" 
+                               class="category-card">
+                                <div class="category-icon">
+                                    <i class="fas fa-box"></i>
+                                </div>
+                                <div class="category-name">{{ $cat->name }}</div>
+                                <div class="category-count">
+                                    {{ $cat->products->count() }} available products
+                                </div>
+                            </a>
+                        @endforeach
                     </div>
 
-                    @if(!$product)
-                        <!-- Dropdown for product selection -->
-                        <div class="form-group">
-                            <label class="form-label required">Choose Product to Customize</label>
-                            <select class="form-select" id="productSelect" name="product_id" required>
-                                <option value="">-- Select a Product --</option>
-                                @foreach($products as $p)
-                                    <option value="{{ $p->id }}" 
-                                            data-name="{{ $p->name }}"
-                                            data-price="{{ $p->price }}"
-                                            data-image="{{ $p->image }}"
-                                            data-description="{{ $p->description ?? '' }}"
-                                            {{ old('product_id') == $p->id ? 'selected' : '' }}>
-                                        {{ $p->name }} - ₱{{ number_format($p->price, 2) }}
-                                    </option>
-                                @endforeach
-                            </select>
+                    <div style="text-align: center; margin-top: 30px;">
+                        <a href="{{ route('customization.landing') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i>
+                            Back to Home
+                        </a>
+                    </div>
+                @else
+                    <!-- Step 2: Customization Form -->
+                    <form action="{{ route('customization.store') }}" method="POST" enctype="multipart/form-data" id="customizationForm">
+                        @csrf
+
+                        <!-- Hidden inputs -->
+                        <input type="hidden" name="category_id" value="{{ $category->id }}">
+                        <input type="hidden" name="product_id" value="{{ $referenceProduct->id }}">
+
+                        <!-- Category Info -->
+                        <div style="margin-bottom: 25px;">
+                            <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                                <i class="fas fa-tag" style="color: var(--primary);"></i>
+                                <span style="font-weight: 600; color: #1e293b;">Category: {{ $category->name }}</span>
+                            </div>
+                            <a href="{{ route('customization.create') }}" style="color: var(--primary); text-decoration: none; font-size: 0.9rem;">
+                                <i class="fas fa-sync-alt"></i> Change Category
+                            </a>
                         </div>
 
-                        <!-- Selected Product Preview -->
-                        <div id="selectedProductInfo" class="product-preview" style="display: none;">
-                            <div class="product-preview-flex">
-                                <img id="productImage" src="" alt="">
-                                <div class="product-info">
-                                    <h4 id="productName"></h4>
-                                    <div class="product-price" id="productPrice"></div>
-                                    <div class="product-description" id="productDescription"></div>
-                                </div>
-                            </div>
-                        </div>
-                    @else
-                        <!-- Pre-selected product -->
-                        <input type="hidden" name="product_id" id="product_id" value="{{ $product->id }}">
-                        
+                        <!-- Reference Product -->
                         <div class="product-preview">
+                            <div class="section-title" style="font-size: 1.2rem; margin-bottom: 15px;">
+                                <i class="fas fa-star"></i>
+                                Reference Product
+                            </div>
                             <div class="product-preview-flex">
-                                <img src="{{ asset('uploads/' . $product->image) }}" 
-                                     alt="{{ $product->name }}"
+                                <img src="{{ asset('uploads/' . $referenceProduct->image) }}" 
+                                     alt="{{ $referenceProduct->name }}"
                                      onerror="this.src='{{ asset('images/placeholder.jpg') }}'">
                                 <div class="product-info">
-                                    <h4>{{ $product->name }}</h4>
-                                    <div class="product-price">₱{{ number_format($product->price, 2) }}</div>
-                                    @if($product->description)
-                                        <div class="product-description">{{ Str::limit($product->description, 100) }}</div>
+                                    <h4>{{ $referenceProduct->name }}</h4>
+                                    <div class="product-price">₱{{ number_format($referenceProduct->price, 2) }}</div>
+                                    @if($referenceProduct->description)
+                                        <div class="product-description">{{ Str::limit($referenceProduct->description, 100) }}</div>
                                     @endif
                                 </div>
                             </div>
-                        </div>
-                    @endif
-
-                    <!-- Customization Details -->
-                    <div style="margin-top: 35px;">
-                        <div class="section-title">
-                            <i class="fas fa-paint-brush"></i>
-                            Customization Details
+                            <div class="reference-note">
+                                <i class="fas fa-info-circle"></i>
+                                <strong>Note:</strong> This product is shown as a reference. Your custom design will be based on this style and category.
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label required">Customization Name</label>
-                            <input type="text" 
-                                   class="form-input"
-                                   id="customization_name" 
-                                   name="customization_name" 
-                                   placeholder="e.g., Romantic Red Rose Bouquet"
-                                   required
-                                   value="{{ old('customization_name') }}">
+                        <!-- Customization Details -->
+                        <div style="margin-top: 35px;">
+                            <div class="section-title">
+                                <i class="fas fa-paint-brush"></i>
+                                Customization Details
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required">Customization Name</label>
+                                <input type="text" 
+                                       class="form-input"
+                                       id="customization_name" 
+                                       name="customization_name" 
+                                       placeholder="e.g., Romantic Red Rose Bouquet"
+                                       required
+                                       value="{{ old('customization_name') }}">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label required">Detailed Description</label>
+                                <textarea class="form-textarea" 
+                                          id="customization_details" 
+                                          name="customization_details" 
+                                          placeholder="Describe your vision in detail:&#10;• What flowers do you want?&#10;• Preferred colors and style?&#10;• Size and arrangement preferences?&#10;• Any specific flowers to include or avoid?&#10;• What's the occasion?"
+                                          required>{{ old('customization_details') }}</textarea>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Special Instructions (Optional)</label>
+                                <textarea class="form-textarea" 
+                                          id="special_instructions" 
+                                          name="special_instructions" 
+                                          placeholder="Any additional details, delivery preferences, or special requests..."
+                                          style="min-height: 100px;">{{ old('special_instructions') }}</textarea>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label required">Detailed Description</label>
-                            <textarea class="form-textarea" 
-                                      id="customization_details" 
-                                      name="customization_details" 
-                                      placeholder="Describe your vision:&#10;• What flowers do you want?&#10;• Preferred colors?&#10;• Size and arrangement style?&#10;• Any specific flowers to include or avoid?&#10;• What's the occasion?"
-                                      required>{{ old('customization_details') }}</textarea>
+                        <!-- Image Upload -->
+                        <div style="margin-top: 35px;">
+                            <div class="section-title">
+                                <i class="fas fa-images"></i>
+                                Reference Images
+                            </div>
+                            <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">
+                                Upload inspiration photos to help us understand your vision better (optional)
+                            </p>
+
+                            <div class="upload-area" onclick="document.getElementById('custom_image').click()">
+                                <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
+                                <div class="upload-text">Click to upload image</div>
+                                <div class="upload-subtext">JPG, PNG, GIF up to 5MB</div>
+                                <input type="file" 
+                                       id="custom_image" 
+                                       name="custom_image" 
+                                       accept="image/*"
+                                       onchange="previewImage(this)">
+                            </div>
+
+                            <div class="preview-box" id="previewBox">
+                                <img id="imagePreview" class="preview-image" src="" alt="Preview">
+                                <button type="button" class="remove-image-btn" onclick="removeImage()">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </div>
                         </div>
 
-                        <div class="form-group">
-                            <label class="form-label">Special Instructions (Optional)</label>
-                            <textarea class="form-textarea" 
-                                      id="special_instructions" 
-                                      name="special_instructions" 
-                                      placeholder="Any additional details, delivery preferences, or special requests..."
-                                      style="min-height: 100px;">{{ old('special_instructions') }}</textarea>
-                        </div>
-                    </div>
-
-                    <!-- Image Upload -->
-                    <div style="margin-top: 35px;">
-                        <div class="section-title">
-                            <i class="fas fa-images"></i>
-                            Reference Images
-                        </div>
-                        <p style="color: #64748b; margin-bottom: 20px; font-size: 14px;">
-                            Upload inspiration photos to help us understand your vision better (optional)
-                        </p>
-
-                        <div class="upload-area" onclick="document.getElementById('custom_image').click()">
-                            <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
-                            <div class="upload-text">Click to upload image</div>
-                            <div class="upload-subtext">JPG, PNG, GIF up to 5MB</div>
-                            <input type="file" 
-                                   id="custom_image" 
-                                   name="custom_image" 
-                                   accept="image/*"
-                                   onchange="previewImage(this)">
-                        </div>
-
-                        <div class="preview-box" id="previewBox">
-                            <img id="imagePreview" class="preview-image" src="" alt="Preview">
-                            <button type="button" class="remove-image-btn" onclick="removeImage()">
-                                <i class="fas fa-times"></i>
+                        <!-- Submit Buttons -->
+                        <div style="margin-top: 40px; display: flex; gap: 15px;">
+                            <button type="submit" class="btn btn-primary" id="submitBtn">
+                                <i class="fas fa-paper-plane"></i>
+                                Submit Customization Request
                             </button>
+                            <a href="{{ route('customization.create') }}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                Change Category
+                            </a>
                         </div>
-                    </div>
-
-                    <!-- Submit Buttons -->
-                    <div style="margin-top: 40px;">
-                        <button type="submit" class="btn btn-primary" id="submitBtn">
-                            <i class="fas fa-paper-plane"></i>
-                            Submit Customization Request
-                        </button>
-                        <a href="{{ route('customization.landing') }}" class="btn btn-secondary">
-                            <i class="fas fa-arrow-left"></i>
-                            Back
-                        </a>
-                    </div>
-                </form>
+                    </form>
+                @endif
             </div>
 
             <!-- Sidebar -->
             <div class="sidebar">
-                <div class="info-card primary">
-                    <h3><i class="fas fa-info-circle"></i> How It Works</h3>
-                    <ul class="info-list">
-                        <li>
-                            <i class="fas fa-check"></i>
-                            <span>Submit your custom design request with details and images</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-check"></i>
-                            <span>Our florists review your request within 24 hours</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-check"></i>
-                            <span>Receive a custom price quote for your design</span>
-                        </li>
-                        <li>
-                            <i class="fas fa-check"></i>
-                            <span>Approve and proceed to checkout</span>
-                        </li>
-                    </ul>
-                </div>
+                @if(!$category)
+                    <div class="info-card primary">
+                        <h3><i class="fas fa-info-circle"></i> How It Works</h3>
+                        <ul class="info-list">
+                            <li>
+                                <i class="fas fa-check"></i>
+                                <span>Choose a category to get started</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check"></i>
+                                <span>We'll show you a reference product from that category</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check"></i>
+                                <span>Describe your custom design requirements</span>
+                            </li>
+                            <li>
+                                <i class="fas fa-check"></i>
+                                <span>Submit your request for review</span>
+                            </li>
+                        </ul>
+                    </div>
+                @else
+                    <div class="info-card primary">
+                        <h3><i class="fas fa-info-circle"></i> About This Category</h3>
+                        <ul class="info-list">
+                            <li>
+                                <i class="fas fa-star"></i>
+                                <span>Category: <strong>{{ $category->name }}</strong></span>
+                            </li>
+                            <li>
+                                <i class="fas fa-box"></i>
+                                <span>Reference Product: <strong>{{ $referenceProduct->name }}</strong></span>
+                            </li>
+                            <li>
+                                <i class="fas fa-money-bill-wave"></i>
+                                <span>Base Price: <strong>₱{{ number_format($referenceProduct->price, 2) }}</strong></span>
+                            </li>
+                            <li>
+                                <i class="fas fa-lightbulb"></i>
+                                <span>Your custom design may vary in price based on requirements</span>
+                            </li>
+                        </ul>
+                    </div>
+                @endif
 
                 <div class="info-card">
                     <h3><i class="fas fa-lightbulb"></i> Tips for Best Results</h3>
                     <ul class="info-list">
                         <li>
                             <i class="fas fa-star"></i>
-                            <span>Be specific about flower types and colors you want</span>
+                            <span>Be specific about flower types and colors</span>
                         </li>
                         <li>
                             <i class="fas fa-star"></i>
@@ -718,7 +815,7 @@
                         </li>
                         <li>
                             <i class="fas fa-star"></i>
-                            <span>Include any allergies or flower preferences</span>
+                            <span>Include budget preferences if any</span>
                         </li>
                     </ul>
                 </div>
@@ -726,7 +823,7 @@
                 <div class="alert alert-info" style="margin: 0;">
                     <i class="fas fa-shield-alt"></i>
                     <div>
-                        <strong>No obligation!</strong> You can review and approve the price before making any payment.
+                        <strong>No obligation!</strong> You'll receive a custom price quote for approval before any payment.
                     </div>
                 </div>
             </div>
@@ -734,31 +831,6 @@
     </div>
 
     <script>
-        // Product Selection
-        @if(!$product)
-        document.getElementById('productSelect').addEventListener('change', function() {
-            const selectedOption = this.options[this.selectedIndex];
-            const productInfo = document.getElementById('selectedProductInfo');
-            
-            if (selectedOption.value) {
-                productInfo.style.display = 'block';
-                document.getElementById('productName').textContent = selectedOption.dataset.name;
-                document.getElementById('productPrice').textContent = '₱' + parseFloat(selectedOption.dataset.price).toLocaleString('en-US', {minimumFractionDigits: 2});
-                document.getElementById('productDescription').textContent = selectedOption.dataset.description || 'No description available';
-                
-                const imgElement = document.getElementById('productImage');
-                if (selectedOption.dataset.image) {
-                    imgElement.src = '{{ asset("uploads/") }}/' + selectedOption.dataset.image;
-                    imgElement.onerror = function() {
-                        this.src = '{{ asset("images/placeholder.jpg") }}';
-                    };
-                }
-            } else {
-                productInfo.style.display = 'none';
-            }
-        });
-        @endif
-
         // Image Preview
         function previewImage(input) {
             if (input.files && input.files[0]) {
@@ -779,16 +851,10 @@
         }
 
         // Form validation
+        @if($category)
         document.getElementById('customizationForm').addEventListener('submit', function(e) {
-            const productId = document.querySelector('input[name="product_id"], select[name="product_id"]').value;
             const customizationName = document.getElementById('customization_name').value;
             const customizationDetails = document.getElementById('customization_details').value;
-            
-            if (!productId) {
-                e.preventDefault();
-                alert('Please select a product to customize.');
-                return;
-            }
             
             if (!customizationName.trim() || !customizationDetails.trim()) {
                 e.preventDefault();
@@ -800,6 +866,7 @@
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
         });
+        @endif
     </script>
 </body>
 </html>
