@@ -7,7 +7,6 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <!-- <link rel="stylesheet" href="{{ asset('asset/stylesthankyou.css') }}"> -->
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
     <style>
         .receipt-container {
@@ -137,6 +136,19 @@
             border-color: #667eea;
         }
         
+        /* Category Badge */
+        .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1565c0;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            margin-left: 5px;
+            border: 1px solid #90caf9;
+        }
+        
         /* Customization Badge */
         .customization-badge {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -174,6 +186,22 @@
             border-radius: 4px;
             padding: 8px;
             margin-bottom: 5px;
+        }
+        
+        /* Product Details */
+        .product-details {
+            margin-top: 5px;
+        }
+        
+        .product-category {
+            color: #666;
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+        
+        .product-category i {
+            color: #667eea;
+            margin-right: 3px;
         }
         
         /* Image Modal Styles */
@@ -400,7 +428,7 @@
     <span class="modal-close">&times;</span>
     <div class="modal-content-wrapper">
         <img class="modal-image" id="modalImage" src="" alt="">
-       
+        <div class="modal-caption">
             <h4 id="modalTitle"></h4>
             <p id="modalDescription"></p>
         </div>
@@ -544,7 +572,7 @@
                                                      crossorigin="anonymous">
                                             @elseif($item->product && $item->product->image)
                                                 <!-- Regular product image -->
-                                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
+                                                <img src="{{ asset('uploads/' . $item->product->image) }}" 
                                                      alt="{{ $item->product->name }}" 
                                                      class="item-image me-3"
                                                      data-title="{{ $item->product->name }}"
@@ -563,16 +591,34 @@
                                                     @if($item->is_customization)
                                                         <strong>{{ $item->customization->customization_name ?? 'Customized Product' }}</strong>
                                                         <span class="customization-badge">CUSTOMIZED</span>
+                                                        @if($item->product->category)
+                                                            <span class="category-badge">
+                                                                <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
+                                                            </span>
+                                                        @endif
                                                     @else
                                                         <strong>{{ $item->product->name ?? 'Product' }}</strong>
+                                                        @if($item->product->category)
+                                                            <span class="category-badge">
+                                                                <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
+                                                            </span>
+                                                        @endif
                                                     @endif
                                                 </div>
                                                 
-                                                @if($item->is_customization && $item->customization)
-                                                    <small class="text-muted">Based on: {{ $item->product->name ?? 'Product' }}</small>
-                                                @elseif($item->product && $item->product->description)
-                                                    <br><small class="text-muted">{{ Str::limit($item->product->description, 50) }}</small>
-                                                @endif
+                                                <div class="product-details">
+                                                    @if($item->product->category)
+                                                        <div class="product-category">
+                                                            <i class="bi bi-tags"></i> {{ $item->product->category->name }}
+                                                        </div>
+                                                    @endif
+                                                    
+                                                    @if($item->is_customization && $item->customization)
+                                                        <small class="text-muted">Based on: {{ $item->product->name ?? 'Product' }}</small>
+                                                    @elseif($item->product && $item->product->description)
+                                                        <small class="text-muted">{{ Str::limit($item->product->description, 50) }}</small>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </div>
                                         

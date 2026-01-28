@@ -239,12 +239,11 @@ Route::middleware(['auth'])->group(function () {
         // Delete customization
         Route::delete('/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
         
-        // Checkout routes (all redirect to unified checkout page)
-        Route::post('/{id}/proceed-checkout', [CustomizationController::class, 'proceedToCheckout'])->name('customization.proceed-checkout');
-        Route::post('/{id}/add-cart-checkout', [CustomizationController::class, 'addToCartAndCheckout'])->name('customization.add-cart-checkout');
-        
-        // Add to cart without immediate checkout
+        // Add to cart
         Route::post('/{id}/add-to-cart', [CustomizationController::class, 'addToCart'])->name('customization.add-to-cart');
+        
+        // Proceed to checkout (this method exists in your controller)
+        Route::post('/{id}/proceed-checkout', [CustomizationController::class, 'proceedCheckout'])->name('customization.proceed-checkout');
     });
     
     // ===================================

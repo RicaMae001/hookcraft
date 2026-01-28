@@ -325,6 +325,19 @@
             font-size: 1.1rem;
         }
 
+        /* Category Badge */
+        .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1565c0;
+            padding: 3px 10px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-left: 8px;
+            border: 1px solid #90caf9;
+        }
+
         /* Custom Product Badge */
         .badge {
             display: inline-block;
@@ -710,7 +723,7 @@
                     Order Summary
                 </div>
                 <div class="card-body">
-                    <!-- Product List - UPDATED WITH CUSTOMIZATION SUPPORT -->
+                    <!-- Product List - UPDATED WITH CATEGORY INFORMATION -->
                     <div class="summary-section">
                         <h6 class="mb-3">Items ({{ $cartItems->count() }})</h6>
                         @foreach($cartItems as $item)
@@ -719,17 +732,25 @@
                                     {{-- CUSTOMIZED PRODUCT --}}
                                     <img src="{{ $item->customization->custom_image 
                                             ? asset('uploads/customizations/' . $item->customization->custom_image) 
-                                            : asset('asset/images/' . $item->product->image) }}" 
+                                            : asset('uploads/' . $item->product->image) }}" 
                                          alt="{{ $item->customization->customization_name }}" 
                                          class="product-image">
                                     <div class="product-details">
                                         <div class="product-name">
                                             {{ $item->customization->customization_name }}
                                             <span class="badge bg-warning text-dark ms-2">✨ Custom</span>
+                                            @if($item->product->category)
+                                                <span class="category-badge">
+                                                    <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
+                                                </span>
+                                            @endif
                                         </div>
                                         <div class="product-meta">
-                                            Based on: {{ $item->product->name }}<br>
-                                            Quantity: {{ $item->quantity }} × ₱{{ number_format($item->price, 2) }}
+                                            <div>Based on: {{ $item->product->name }}</div>
+                                            @if($item->product->category)
+                                                <div>Category: {{ $item->product->category->name }}</div>
+                                            @endif
+                                            <div>Quantity: {{ $item->quantity }} × ₱{{ number_format($item->price, 2) }}</div>
                                         </div>
                                         <div class="product-price">
                                             ₱{{ number_format($item->subtotal, 2) }}
@@ -737,13 +758,23 @@
                                     </div>
                                 @else
                                     {{-- REGULAR PRODUCT --}}
-                                    <img src="{{ asset('asset/images/' . $item->product->image) }}" 
+                                    <img src="{{ asset('uploads/' . $item->product->image) }}" 
                                          alt="{{ $item->product->name }}" 
                                          class="product-image">
                                     <div class="product-details">
-                                        <div class="product-name">{{ $item->product->name }}</div>
+                                        <div class="product-name">
+                                            {{ $item->product->name }}
+                                            @if($item->product->category)
+                                                <span class="category-badge">
+                                                    <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
+                                                </span>
+                                            @endif
+                                        </div>
                                         <div class="product-meta">
-                                            Quantity: {{ $item->quantity }} × ₱{{ number_format($item->product->price, 2) }}
+                                            @if($item->product->category)
+                                                <div>Category: {{ $item->product->category->name }}</div>
+                                            @endif
+                                            <div>Quantity: {{ $item->quantity }} × ₱{{ number_format($item->product->price, 2) }}</div>
                                         </div>
                                         <div class="product-price">
                                             ₱{{ number_format($item->quantity * $item->product->price, 2) }}
