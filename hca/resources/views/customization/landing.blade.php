@@ -330,7 +330,7 @@
             </div>
 
             <div style="margin-top: 40px; text-align: center; color: #666;">
-                <p>💬 Need help? <a href="{{ route('livechat.request') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Chat with our design specialists</a></p>
+                <p>💬 Need help? <a href="{{ route('chatbot') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Chat with our design specialists</a></p>
             </div>
         </div>
     </div>

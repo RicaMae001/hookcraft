@@ -64,11 +64,6 @@
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--light-bg);
             color: var(--text-primary);
-<<<<<<< HEAD
-            margin-top: 76px;
-=======
-            margin-top: 20px;
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
             line-height: 1.6;
             transition: background-color 0.3s ease, color 0.3s ease;
             overflow-x: hidden;
@@ -117,17 +112,10 @@
         .stat-card {
             background: var(--card-bg);
             border-radius: 16px;
-<<<<<<< HEAD
             padding: 1.75rem;
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
             height: 100%;
-=======
-            padding: 0.30rem;
-            border: 1px solid var(--border-color);
-            transition: all 0.2s ease;
-            height: 105%;
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         .stat-card:hover {
@@ -144,11 +132,6 @@
             justify-content: center;
             font-size: 1.5rem;
             margin-bottom: 1rem;
-<<<<<<< HEAD
-=======
-            margin-left: 20px;  
-            margin-top: 10px;
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         .stat-card-icon.primary {
@@ -176,20 +159,12 @@
             font-weight: 700;
             color: var(--text-primary);
             margin: 0.5rem 0;
-<<<<<<< HEAD
-=======
-            margin-left: 25px;
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         .stat-card-label {
             color: var(--text-secondary);
             font-size: 0.875rem;
             font-weight: 500;
-<<<<<<< HEAD
-=======
-            margin-left: 20px;
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
         }
 
         /* Content Cards */
@@ -250,12 +225,13 @@
         }
 
         .badge-info {
-<<<<<<< HEAD
             background: rgba(99, 179, 237, 0.15);
-=======
-            background: rgba(211, 214, 216, 0.15);
->>>>>>> 4ee57059ad4405f3c30631ec8f07d749078e2ae8
             color: var(--info);
+        }
+
+        .badge-primary {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--primary-blue);
         }
 
         /* Buttons */
@@ -286,10 +262,23 @@
         .btn-modern-secondary {
             background: var(--light-bg);
             color: var(--text-primary);
+            border: 1px solid var(--border-color);
         }
 
         .btn-modern-secondary:hover {
             background: var(--hover-bg);
+        }
+
+        .btn-modern-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-modern-danger:hover {
+            background: #f56565;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(252, 129, 129, 0.3);
+            color: white;
         }
 
         /* Alerts */
@@ -385,6 +374,12 @@
             margin-top: 0.75rem;
         }
 
+        /* Address text styling */
+        .address-text {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
         /* Empty state */
         .empty-state {
             text-align: center;
@@ -436,6 +431,7 @@
             .timeline-icon {
                 width: 28px;
                 height: 28px;
+                font-size: 12px;
             }
         }
     </style>
@@ -446,107 +442,6 @@
 
     <!-- Modern Navbar -->
     @include('admin.delivery.layouts.navbar')
-    </style>
-</head>
-<body>
-    <!-- Modern Navbar -->
-    <nav class="modern-navbar">
-        <div class="navbar-start">
-            <button class="btn btn-link d-md-none" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-        
-        <div class="navbar-actions">
-            <!-- Theme Toggle -->
-            <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                <div class="theme-toggle-slider">
-                    <i class="fas fa-sun theme-toggle-icon sun"></i>
-                    <i class="fas fa-moon theme-toggle-icon moon"></i>
-                </div>
-            </div>
-
-            <!-- Status Badge -->
-            <div class="status-badge">
-                <span class="pulse"></span>
-                Online
-            </div>
-
-            <!-- User Profile -->
-            <div class="user-profile dropdown">
-                <div data-bs-toggle="dropdown">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="user-avatar">D</div>
-                        <div class="d-none d-md-block">
-                            <div style="font-size: 0.875rem; font-weight: 600;">Delivery Coordinator</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Delivery Staff</div>
-                        </div>
-                    </div>
-                </div>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Modern Sidebar -->
-    <aside class="modern-sidebar" id="sidebar">
-        <div class="sidebar-logo">
-            <h2><i class="fas fa-truck-fast"></i> HCA Delivery</h2>
-            <p>Coordinator Dashboard</p>
-        </div>
-
-        <!-- User Profile in Sidebar -->
-        <div class="sidebar-section">
-            <div class="text-center mb-3" style="padding: 0 1rem;">
-                <div class="user-avatar" style="width: 60px; height: 60px; margin: 0 auto 1rem; font-size: 1.5rem;">
-                    {{ strtoupper(substr(session('coordinator_name', 'D'), 0, 1)) }}
-                </div>
-                <h6 style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.25rem;">
-                    {{ session('coordinator_name') ?? 'Delivery Coordinator' }}
-                </h6>
-                <small style="color: var(--text-secondary);">Delivery Coordinator</small>
-            </div>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Main Menu</div>
-            
-            <a href="{{ route('delivery.dashboard') }}" class="sidebar-link {{ request()->routeIs('delivery.dashboard') ? 'active' : '' }}">
-                <i class="fas fa-tachometer-alt"></i>
-                <span>Dashboard</span>
-            </a>
-
-            <a href="{{ route('delivery.deliveries') }}" class="sidebar-link {{ request()->routeIs('delivery.deliveries') ? 'active' : '' }}">
-                <i class="fas fa-box"></i>
-                <span>My Deliveries</span>
-            </a>
-
-            <a href="{{ route('delivery.livechat.index') }}" class="sidebar-link {{ request()->routeIs('delivery.livechat.*') ? 'active' : '' }}">
-                <i class="fas fa-comments"></i>
-                <span>Live Chat Support</span>
-            </a>
-
-            <a href="{{ route('delivery.history') }}" class="sidebar-link {{ request()->routeIs('delivery.history') ? 'active' : '' }}">
-                <i class="fas fa-history"></i>
-                <span>Delivery History</span>
-            </a>
-        </div>
-
-        <div class="sidebar-section">
-            <div class="sidebar-section-title">Account</div>
-
-            <a href="#" class="sidebar-link text-danger" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                <i class="fas fa-sign-out-alt"></i>
-                <span>Logout</span>
-            </a>
-        </div>
-    </aside>
 
     <!-- Main Content -->
     <main class="main-content">
@@ -636,11 +531,10 @@
                                             <span class="badge bg-secondary me-2">#{{ $log->order_id }}</span>
                                             <strong>{{ $log->customer_name }}</strong>
                                         </h6>
-                                   <p class="mb-2 address-text">
-    <i class="fas fa-map-marker-alt me-2"></i>
-    {{ Str::limit($log->address, 60) }}
-</p>
-
+                                        <p class="mb-2 address-text">
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            {{ Str::limit($log->address, 60) }}
+                                        </p>
                                         <div class="status-change">
                                             <span class="badge-modern 
                                                 @if($log->old_status == 'Delivered') badge-success
@@ -693,44 +587,43 @@
                 </button>
             </div>
         @endif
+    </main>
 
-        <!-- Logout Modal -->
-        <div class="modal fade" id="logoutModal" tabindex="-1">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title">
-                            <i class="fas fa-sign-out-alt me-2 text-danger"></i>
-                            Confirm Logout
-                        </h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body text-center py-4">
-                        <i class="fas fa-question-circle fa-4x mb-4" style="color: var(--warning);"></i>
-                        <h5 class="mb-3">Are you sure you want to logout?</h5>
-                        <p class="text-muted">You will be redirected to the login page.</p>
-                    </div>
-                    <div class="modal-footer justify-content-center border-0">
-                        <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
-                            <i class="fas fa-times me-1"></i> Cancel
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-out-alt me-2 text-danger"></i>
+                        Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="fas fa-question-circle fa-4x mb-4" style="color: var(--warning);"></i>
+                    <h5 class="mb-3">Are you sure you want to logout?</h5>
+                    <p class="text-muted">You will be redirected to the login page.</p>
+                </div>
+                <div class="modal-footer justify-content-center border-0">
+                    <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <form action="{{ route('delivery.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn-modern btn-modern-danger">
+                            <i class="fas fa-sign-out-alt me-1"></i> Yes, Logout
                         </button>
-                        <form action="{{ route('delivery.logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="btn-modern btn-modern-danger">
-                                <i class="fas fa-sign-out-alt me-1"></i> Yes, Logout
-                            </button>
-                        </form>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
-    </main>
+    </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     
     <script>
-        // Ensure notifications work by re-initializing the navbar functionality
         document.addEventListener('DOMContentLoaded', function() {
             // Update Current Date
             function updateCurrentDate() {
@@ -743,57 +636,6 @@
             }
             updateCurrentDate();
 
-            // Check if notification dropdown exists and add click handlers
-            const notificationBell = document.querySelector('.notification-bell');
-            const notificationMenu = document.getElementById('notificationDropdown');
-            
-            if (notificationBell && notificationMenu) {
-                // Remove any existing event listeners and add new ones
-                const newBell = notificationBell.cloneNode(true);
-                notificationBell.parentNode.replaceChild(newBell, notificationBell);
-                
-                newBell.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const isVisible = notificationMenu.style.display === 'block';
-                    notificationMenu.style.display = isVisible ? 'none' : 'block';
-                    
-                    // Hide other dropdowns
-                    const profileMenu = document.getElementById('profileMenu');
-                    if (profileMenu) profileMenu.style.display = 'none';
-                    
-                    if (!isVisible) {
-                        // Trigger notification fetch if function exists
-                        if (typeof fetchNotifications === 'function') {
-                            fetchNotifications();
-                        }
-                    }
-                });
-            }
-            
-            // Check for notification functions from navbar component
-            if (typeof fetchNotifications === 'function') {
-                // Fetch notifications on page load
-                setTimeout(fetchNotifications, 1000);
-                
-                // Set up auto-refresh
-                if (typeof notificationUpdateInterval === 'undefined') {
-                    window.notificationUpdateInterval = setInterval(fetchNotifications, 30000);
-                }
-            }
-            
-            // Theme toggle functionality
-            const themeToggle = document.getElementById('themeToggle');
-            if (themeToggle) {
-                themeToggle.addEventListener('click', function() {
-                    const html = document.documentElement;
-                    const currentTheme = html.getAttribute('data-theme');
-                    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-                    
-                    html.setAttribute('data-theme', newTheme);
-                    localStorage.setItem('delivery-theme', newTheme);
-                });
-            }
-            
             // Sidebar toggle for mobile
             const sidebarToggle = document.getElementById('sidebarToggle');
             const sidebar = document.getElementById('sidebar');
@@ -815,30 +657,17 @@
                     sidebarOverlay.classList.remove('show');
                 });
             }
-            
-            // Close dropdowns when clicking outside
-            document.addEventListener('click', function(e) {
-                const notificationMenu = document.getElementById('notificationDropdown');
-                const profileMenu = document.getElementById('profileMenu');
-                const notificationBell = document.querySelector('.notification-bell');
-                const userProfile = document.getElementById('userProfile');
-                
-                if (notificationMenu && !notificationMenu.contains(e.target) && !notificationBell?.contains(e.target)) {
-                    notificationMenu.style.display = 'none';
-                }
-                
-                if (profileMenu && !profileMenu.contains(e.target) && !userProfile?.contains(e.target)) {
-                    profileMenu.style.display = 'none';
-                }
-            });
         });
 
-        // Clean up intervals on page unload
-        window.addEventListener('beforeunload', function() {
-            if (window.notificationUpdateInterval) {
-                clearInterval(window.notificationUpdateInterval);
-            }
-        });
+        // Theme toggle function
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('delivery-theme', newTheme);
+        }
     </script>
 </body>
 </html>

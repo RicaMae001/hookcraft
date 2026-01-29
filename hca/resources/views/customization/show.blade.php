@@ -161,6 +161,8 @@
     </style>
 </head>
 <body>
+    {{-- Include Navigation Bar --}}
+@include('components.customization-navbar')
     <div class="container">
         <div class="header">
             <h1>{{ $customization->customization_name }}</h1>
@@ -261,7 +263,7 @@
 
                 <div class="action-buttons">
                     @if(!$customization->order_id)
-                        <a href="{{ route('customization.edit', $customization->id) }}" class="btn btn-primary">
+                        <a href="{{ route('customization.edit', $customization->id) }}" class="btn btn-primary" >
                             ✏️ Edit Design
                         </a>
                         <form action="{{ route('customization.destroy', $customization->id) }}" 
@@ -276,7 +278,7 @@
                         </form>
                     @endif
                     
-                    <a href="{{ route('customization.my-customizations') }}" class="btn btn-secondary">
+                    <a href="{{ route('customization.my-customizations') }}" class="btn btn-secondary" >
                         ← Back to My Customizations
                     </a>
                 </div>

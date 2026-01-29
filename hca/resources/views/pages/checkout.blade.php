@@ -48,12 +48,12 @@
         /* Page Header */
         .page-header {
             text-align: center;
-            margin-bottom: 3rem;
+            margin-bottom: 2rem;
             padding-top: 1rem;
         }
 
         .page-header h2 {
-            font-size: 2.25rem;
+            font-size: 2rem;
             font-weight: 700;
             color: var(--dark-navy);
             margin-bottom: 0.75rem;
@@ -62,7 +62,7 @@
 
         .page-header .subtitle {
             color: var(--secondary-gray);
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 400;
             max-width: 600px;
             margin: 0 auto;
@@ -76,7 +76,7 @@
             overflow: hidden;
             background: var(--white);
             transition: var(--transition);
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .card:hover {
@@ -86,13 +86,13 @@
         .card-header {
             background: linear-gradient(135deg, #f8f9fa, #ffffff);
             color: var(--dark-navy);
-            padding: 1.5rem 1.75rem;
+            padding: 1.25rem 1.5rem;
             font-weight: 600;
             display: flex;
             align-items: center;
             gap: 0.75rem;
             border-bottom: 1px solid var(--border-color);
-            font-size: 1.1rem;
+            font-size: 1rem;
         }
 
         .card-header i {
@@ -100,139 +100,70 @@
         }
 
         .card-body {
-            padding: 1.75rem;
+            padding: 1.5rem;
         }
 
-        /* Form Elements */
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            font-weight: 600;
-            color: var(--dark-navy);
-            margin-bottom: 0.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            font-size: 0.95rem;
-        }
-
-        .form-label i {
-            color: var(--primary-pink);
-            width: 20px;
-        }
-
-        .form-control, .form-select {
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-            padding: 0.875rem 1rem;
-            font-size: 0.95rem;
-            transition: var(--transition);
-            background: var(--white);
-            color: var(--dark-navy);
-        }
-
-        .form-control:focus, .form-select:focus {
-            border-color: var(--primary-pink);
-            box-shadow: 0 0 0 0.2rem rgba(214, 51, 132, 0.15);
-            outline: none;
-        }
-
-        .form-control:disabled, .form-control[readonly] {
-            background-color: #f8f9fa;
-            cursor: not-allowed;
-        }
-
-        /* User Info Display */
-        .user-info-display {
-            background: linear-gradient(135deg, #fce7f3, #fce7f3);
+        /* User Info - ONE LINE WITH LABELS */
+        .user-info-one-line {
+            background: linear-gradient(135deg, rgba(248, 249, 250, 0.8), rgba(255, 255, 255, 0.9));
+            border: 1px solid rgba(0, 0, 0, 0.08);
             padding: 1rem;
-            border-radius: 8px;
-            border-left: 4px solid var(--primary-pink);
+            border-radius: 10px;
+            margin-bottom: 1rem;
         }
 
-        .user-info-row {
+        .user-info-one-line-content {
             display: flex;
             align-items: center;
-            margin-bottom: 0.75rem;
+            gap: 2rem;
         }
 
-        .user-info-row:last-child {
-            margin-bottom: 0;
+        .user-info-item {
+            display: flex;
+            align-items: baseline;
+            gap: 0.5rem;
         }
 
-        .user-info-row i {
-            color: var(--primary-pink);
-            width: 24px;
-            margin-right: 0.75rem;
-        }
-
-        .user-info-row strong {
+        .user-info-label {
+            font-size: 0.8rem;
             font-weight: 600;
+            color: var(--secondary-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            min-width: 80px;
+        }
+
+        .user-info-value {
+            font-size: 0.95rem;
+            font-weight: 500;
             color: var(--dark-navy);
         }
 
-        /* Location Info */
-        .location-info {
-            background: linear-gradient(135deg, #fce7f3, #fce7f3);
-            padding: 12px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border-left: 4px solid var(--primary-pink);
+        /* ============ FIXED RIGHT COLUMN STYLES ============ */
+        .right-column {
+            position: sticky;
+            top: 2rem;
         }
 
-        .location-info i {
-            color: var(--primary-pink);
+        /* Order Summary - COMPACT AND TOGETHER */
+        .order-summary-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
         }
 
-        /* Address Display */
-        .address-display {
-            background: #f8f9fa;
-            padding: 15px;
-            border-radius: 8px;
-            border: 2px solid #dee2e6;
-            margin-bottom: 15px;
-            display: none;
-            border-left: 4px solid var(--primary-pink);
-        }
-
-        .address-display.active {
-            display: block;
-        }
-
-        .location-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
-            color: white;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            margin: 2px;
-            font-weight: 500;
-        }
-
-        /* Map */
-        #map {
-            height: 400px;
-            width: 100%;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            border: 2px solid var(--border-color);
-        }
-
-        /* Payment Options */
+        /* Payment Options - COMPACT */
         .payment-options {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-top: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 0.5rem;
+            margin-top: 0.25rem;
         }
 
         .payment-option {
             border: 2px solid var(--border-color);
-            border-radius: 10px;
-            padding: 1.25rem;
+            border-radius: 8px;
+            padding: 0.75rem;
             cursor: pointer;
             transition: var(--transition);
             background: var(--white);
@@ -250,35 +181,37 @@
         }
 
         .payment-option .icon {
-            width: 48px;
-            height: 48px;
-            border-radius: 10px;
+            width: 35px;
+            height: 35px;
+            border-radius: 8px;
             background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
             color: white;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
         }
 
         .payment-option h6 {
             font-weight: 600;
-            margin-bottom: 0.25rem;
+            margin-bottom: 0.125rem;
             color: var(--dark-navy);
+            font-size: 0.9rem;
         }
 
         .payment-option p {
             color: var(--secondary-gray);
-            font-size: 0.875rem;
+            font-size: 0.75rem;
             margin: 0;
+            line-height: 1.2;
         }
 
-        /* Product Items */
+        /* Product Items - MORE COMPACT */
         .product-item {
             display: flex;
             align-items: center;
-            padding: 1rem;
+            padding: 0.5rem;
             border-bottom: 1px solid var(--border-color);
             transition: var(--transition);
         }
@@ -292,11 +225,11 @@
         }
 
         .product-image {
-            width: 80px;
-            height: 80px;
+            width: 60px;
+            height: 60px;
             object-fit: cover;
-            border-radius: 8px;
-            margin-right: 1rem;
+            border-radius: 6px;
+            margin-right: 0.5rem;
             border: 1px solid var(--border-color);
         }
 
@@ -311,18 +244,20 @@
             display: flex;
             align-items: center;
             flex-wrap: wrap;
+            margin-bottom: 0.125rem;
+            font-size: 0.85rem;
         }
 
         .product-meta {
             color: var(--secondary-gray);
-            font-size: 0.875rem;
-            margin-bottom: 0.25rem;
+            font-size: 0.75rem;
+            margin-bottom: 0.125rem;
         }
 
         .product-price {
             font-weight: 700;
             color: var(--primary-pink);
-            font-size: 1.1rem;
+            font-size: 0.9rem;
         }
 
         /* Category Badge */
@@ -354,14 +289,9 @@
             border: 1px solid #f59e0b;
         }
 
-        /* Order Summary */
-        .order-summary {
-            position: sticky;
-            top: 2rem;
-        }
-
+        /* Order Summary Sections - MORE COMPACT */
         .summary-section {
-            padding: 1rem 0;
+            padding: 0.5rem 0;
             border-bottom: 1px solid var(--border-color);
         }
 
@@ -372,40 +302,41 @@
         .summary-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 0.75rem;
-            font-size: 0.95rem;
+            margin-bottom: 0.25rem;
+            font-size: 0.85rem;
         }
 
         .summary-row.total {
-            font-size: 1.25rem;
+            font-size: 1rem;
             font-weight: 700;
             color: var(--primary-pink);
-            margin-top: 1rem;
-            padding-top: 1rem;
+            margin-top: 0.5rem;
+            padding-top: 0.5rem;
             border-top: 2px solid var(--border-color);
         }
 
+        /* Security Badge - COMPACT */
         .security-badge {
             display: inline-flex;
             align-items: center;
-            gap: 0.5rem;
+            gap: 0.25rem;
             background: #e8f5e9;
             color: #2e7d32;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.875rem;
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-right: 0.25rem;
+            margin-bottom: 0.25rem;
         }
 
         /* Buttons */
         .btn {
             border-radius: 8px;
-            padding: 0.875rem 1.75rem;
+            padding: 0.75rem 1.5rem;
             font-weight: 600;
             transition: var(--transition);
             border: none;
-            font-size: 1rem;
+            font-size: 0.95rem;
         }
 
         .btn-primary {
@@ -419,8 +350,8 @@
         }
 
         .btn-lg {
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
+            padding: 0.875rem 1.75rem;
+            font-size: 1rem;
         }
 
         .btn-block {
@@ -428,89 +359,142 @@
             display: block;
         }
 
-        /* Alerts */
-        .alert {
+        /* COMPACT ORDER BUTTON */
+        .compact-btn {
+            padding: 0.625rem 1.25rem;
+            font-size: 0.9rem;
+        }
+
+        /* Map - SMALLER */
+        #map {
+            height: 300px;
+            width: 100%;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border: 2px solid var(--border-color);
+        }
+
+        /* User Info - COMPACT */
+        .user-info-display {
+            background: linear-gradient(135deg, rgba(248, 231, 243, 0.4), rgba(248, 231, 243, 0.2));
+            border: 1px solid rgba(214, 51, 132, 0.2);
+            padding: 1rem;
             border-radius: 10px;
-            border: none;
-            padding: 1.25rem;
-            margin-bottom: 2rem;
-            box-shadow: var(--shadow-sm);
+            margin-bottom: 1rem;
         }
 
-        .alert-danger {
-            background: linear-gradient(135deg, #fdf2f2, #fde8e8);
-            color: #9b1c1c;
-            border-left: 4px solid var(--danger-red);
-        }
-
-        .alert-success {
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-            color: #166534;
-            border-left: 4px solid var(--success-green);
-        }
-
-        /* Empty State */
-        .empty-state {
-            text-align: center;
-            padding: 4rem 2rem;
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .empty-icon {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 2rem;
-            background: linear-gradient(135deg, #fce7f3, #f8bbd9);
-            border-radius: 50%;
+        .user-info-title {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 0.75rem;
             display: flex;
             align-items: center;
-            justify-content: center;
+            gap: 0.5rem;
         }
 
-        .empty-icon i {
-            font-size: 3.5rem;
-            color: var(--primary-pink);
+        /* Form Elements - COMPACT */
+        .form-group {
+            margin-bottom: 1rem;
         }
 
-        /* Responsive Design */
+        .form-label {
+            font-weight: 600;
+            color: var(--dark-navy);
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            padding: 0.625rem 0.875rem;
+            font-size: 0.9rem;
+            transition: var(--transition);
+            background: var(--white);
+            color: var(--dark-navy);
+        }
+
+        /* ============ RESPONSIVE FIXES ============ */
         @media (max-width: 992px) {
-            .order-summary {
+            .right-column {
                 position: static;
-                margin-top: 2rem;
             }
-
+            
+            .order-summary-wrapper {
+                gap: 0.75rem;
+            }
+            
             #map {
-                height: 300px;
+                height: 250px;
             }
         }
 
         @media (max-width: 768px) {
             .container {
-                padding: 1.5rem 1rem;
+                padding: 1rem;
+            }
+
+            .page-header {
+                margin-bottom: 1.5rem;
             }
 
             .page-header h2 {
-                font-size: 1.75rem;
+                font-size: 1.5rem;
             }
 
             .card-body {
-                padding: 1.25rem;
+                padding: 1rem;
+            }
+
+            .card-header {
+                padding: 1rem 1.25rem;
             }
 
             .payment-options {
                 grid-template-columns: 1fr;
+                gap: 0.25rem;
             }
 
             .product-image {
-                width: 70px;
-                height: 70px;
+                width: 50px;
+                height: 50px;
+            }
+            
+            #map {
+                height: 200px;
+            }
+            
+            /* Responsive for one line user info */
+            .user-info-one-line-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+            
+            .user-info-item {
+                width: 100%;
             }
         }
 
         @media (max-width: 576px) {
+            .container {
+                padding: 0.75rem;
+            }
+            
             .empty-state {
-                padding: 3rem 1rem;
+                padding: 2rem 0.75rem;
+            }
+            
+            .card-header {
+                padding: 0.75rem 1rem;
+            }
+            
+            .user-info-one-line-content {
+                gap: 0.75rem;
             }
         }
     </style>
@@ -556,7 +540,7 @@
             </a>
         </div>
     @else
-    <div class="row">
+    <div class="row g-4">
         <!-- Left Column: Form -->
         <div class="col-lg-8">
             <form method="POST" action="{{ route('checkout.store') }}" id="checkoutForm" class="checkout-form">
@@ -570,17 +554,32 @@
                     </div>
                     <div class="card-body">
                         <div class="user-info-display">
-                            <div class="user-info-row">
-                                <i class="bi bi-person-fill"></i>
-                                <div>
-                                    <strong>Name:</strong> {{ Auth::user()->name }}
+                            <div class="user-info-title">
+                                <i class="bi bi-person-check"></i>
+                                Account Details
+                            </div>
+                            
+                            <!-- ONE LINE FOR NAME AND EMAIL WITH LABELS -->
+                            <div class="user-info-one-line">
+                                <div class="user-info-one-line-content">
+                                    <div class="user-info-item">
+                                        <span class="user-info-label">FULL NAME:</span>
+                                        <span class="user-info-value">{{ Auth::user()->name }}</span>
+                                    </div>
+                                    
+                                    <div class="user-info-item">
+                                        <span class="user-info-label">EMAIL:</span>
+                                        <span class="user-info-value">{{ Auth::user()->email }}</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div class="user-info-row">
-                                <i class="bi bi-envelope-fill"></i>
-                                <div>
-                                    <strong>Email:</strong> {{ Auth::user()->email }}
-                                </div>
+                            
+                            <!-- Status badge -->
+                            <div class="mt-2 d-flex align-items-center">
+                                <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25 px-2 py-1 rounded-pill">
+                                    <i class="bi bi-shield-check me-1"></i>
+                                    Account Verified
+                                </span>
                             </div>
                         </div>
                         
@@ -589,13 +588,21 @@
                         <input type="hidden" name="email" value="{{ Auth::user()->email }}">
                         
                         <!-- Phone number input -->
-                        <div class="form-group mt-3">
+                        <div class="form-group mt-2">
                             <label class="form-label">
                                 <i class="bi bi-phone"></i>
                                 Phone Number *
                             </label>
-                            <input type="tel" class="form-control" name="phone" value="{{ old('phone', Auth::user()->phone ?? '') }}" placeholder="09123456789" pattern="[0-9]{11}" maxlength="11" required>
-                            <small class="text-muted">Format: 09123456789</small>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-end-0">
+                                    <i class="bi bi-telephone text-primary-pink"></i>
+                                </span>
+                                <input type="tel" class="form-control border-start-0" name="phone" value="{{ old('phone', Auth::user()->phone ?? '') }}" placeholder="09123456789" pattern="[0-9]{11}" maxlength="11" required>
+                            </div>
+                            <small class="text-muted mt-1 d-block">
+                                <i class="bi bi-info-circle me-1"></i>
+                                Format: 09123456789 - We'll use this for delivery updates
+                            </small>
                         </div>
                     </div>
                 </div>
@@ -664,58 +671,10 @@
                         <input type="hidden" name="longitude" id="longitude">
                     </div>
                 </div>
-
-                <!-- Payment Method -->
-                <div class="card">
-                    <div class="card-header">
-                        <i class="bi bi-credit-card"></i>
-                        Payment Method
-                    </div>
-                    <div class="card-body">
-                        <div class="payment-options">
-                            <div class="payment-option selected" onclick="selectPayment('GCash')">
-                                <div class="icon">
-                                    <i class="bi bi-phone"></i>
-                                </div>
-                                <h6>GCash</h6>
-                                <p>Pay via GCash transfer</p>
-                                <input type="radio" name="payment_method" value="GCash" id="paymentGCash" class="d-none" checked form="checkoutForm">
-                            </div>
-                            <div class="payment-option" onclick="selectPayment('COD')">
-                                <div class="icon">
-                                    <i class="bi bi-cash"></i>
-                                </div>
-                                <h6>Cash on Delivery</h6>
-                                <p>Pay when order arrives</p>
-                                <input type="radio" name="payment_method" value="COD" id="paymentCOD" class="d-none" form="checkoutForm">
-                            </div>
-                        </div>
-                        
-                        <div class="mt-4 pt-3 border-top">
-                            <div class="d-flex align-items-center gap-3">
-                                <i class="bi bi-shield-check text-success fs-4"></i>
-                                <div>
-                                    <h6 class="mb-1">Secure Payment</h6>
-                                    <p class="text-muted small mb-0">Your payment information is encrypted and secure</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Submit Button -->
-                <div class="mt-4">
-                    <button type="submit" class="btn btn-primary btn-lg btn-block">
-                        <i class="bi bi-lock me-2"></i>Place Secure Order
-                    </button>
-                    <p class="text-center text-muted small mt-2">
-                        By placing your order, you agree to our <a href="#">Terms & Conditions</a>
-                    </p>
-                </div>
             </form>
         </div>
 
-        <!-- Right Column: Order Summary -->
+        <!-- Right Column: Order Summary & Payment - FIXED POSITION -->
         <div class="col-lg-4">
             <div class="card order-summary">
                 <div class="card-header">
@@ -784,54 +743,131 @@
                             </div>
                         @endforeach
                     </div>
+            <div class="right-column">
+                <div class="order-summary-wrapper">
+                    <!-- Order Summary Card -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-receipt"></i>
+                            Order Summary
+                        </div>
+                        <div class="card-body">
+                            <!-- Product List -->
+                            <div class="summary-section">
+                                <h6 class="mb-2" style="font-size: 0.9rem;">Items ({{ $cartItems->count() }})</h6>
+                                @foreach($cartItems as $item)
+                                    <div class="product-item">
+                                        <img src="{{ asset('asset/images/' . $item->product->image) }}" alt="{{ $item->product->name }}" class="product-image">
+                                        <div class="product-details">
+                                            <div class="product-name">{{ $item->product->name }}</div>
+                                            <div class="product-meta">
+                                                {{ $item->quantity }} × ₱{{ number_format($item->product->price, 2) }}
+                                            </div>
+                                            <div class="product-price">
+                                                ₱{{ number_format($item->quantity * $item->product->price, 2) }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endforeach
+                            </div>
 
-                    <!-- Price Breakdown -->
-                    <div class="summary-section">
-                        <div class="summary-row">
-                            <span>Subtotal</span>
-                            <span>₱{{ number_format($total, 2) }}</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Shipping</span>
-                            <span>Calculated at checkout</span>
-                        </div>
-                        <div class="summary-row">
-                            <span>Tax</span>
-                            <span>Included</span>
-                        </div>
-                        <div class="summary-row total">
-                            <span>Total</span>
-                            <span>₱{{ number_format($total, 2) }}</span>
+                            <!-- Price Breakdown -->
+                            <div class="summary-section">
+                                <div class="summary-row">
+                                    <span>Subtotal</span>
+                                    <span>₱{{ number_format($total, 2) }}</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Shipping</span>
+                                    <span>Calculated at checkout</span>
+                                </div>
+                                <div class="summary-row">
+                                    <span>Tax</span>
+                                    <span>Included</span>
+                                </div>
+                                <div class="summary-row total">
+                                    <span>Total</span>
+                                    <span>₱{{ number_format($total, 2) }}</span>
+                                </div>
+                            </div>
+
+                            <!-- Security & Support -->
+                            <div class="summary-section">
+                                <div class="d-flex flex-wrap mb-2">
+                                    <span class="security-badge">
+                                        <i class="bi bi-shield-check"></i>
+                                        SSL Secure
+                                    </span>
+                                    <span class="security-badge" style="background: #e3f2fd; color: #1565c0;">
+                                        <i class="bi bi-truck"></i>
+                                        Fast Delivery
+                                    </span>
+                                </div>
+                                
+                                <div class="alert alert-info small mb-0 p-2">
+                                    <i class="bi bi-info-circle me-2"></i>
+                                    Need help? <a href="#" class="fw-bold">Contact Support</a>
+                                </div>
+                            </div>
+                            
+                            <!-- Continue Shopping -->
+                            <div class="text-center mt-2">
+                                <a href="{{ route('cart.index') }}" class="btn btn-outline-secondary btn-sm compact-btn">
+                                    <i class="bi bi-arrow-left me-1"></i>Back to Cart
+                                </a>
+                                <a href="{{ route('shop') }}" class="btn btn-outline-primary btn-sm ms-1 compact-btn">
+                                    <i class="bi bi-bag-plus me-1"></i>Shop More
+                                </a>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Security & Support -->
-                    <div class="summary-section">
-                        <div class="d-flex flex-wrap mb-3">
-                            <span class="security-badge">
-                                <i class="bi bi-shield-check"></i>
-                                SSL Secure
-                            </span>
-                            <span class="security-badge" style="background: #e3f2fd; color: #1565c0;">
-                                <i class="bi bi-truck"></i>
-                                Fast Delivery
-                            </span>
+                    <!-- Payment Method Card - NOW PROPERLY ATTACHED -->
+                    <div class="card">
+                        <div class="card-header">
+                            <i class="bi bi-credit-card"></i>
+                            Payment Method
                         </div>
-                        
-                        <div class="alert alert-info small mb-0">
-                            <i class="bi bi-info-circle me-2"></i>
-                            Need help? <a href="#" class="fw-bold">Contact Support</a>
+                        <div class="card-body">
+                            <div class="payment-options">
+                                <div class="payment-option selected" onclick="selectPayment('GCash')">
+                                    <div class="icon">
+                                        <i class="bi bi-phone"></i>
+                                    </div>
+                                    <h6>GCash</h6>
+                                    <p>Pay via GCash transfer</p>
+                                    <input type="radio" name="payment_method" value="GCash" id="paymentGCash" class="d-none" checked form="checkoutForm">
+                                </div>
+                                <div class="payment-option" onclick="selectPayment('COD')">
+                                    <div class="icon">
+                                        <i class="bi bi-cash"></i>
+                                    </div>
+                                    <h6>Cash on Delivery</h6>
+                                    <p>Pay when order arrives</p>
+                                    <input type="radio" name="payment_method" value="COD" id="paymentCOD" class="d-none" form="checkoutForm">
+                                </div>
+                            </div>
+                            
+                            <!-- PLACE ORDER BUTTON -->
+                            <div class="mt-3">
+                                <button type="submit" class="btn btn-primary w-100 compact-btn" form="checkoutForm">
+                                    <i class="bi bi-lock me-2"></i>Place Secure Order
+                                </button>
+                                <p class="text-center text-muted small mt-2 mb-0">
+                                    By placing your order, you agree to our <a href="#">Terms</a>
+                                </p>
+                            </div>
+                            
+                            <div class="mt-3 pt-3 border-top">
+                                <div class="d-flex align-items-center gap-2">
+                                    <i class="bi bi-shield-check text-success fs-5"></i>
+                                    <div>
+                                        <h6 class="mb-0" style="font-size: 0.85rem;">Secure Payment</h6>
+                                        <p class="text-muted small mb-0">Payment information is encrypted</p>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    
-                    <!-- Continue Shopping -->
-                    <div class="text-center mt-3">
-                        <a href="{{ route('cart.index') }}" class="btn btn-outline-secondary btn-sm">
-                            <i class="bi bi-arrow-left me-1"></i>Back to Cart
-                        </a>
-                        <a href="{{ route('shop') }}" class="btn btn-outline-primary btn-sm ms-2">
-                            <i class="bi bi-bag-plus me-1"></i>Continue Shopping
-                        </a>
                     </div>
                 </div>
             </div>
@@ -845,9 +881,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-    // ==========================================
-    // PAYMENT SELECTION
-    // ==========================================
+    // Payment selection function
     function selectPayment(method) {
         document.querySelectorAll('.payment-option').forEach(option => {
             option.classList.remove('selected');
@@ -856,6 +890,7 @@
         document.getElementById(`payment${method}`).checked = true;
     }
 
+    // Rest of your JavaScript code remains the same...
     // ==========================================
     // CITY CONFIGURATIONS
     // ==========================================
@@ -882,7 +917,7 @@
             maxZoom: 18
         },
         4: { // Talisay City
-            name: 'Talisay City',
+            name: 'Talisy City',
             center: [10.2444, 123.8493],
             bounds: [[10.20, 123.81], [10.29, 123.89]],
             minZoom: 13,
