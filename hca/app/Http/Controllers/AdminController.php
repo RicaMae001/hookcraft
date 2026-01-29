@@ -16,6 +16,7 @@ use App\Models\Cart;
 use App\Models\CartItem;
 use App\Services\NotificationService;
 use App\Models\ProductCustomization;
+use App\Helpers\NotificationHelper;
 
 class AdminController extends Controller
 {
@@ -766,6 +767,10 @@ class AdminController extends Controller
         }
     }
 
+        /**
+     * Delete order from admin panel
+     * Enhanced to properly cancel order before deletion
+     */
     public function deleteOrder($id)
     {
         $authCheck = $this->checkAdminAuth();
@@ -776,37 +781,55 @@ class AdminController extends Controller
         try {
             $order = DB::table('orders')->where('id', $id)->first();
             
-            if ($order && $order->payment_status === 'Paid') {
+            if (!$order) {
+                return redirect()->back()->with('error', 'Order not found');
+            }
+            
+            // 1. First update order status to Cancelled
+            DB::table('orders')->where('id', $id)->update([
+                'delivery_status' => 'Cancelled',
+                'payment_status' => 'Cancelled'
+            ]);
+            
+            // 2. Send cancellation notifications BEFORE deletion - FIXED: Changed delivery_coordinator_id to coordinator_id
+            NotificationHelper::orderCancelled(
+                $id,
+                $order->customer_name,
+                'Order deleted by admin',
+                $order->user_id ?? null,
+                $order->coordinator_id ?? null
+            );
+            
+            // 3. Restore stock if order was paid
+            if ($order->payment_status === 'Paid') {
                 $this->restoreStockFromOrder($id);
             }
 
-            // Send order cancelled notification if applicable
-            if ($order && $order->customer_name && $order->delivery_status !== 'Cancelled') {
-                $this->notificationService->orderCancelled(
-                    $id,
-                    $order->customer_name,
-                    'Order deleted by admin',
-                    $order->user_id ?? null,
-                    $order->delivery_coordinator_id ?? null
-                );
-            }
+            // 4. Log the cancellation
+            Log::info('Order cancelled before deletion', [
+                'order_id' => $id,
+                'customer_name' => $order->customer_name,
+                'admin_id' => session('admin_id')
+            ]);
 
+            // 5. Now delete the order
             DB::table('orders')->where('id', $id)->delete();
 
             DB::commit();
 
-            Log::info('Order deleted', [
+            Log::info('Order deleted successfully', [
                 'order_id' => $id,
                 'admin_id' => session('admin_id')
             ]);
 
-            return redirect()->back()->with('success', 'Order deleted successfully');
+            return redirect()->back()->with('success', 'Order cancelled and deleted successfully. All parties have been notified.');
 
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Order deletion failed', [
                 'order_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
             return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
         }
@@ -824,10 +847,11 @@ class AdminController extends Controller
         $order = DB::table('orders')->where('id', $id)->first();
         $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
 
+        // FIXED: Changed delivery_coordinator_id to coordinator_id
         DB::table('orders')
             ->where('id', $id)
             ->update([
-                'delivery_coordinator_id' => $validated['coordinator_id'],
+                'coordinator_id' => $validated['coordinator_id'],
                 'admin_id' => session('admin_id')
             ]);
 
