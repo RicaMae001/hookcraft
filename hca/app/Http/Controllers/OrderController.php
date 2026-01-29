@@ -276,7 +276,8 @@ class OrderController extends Controller
                     "#{$order->id}",
                     $oldDeliveryStatus,
                     $newDeliveryStatus,
-                    $order->user_id
+                    $order->user_id,
+                    $order->delivery_coordinator_id ?? null
                 );
             }
 
@@ -330,7 +331,8 @@ class OrderController extends Controller
                 "#{$order->id}",
                 $oldStatus,
                 $newStatus,
-                $order->user_id
+                $order->user_id,
+                $order->delivery_coordinator_id ?? null
             );
 
             Log::info('Delivery status change notified', [

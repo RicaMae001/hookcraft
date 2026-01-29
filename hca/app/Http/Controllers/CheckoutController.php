@@ -185,6 +185,27 @@ class CheckoutController extends Controller
                         'order_id' => $order->id,
                         'status' => 'Completed'
                     ]);
+
+                    // ===== NOTIFY ABOUT CUSTOMIZATION ORDER =====
+                    try {
+                        NotificationHelper::customizationOrdered(
+                            $item->customization_id,
+                            $order->id,
+                            $item->product->name,
+                            Auth::id(),
+                            $price
+                        );
+                        Log::info('Customization order notification sent', [
+                            'customization_id' => $item->customization_id,
+                            'order_id' => $order->id
+                        ]);
+                    } catch (\Exception $e) {
+                        Log::error('Failed to send customization order notification', [
+                            'customization_id' => $item->customization_id,
+                            'order_id' => $order->id,
+                            'error' => $e->getMessage()
+                        ]);
+                    }
                 }
             }
 
@@ -297,7 +318,7 @@ class CheckoutController extends Controller
 
                 // ===== NOTIFY ADMIN OF PAYMENT PROOF =====
                 try {
-                    NotificationHelper::paymentProofUploaded($order->id, "#{$order->id}", $order->total);
+                    NotificationHelper::paymentProofUploaded($order->id, "#{$order->id}", $order->total, Auth::id());
                     Log::info('Payment proof notification sent', ['order_id' => $order->id]);
                 } catch (\Exception $e) {
                     Log::error('Failed to notify admin of payment proof', ['order_id' => $order->id, 'error' => $e->getMessage()]);

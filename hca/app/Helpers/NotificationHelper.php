@@ -21,9 +21,11 @@ class NotificationHelper
         return self::$service;
     }
 
+    // ==================== ORDER NOTIFICATIONS ====================
+
     /**
      * When a new order is created
-     * Notifies admin and optionally the customer
+     * Notifies admin and the customer
      */
     public static function orderCreated($orderId, $customerName, $total, $userId = null)
     {
@@ -31,18 +33,18 @@ class NotificationHelper
             // Notify admins
             self::getService()->notifyOrderCreated($orderId, $customerName, $total);
             
-            // Also notify the customer if userId is provided
+            // Notify the customer if userId is provided
             if ($userId) {
                 self::getService()->create([
                     'recipient_type' => 'user',
                     'recipient_id' => $userId,
                     'type' => 'order_created',
-                    'title' => 'Order Confirmed',
-                    'message' => 'Your order has been received and is being processed. Thank you for your purchase!',
+                    'title' => 'Order Confirmed ✓',
+                    'message' => "Your order #{$orderId} has been received and is being processed. Total: ₱" . number_format($total, 2) . ". Thank you for your purchase!",
                     'entity_type' => 'order',
                     'entity_id' => $orderId,
                     'action_url' => "/user/orders/{$orderId}",
-                    'priority' => 'normal',
+                    'priority' => 'high',
                     'metadata' => [
                         'order_id' => $orderId,
                         'customer_name' => $customerName,
@@ -68,9 +70,10 @@ class NotificationHelper
      * When payment proof is uploaded
      * Notifies admin to review the payment
      */
-    public static function paymentProofUploaded($orderId, $orderNumber, $amount)
+    public static function paymentProofUploaded($orderId, $orderNumber, $amount, $userId = null)
     {
         try {
+            // Notify admin
             self::getService()->create([
                 'recipient_type' => 'admin',
                 'type' => 'payment_proof_uploaded',
@@ -87,6 +90,26 @@ class NotificationHelper
                     'action' => 'payment_proof_uploaded'
                 ]
             ]);
+
+            // Also notify user that proof was received
+            if ($userId) {
+                self::getService()->create([
+                    'recipient_type' => 'user',
+                    'recipient_id' => $userId,
+                    'type' => 'payment_proof_received',
+                    'title' => 'Payment Proof Received',
+                    'message' => "We've received your payment proof for order {$orderNumber}. Our team will verify it shortly.",
+                    'entity_type' => 'order',
+                    'entity_id' => $orderId,
+                    'action_url' => "/user/orders/{$orderId}",
+                    'priority' => 'normal',
+                    'metadata' => [
+                        'order_id' => $orderId,
+                        'order_number' => $orderNumber,
+                        'action' => 'proof_received_confirmation'
+                    ]
+                ]);
+            }
             
             Log::info('Payment proof uploaded notification sent', [
                 'order_id' => $orderId,
@@ -115,8 +138,8 @@ class NotificationHelper
                 'recipient_type' => 'user',
                 'recipient_id' => $userId,
                 'type' => 'payment_received',
-                'title' => 'Payment Confirmed',
-                'message' => 'Your payment has been verified. Your order will be processed shortly.',
+                'title' => 'Payment Confirmed ✓',
+                'message' => "Your payment of ₱" . number_format($amount, 2) . " has been verified. Your order {$orderNumber} will be processed shortly.",
                 'entity_type' => 'order',
                 'entity_id' => $orderId,
                 'action_url' => "/user/orders/{$orderId}",
@@ -143,18 +166,58 @@ class NotificationHelper
 
     /**
      * When delivery status changes
-     * Notifies admin and customer
+     * Notifies admin, customer, and delivery coordinator if applicable
      */
-    public static function deliveryStatusChanged($orderId, $orderNumber, $oldStatus, $newStatus, $userId = null)
+    public static function deliveryStatusChanged($orderId, $orderNumber, $oldStatus, $newStatus, $userId = null, $coordinatorId = null)
     {
         try {
+            // Notify customer
             self::getService()->notifyDeliveryStatusChanged($orderId, $orderNumber, $newStatus, $userId);
+            
+            // Notify admin
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'type' => 'delivery_status_changed',
+                'title' => 'Delivery Status Updated',
+                'message' => "Order {$orderNumber} delivery status changed: {$oldStatus} → {$newStatus}",
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/admin/orders/{$orderId}",
+                'priority' => 'normal',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'order_number' => $orderNumber,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus
+                ]
+            ]);
+
+            // If delivery coordinator exists and status is relevant, notify them too
+            if ($coordinatorId && in_array($newStatus, ['Pending', 'Out for Delivery'])) {
+                self::getService()->create([
+                    'recipient_type' => 'delivery',
+                    'recipient_id' => $coordinatorId,
+                    'type' => 'delivery_status_changed',
+                    'title' => 'Delivery Status Updated',
+                    'message' => "Order {$orderNumber} status changed to: {$newStatus}",
+                    'entity_type' => 'order',
+                    'entity_id' => $orderId,
+                    'action_url' => "/delivery/deliveries",
+                    'priority' => 'normal',
+                    'metadata' => [
+                        'order_id' => $orderId,
+                        'order_number' => $orderNumber,
+                        'new_status' => $newStatus
+                    ]
+                ]);
+            }
             
             Log::info('Delivery status changed notification sent', [
                 'order_id' => $orderId,
                 'old_status' => $oldStatus,
                 'new_status' => $newStatus,
-                'user_id' => $userId
+                'user_id' => $userId,
+                'coordinator_id' => $coordinatorId
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to send delivery status notification', [
@@ -166,12 +229,50 @@ class NotificationHelper
 
     /**
      * When order is assigned to delivery coordinator
-     * Notifies the delivery coordinator only
+     * Notifies the delivery coordinator and admin
      */
-    public static function deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName)
+    public static function deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName, $userId = null)
     {
         try {
+            // Notify delivery coordinator
             self::getService()->deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName);
+            
+            // Notify admin
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'type' => 'delivery_assigned',
+                'title' => 'Delivery Assigned',
+                'message' => "Order #{$orderId} for {$customerName} has been assigned to {$coordinatorName}",
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/admin/orders/{$orderId}",
+                'priority' => 'normal',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'coordinator_id' => $coordinatorId,
+                    'coordinator_name' => $coordinatorName,
+                    'customer_name' => $customerName
+                ]
+            ]);
+
+            // Optionally notify customer that delivery coordinator has been assigned
+            if ($userId) {
+                self::getService()->create([
+                    'recipient_type' => 'user',
+                    'recipient_id' => $userId,
+                    'type' => 'delivery_assigned',
+                    'title' => 'Delivery Coordinator Assigned',
+                    'message' => "Your order #{$orderId} has been assigned to a delivery coordinator for faster processing.",
+                    'entity_type' => 'order',
+                    'entity_id' => $orderId,
+                    'action_url' => "/user/orders/{$orderId}",
+                    'priority' => 'normal',
+                    'metadata' => [
+                        'order_id' => $orderId,
+                        'coordinator_name' => $coordinatorName
+                    ]
+                ]);
+            }
             
             Log::info('Delivery assignment notification sent', [
                 'order_id' => $orderId,
@@ -187,121 +288,8 @@ class NotificationHelper
     }
 
     /**
-     * Check product stock and notify if low or out of stock
-     * This can be called after product updates or order placements
-     */
-    public static function checkProductStock($productId, $productName, $currentStock, $lowStockThreshold = 5)
-    {
-        try {
-            if ($currentStock <= $lowStockThreshold && $currentStock > 0) {
-                // Low stock warning
-                self::getService()->notifyLowStock($productId, $productName, $currentStock);
-                
-                Log::info('Low stock notification sent', [
-                    'product_id' => $productId,
-                    'product_name' => $productName,
-                    'current_stock' => $currentStock
-                ]);
-            } elseif ($currentStock == 0) {
-                // Out of stock alert
-                self::getService()->create([
-                    'recipient_type' => 'admin',
-                    'type' => 'product_out_of_stock',
-                    'title' => 'Product Out of Stock',
-                    'message' => "{$productName} is now out of stock! Please restock immediately.",
-                    'entity_type' => 'product',
-                    'entity_id' => $productId,
-                    'action_url' => "/admin/products/{$productId}/edit",
-                    'priority' => 'urgent',
-                    'metadata' => [
-                        'product_id' => $productId,
-                        'product_name' => $productName,
-                        'current_stock' => $currentStock,
-                        'action' => 'out_of_stock'
-                    ]
-                ]);
-                
-                Log::info('Out of stock notification sent', [
-                    'product_id' => $productId,
-                    'product_name' => $productName
-                ]);
-            }
-        } catch (\Exception $e) {
-            Log::error('Failed to send stock notification', [
-                'product_id' => $productId,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * Send a generic notification
-     * Useful for custom scenarios
-     */
-    public static function send($recipientType, $recipientId, $type, $title, $message, $options = [])
-    {
-        try {
-            $data = [
-                'recipient_type' => $recipientType,
-                'recipient_id' => $recipientId,
-                'type' => $type,
-                'title' => $title,
-                'message' => $message,
-                'entity_type' => $options['entity_type'] ?? null,
-                'entity_id' => $options['entity_id'] ?? null,
-                'action_url' => $options['action_url'] ?? null,
-                'priority' => $options['priority'] ?? 'normal',
-                'metadata' => $options['metadata'] ?? null,
-            ];
-
-            self::getService()->create($data);
-            
-            Log::info('Generic notification sent', [
-                'recipient_type' => $recipientType,
-                'recipient_id' => $recipientId,
-                'type' => $type,
-                'title' => $title
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to send generic notification', [
-                'title' => $title,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * When order is updated
-     * Notifies admin about changes
-     */
-    public static function orderUpdated($orderId, $customerName, $oldPaymentStatus, $newPaymentStatus, $updatedBy)
-    {
-        try {
-            self::getService()->orderUpdated($orderId, $customerName, $oldPaymentStatus, $newPaymentStatus, $updatedBy);
-            
-            Log::info('Order updated notification sent', [
-                'order_id' => $orderId,
-                'old_status' => $oldPaymentStatus,
-                'new_status' => $newPaymentStatus,
-                'updated_by' => $updatedBy
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to send order updated notification', [
-                'order_id' => $orderId,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
      * When order is cancelled
      * ENHANCED: Notifies ALL parties: admin, delivery coordinator (if assigned), and customer
-     * 
-     * @param int $orderId The order ID
-     * @param string $customerName Customer's name
-     * @param string|null $reason Reason for cancellation
-     * @param int|null $userId Customer user ID (if registered user)
-     * @param int|null $coordinatorId Delivery coordinator ID (if assigned)
      */
     public static function orderCancelled($orderId, $customerName, $reason = null, $userId = null, $coordinatorId = null)
     {
@@ -332,9 +320,412 @@ class NotificationHelper
     }
 
     /**
+     * When order is updated by admin/staff
+     * Notifies customer and delivery coordinator if assigned
+     */
+    public static function orderUpdated($orderId, $customerName, $changes, $userId = null, $coordinatorId = null)
+    {
+        try {
+            $changesText = is_array($changes) ? implode(', ', $changes) : $changes;
+
+            // Notify admin
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'type' => 'order_updated',
+                'title' => 'Order Updated',
+                'message' => "Order #{$orderId} for {$customerName} was updated. Changes: {$changesText}",
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/admin/orders/{$orderId}",
+                'priority' => 'normal',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'customer_name' => $customerName,
+                    'changes' => $changesText
+                ]
+            ]);
+
+            // Notify customer
+            if ($userId) {
+                self::getService()->create([
+                    'recipient_type' => 'user',
+                    'recipient_id' => $userId,
+                    'type' => 'order_updated',
+                    'title' => 'Order Updated',
+                    'message' => "Your order #{$orderId} has been updated. Changes: {$changesText}",
+                    'entity_type' => 'order',
+                    'entity_id' => $orderId,
+                    'action_url' => "/user/orders/{$orderId}",
+                    'priority' => 'normal',
+                    'metadata' => [
+                        'order_id' => $orderId,
+                        'changes' => $changesText
+                    ]
+                ]);
+            }
+
+            // Notify delivery coordinator if assigned
+            if ($coordinatorId) {
+                self::getService()->create([
+                    'recipient_type' => 'delivery',
+                    'recipient_id' => $coordinatorId,
+                    'type' => 'order_updated',
+                    'title' => 'Assigned Order Updated',
+                    'message' => "Order #{$orderId} for {$customerName} has been updated. Changes: {$changesText}",
+                    'entity_type' => 'order',
+                    'entity_id' => $orderId,
+                    'action_url' => "/delivery/deliveries",
+                    'priority' => 'normal',
+                    'metadata' => [
+                        'order_id' => $orderId,
+                        'customer_name' => $customerName,
+                        'changes' => $changesText
+                    ]
+                ]);
+            }
+
+            Log::info('Order updated notification sent', [
+                'order_id' => $orderId,
+                'user_id' => $userId,
+                'coordinator_id' => $coordinatorId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send order updated notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    // ==================== CUSTOMIZATION NOTIFICATIONS ====================
+
+    /**
+     * When a new customization request is created
+     * Notifies admin and confirms to user
+     */
+    public static function customizationCreated($customizationId, $productName, $userName, $userId)
+    {
+        try {
+            // Notify admin
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'type' => 'customization_created',
+                'title' => 'New Customization Request',
+                'message' => "{$userName} submitted a customization request for {$productName}",
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/admin/customizations/{$customizationId}",
+                'priority' => 'high',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'product_name' => $productName,
+                    'user_name' => $userName,
+                    'user_id' => $userId
+                ]
+            ]);
+
+            // Confirm to user
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $userId,
+                'type' => 'customization_created',
+                'title' => 'Customization Request Received',
+                'message' => "Your customization request for {$productName} has been received. We'll review it and get back to you with pricing soon!",
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/customization/my-customizations",
+                'priority' => 'normal',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'product_name' => $productName
+                ]
+            ]);
+
+            Log::info('Customization created notification sent', [
+                'customization_id' => $customizationId,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send customization created notification', [
+                'customization_id' => $customizationId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When customization status is updated (Approved/Rejected)
+     * Notifies customer and admin
+     */
+    public static function customizationStatusChanged($customizationId, $productName, $oldStatus, $newStatus, $userId, $adminPrice = null, $adminNotes = null)
+    {
+        try {
+            $customization = DB::table('product_customizations')->where('id', $customizationId)->first();
+
+            // Notify customer with detailed message
+            $title = 'Customization Update';
+            $message = '';
+            $priority = 'normal';
+
+            if ($newStatus === 'Approved') {
+                $title = 'Customization Approved ✓';
+                $message = "Great news! Your customization for {$productName} has been approved";
+                if ($adminPrice) {
+                    $message .= " at ₱" . number_format($adminPrice, 2);
+                }
+                $message .= ". You can now proceed to checkout!";
+                $priority = 'high';
+            } elseif ($newStatus === 'Rejected') {
+                $title = 'Customization Update';
+                $message = "Your customization request for {$productName} requires revision";
+                if ($adminNotes) {
+                    $message .= ". Note: {$adminNotes}";
+                }
+                $priority = 'high';
+            } elseif ($newStatus === 'Completed') {
+                $title = 'Customization Completed ✓';
+                $message = "Your customization for {$productName} has been completed and is ready!";
+                $priority = 'high';
+            }
+
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $userId,
+                'type' => 'customization_status_changed',
+                'title' => $title,
+                'message' => $message,
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/customization/my-customizations",
+                'priority' => $priority,
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'product_name' => $productName,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'admin_price' => $adminPrice,
+                    'admin_notes' => $adminNotes
+                ]
+            ]);
+
+            // Notify admin
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'type' => 'customization_status_changed',
+                'title' => 'Customization Status Updated',
+                'message' => "Customization #{$customizationId} for {$productName} status changed: {$oldStatus} → {$newStatus}",
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/admin/customizations/{$customizationId}",
+                'priority' => 'normal',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'product_name' => $productName,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus
+                ]
+            ]);
+
+            Log::info('Customization status changed notification sent', [
+                'customization_id' => $customizationId,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send customization status notification', [
+                'customization_id' => $customizationId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When customization price is updated
+     * Notifies customer
+     */
+    public static function customizationPriceUpdated($customizationId, $productName, $newPrice, $userId, $adminNotes = null)
+    {
+        try {
+            $message = "The price for your {$productName} customization has been updated to ₱" . number_format($newPrice, 2);
+            if ($adminNotes) {
+                $message .= ". Note: {$adminNotes}";
+            }
+
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $userId,
+                'type' => 'customization_price_updated',
+                'title' => 'Customization Price Updated',
+                'message' => $message,
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/customization/my-customizations",
+                'priority' => 'high',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'product_name' => $productName,
+                    'new_price' => $newPrice,
+                    'admin_notes' => $adminNotes
+                ]
+            ]);
+
+            Log::info('Customization price updated notification sent', [
+                'customization_id' => $customizationId,
+                'new_price' => $newPrice,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send customization price notification', [
+                'customization_id' => $customizationId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When customization is added to cart
+     * Confirms to user
+     */
+    public static function customizationAddedToCart($customizationId, $productName, $userId)
+    {
+        try {
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $userId,
+                'type' => 'customization_cart_added',
+                'title' => 'Added to Cart',
+                'message' => "Your {$productName} customization has been added to your cart. Ready to checkout!",
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/cart",
+                'priority' => 'normal',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'product_name' => $productName
+                ]
+            ]);
+
+            Log::info('Customization added to cart notification sent', [
+                'customization_id' => $customizationId,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send customization cart notification', [
+                'customization_id' => $customizationId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When customization order is placed
+     * Notifies admin and confirms to user
+     */
+    public static function customizationOrdered($customizationId, $orderId, $productName, $userId, $price)
+    {
+        try {
+            // Notify admin
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'type' => 'customization_ordered',
+                'title' => 'Customization Order Placed',
+                'message' => "Customization #{$customizationId} for {$productName} has been ordered (Order #{$orderId})",
+                'entity_type' => 'customization',
+                'entity_id' => $customizationId,
+                'action_url' => "/admin/customizations/{$customizationId}",
+                'priority' => 'high',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'order_id' => $orderId,
+                    'product_name' => $productName,
+                    'price' => $price
+                ]
+            ]);
+
+            // Confirm to user
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $userId,
+                'type' => 'customization_ordered',
+                'title' => 'Customization Order Placed ✓',
+                'message' => "Your {$productName} customization order has been placed (Order #{$orderId}). We'll start working on it soon!",
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/user/orders/{$orderId}",
+                'priority' => 'high',
+                'metadata' => [
+                    'customization_id' => $customizationId,
+                    'order_id' => $orderId,
+                    'product_name' => $productName,
+                    'price' => $price
+                ]
+            ]);
+
+            Log::info('Customization ordered notification sent', [
+                'customization_id' => $customizationId,
+                'order_id' => $orderId,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send customization ordered notification', [
+                'customization_id' => $customizationId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    // ==================== PRODUCT NOTIFICATIONS ====================
+
+    /**
+     * Check product stock and notify if low or out of stock
+     */
+    public static function checkProductStock($productId, $productName, $currentStock, $lowStockThreshold = 5)
+    {
+        try {
+            if ($currentStock <= $lowStockThreshold && $currentStock > 0) {
+                // Low stock warning
+                self::getService()->notifyLowStock($productId, $productName, $currentStock);
+                
+                Log::info('Low stock notification sent', [
+                    'product_id' => $productId,
+                    'product_name' => $productName,
+                    'current_stock' => $currentStock
+                ]);
+            } elseif ($currentStock == 0) {
+                // Out of stock alert
+                self::getService()->create([
+                    'recipient_type' => 'admin',
+                    'type' => 'product_out_of_stock',
+                    'title' => 'Product Out of Stock',
+                    'message' => "{$productName} is now out of stock! Please restock immediately.",
+                    'entity_type' => 'product',
+                    'entity_id' => $productId,
+                    'action_url' => "/admin/products/{$productId}/edit",
+                    'priority' => 'urgent',
+                    'metadata' => [
+                        'product_id' => $productId,
+                        'product_name' => $productName,
+                        'current_stock' => 0,
+                        'action' => 'restock_needed'
+                    ]
+                ]);
+                
+                Log::info('Out of stock notification sent', [
+                    'product_id' => $productId,
+                    'product_name' => $productName
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send stock notification', [
+                'product_id' => $productId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
      * When product is created
-     * Notifies admin about new product
-     * Price parameter is optional
      */
     public static function productCreated($productId, $productName, $adminName, $price = null)
     {
@@ -356,7 +747,6 @@ class NotificationHelper
 
     /**
      * When product is updated
-     * Notifies admin about product changes
      */
     public static function productUpdated($productId, $productName, $updatedBy)
     {
@@ -376,9 +766,10 @@ class NotificationHelper
         }
     }
 
+    // ==================== UTILITY NOTIFICATIONS ====================
+
     /**
      * Batch notification sending
-     * Send the same notification to multiple users
      */
     public static function notifyMultipleUsers(array $userIds, $type, $title, $message, $entityType = null, $entityId = null, $actionUrl = null, $priority = 'normal')
     {
@@ -434,14 +825,13 @@ class NotificationHelper
 
     /**
      * Broadcast notification to all users
-     * Sends to all users without specifying recipient_id
      */
     public static function broadcastToAllUsers($type, $title, $message, $priority = 'normal')
     {
         try {
             self::getService()->create([
                 'recipient_type' => 'user',
-                'recipient_id' => null, // Broadcast to all users
+                'recipient_id' => null,
                 'type' => $type,
                 'title' => $title,
                 'message' => $message,
@@ -469,14 +859,13 @@ class NotificationHelper
 
     /**
      * Broadcast notification to all admins
-     * Sends to all admin users
      */
     public static function broadcastToAllAdmins($type, $title, $message, $priority = 'normal')
     {
         try {
             self::getService()->create([
                 'recipient_type' => 'admin',
-                'recipient_id' => null, // Broadcast to all admins
+                'recipient_id' => null,
                 'type' => $type,
                 'title' => $title,
                 'message' => $message,
