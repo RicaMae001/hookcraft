@@ -1,125 +1,111 @@
 {{-- resources/views/components/pmodal.blade.php --}}
 <link rel="stylesheet" href="{{ asset('asset/stylesshop.css') }}">
 
-<!-- Product Modal -->
+<!-- Product Modal - Landscape Cool Design -->
 <div class="modal fade product-modal" id="productModal" tabindex="-1" aria-labelledby="productModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content rounded-4 shadow-lg border-0">
-            <!-- Modal Header -->
-            <div class="modal-header bg-gradient-pink text-white rounded-top-4 border-0 py-4 position-relative">
-                <h5 class="modal-title fw-bold" id="productModalLabel">
-                    <i class="fas fa-gem me-2"></i>Product Details
-                </h5>
-                <!-- Visible X Button -->
-                <button type="button" class="btn-close btn-close-pink bg-white shadow-sm" 
-                        data-bs-dismiss="modal" aria-label="Close">
-                    <i class="fas fa-times"></i>
-                </button>
-            </div>
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content landscape-modal">
+            <!-- Close Button - Absolute Positioned -->
+            <button type="button" class="btn-close-landscape" data-bs-dismiss="modal" aria-label="Close">
+                <i class="fas fa-times"></i>
+            </button>
 
-            <!-- Modal Body -->
-            <div class="modal-body p-0">
-                <div class="row g-0">
-                    <!-- Product Image Section -->
-                    <div class="col-md-6 position-relative">
-                        <div class="product-image-container p-4">
-                            <img id="modalProductImage" src="" alt="" class="img-fluid rounded-3 shadow-sm product-modal-image">
-                            <!-- Stock Badge Overlay -->
-                            <div class="stock-badge position-absolute top-0 end-0 m-4">
-                                <span id="modalProductStock" class="badge bg-pink-soft shadow-lg">
-                                    <i class="fas fa-heart me-1"></i>
-                                    <span id="stockCount">0</span> available
-                                </span>
-                            </div>
-                        </div>
+            <div class="modal-inner">
+                <!-- Left Side - Product Image -->
+                <div class="image-side">
+                    <div class="image-wrapper">
+                        <div class="image-bg-pattern"></div>
+                        <img id="modalProductImage" src="" alt="" class="product-img-landscape">
+                        <div class="image-glow"></div>
                     </div>
-
-                    <!-- Product Details Section -->
-                    <div class="col-md-6 bg-pink-light rounded-end-4">
-                        <div class="p-4 h-100 d-flex flex-column">
-                            <!-- Product Title -->
-                            <h3 id="modalProductName" class="fw-bold mb-2 text-pink-dark"></h3>
-                            
-                            <!-- Category Tag -->
-                            <div class="mb-3">
-                                <span class="badge bg-pink bg-opacity-20 text-white fw-medium px-3 py-2 rounded-pill" id="modalProductCategory"></span>
-                            </div>
-
-                            <!-- Price Display -->
-                            <div class="product-price-display mb-4">
-                                <div class="d-flex align-items-center">
-                                    <span class="h2 fw-bold text-gradient-pink mb-0" id="modalProductPrice"></span>
-                                    <small class="text-pink-muted ms-2">per item</small>
-                                </div>
-                            </div>
-
-                            <!-- Description -->
-                            <div class="description-section mb-4">
-                                <h6 class="fw-semibold mb-2 text-pink-dark">
-                                    <i class="fas fa-align-left me-2 text-pink"></i>About This Item
-                                </h6>
-                                <p id="modalProductDescription" class="text-pink-muted mb-0 lh-base"></p>
-                            </div>
-
-                            <!-- Quantity Selector -->
-                            <div class="quantity-section mb-4">
-                                <label class="form-label fw-semibold text-pink-dark mb-2">
-                                    <i class="fas fa-hashtag me-2 text-pink"></i>Select Quantity
-                                </label>
-                                <div class="d-flex align-items-center">
-                                    <div class="quantity-controls d-flex align-items-center border rounded-3 bg-white shadow-sm border-pink-soft">
-                                        <button type="button" class="btn quantity-btn px-3 py-2 border-0" id="modalDecreaseBtn">
-                                            <i class="fas fa-minus text-pink"></i>
-                                        </button>
-                                        <input type="number" class="form-control quantity-input border-0 text-center fw-bold text-pink-dark" 
-                                               id="modalQuantity" value="1" min="1" readonly>
-                                        <button type="button" class="btn quantity-btn px-3 py-2 border-0" id="modalIncreaseBtn">
-                                            <i class="fas fa-plus text-pink"></i>
-                                        </button>
-                                    </div>
-                                   
-                                </div>
-                            </div>
-
-                            <!-- Add-ons Section -->
-                            <div class="add-ons-section d-none" id="addOnsSection">
-                                <h6 class="fw-semibold mb-3 text-pink-dark">
-                                    <i class="fas fa-sparkles me-2 text-pink"></i>Customize Your Order
-                                </h6>
-                                <div class="add-ons-list" id="addOnsList">
-                                    <!-- Add-ons will be populated dynamically -->
-                                </div>
-                                <small class="text-pink-muted mt-2 d-block">
-                                    <i class="fas fa-heart me-1"></i>Optional add-ons for personalization
-                                </small>
-                            </div>
-
-                            <!-- Total Price -->
-                            <div class="total-price-section mt-auto pt-4 border-top border-pink-soft">
-                                <div class="d-flex justify-content-between align-items-center p-3 bg-white rounded-3 shadow-sm border border-pink-soft">
-                                    <div>
-                                        <strong class="text-pink-dark">Total Amount</strong>
-                                        <small class="text-pink-muted d-block">Including all selections</small>
-                                    </div>
-                                    <strong class="text-pink fs-3 fw-bold" id="modalTotalPrice">₱0.00</strong>
-                                </div>
-                            </div>
+                    <!-- Stock Badge -->
+                    <div class="stock-badge-landscape">
+                        <div class="stock-icon">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                        <div class="stock-info">
+                            <span class="stock-label">Available</span>
+                            <span class="stock-number" id="stockCount">0</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Modal Footer -->
-            <div class="modal-footer border-0 bg-pink-light rounded-bottom-4 py-3">
-                <div class="d-flex gap-3 w-100">
-                    <button type="button" class="btn btn-lg btn-outline-pink flex-fill rounded-3 py-3" 
-                            id="modalAddToCart">
-                        <i class="fas fa-shopping-bag me-2"></i>Add to Bag
-                    </button>
-                    <button type="button" class="btn btn-lg btn-gradient-pink flex-fill rounded-3 py-3 shadow-sm" 
-                            id="modalBuyNow">
-                        <i class="fas fa-bolt me-2"></i>Buy Now
-                    </button>
+                <!-- Right Side - Product Details -->
+                <div class="content-side">
+                    <div class="content-scroll">
+                        <!-- Header -->
+                        <div class="product-header-landscape">
+                            <span class="category-pill" id="modalProductCategory"></span>
+                            <h3 id="modalProductName" class="product-name-landscape"></h3>
+                        </div>
+
+                        <!-- Price -->
+                        <div class="price-box-landscape">
+                            <div class="price-main">
+                                <span class="price-value" id="modalProductPrice"></span>
+                                <span class="price-per">/ item</span>
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div class="description-landscape">
+                            <div class="desc-header">
+                                <i class="fas fa-info-circle"></i>
+                                <span>About</span>
+                            </div>
+                            <p id="modalProductDescription" class="desc-text"></p>
+                        </div>
+
+                        <!-- Quantity & Add-ons Row -->
+                        <div class="controls-row">
+                            <!-- Quantity -->
+                            <div class="quantity-box-landscape">
+                                <label class="control-label">
+                                    <i class="fas fa-cubes"></i> Quantity
+                                </label>
+                                <div class="qty-control-landscape">
+                                    <button type="button" class="qty-btn-land" id="modalDecreaseBtn">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <input type="number" class="qty-display-land" id="modalQuantity" value="1" min="1" readonly>
+                                    <button type="button" class="qty-btn-land" id="modalIncreaseBtn">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Add-ons (if available) -->
+                            <div class="addons-box-landscape d-none" id="addOnsSection">
+                                <label class="control-label">
+                                    <i class="fas fa-star"></i> Extras
+                                </label>
+                                <div class="addons-list-landscape" id="addOnsList">
+                                    <!-- Dynamic add-ons -->
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Footer - Total & Actions -->
+                        <div class="modal-footer-landscape">
+                            <div class="total-box-landscape">
+                                <div class="total-info">
+                                    <span class="total-label-land">Total Price</span>
+                                    <span class="total-value-land" id="modalTotalPrice">₱0.00</span>
+                                </div>
+                            </div>
+                            
+                            <div class="action-group-landscape">
+                                <button type="button" class="btn-land btn-cart-land" id="modalAddToCart">
+                                    <i class="fas fa-shopping-bag"></i>
+                                    Add to Cart
+                                </button>
+                                <button type="button" class="btn-land btn-buy-land" id="modalBuyNow">
+                                    <i class="fas fa-bolt"></i>
+                                    Buy Now
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -127,496 +113,779 @@
 </div>
 
 <style>
-    /* Pink Color Palette */
-    :root {
-        --pink-primary: #ec4899;
-        --pink-dark: #be185d;
-        --pink-light: #fdf2f8;
-        --pink-soft: #fce7f3;
-        --pink-muted: #9d174d;
-        --pink-gradient: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-        --pink-gradient-dark: linear-gradient(135deg, #db2777 0%, #be185d 100%);
+:root {
+    --pink-primary: #ec4899;
+    --pink-dark: #be185d;
+    --pink-darker: #9f1239;
+    --pink-light: #fce7f3;
+    --pink-ultra-light: #fdf2f8;
+    --text-dark: #1f2937;
+    --text-muted: #6b7280;
+    --white: #ffffff;
+    --gray-bg: #f9fafb;
+}
+
+/* Modal Base - Landscape */
+.product-modal .modal-dialog {
+    max-width: 900px;
+    margin: 1rem auto;
+}
+
+@media (min-width: 992px) {
+    .product-modal .modal-dialog {
+        max-width: 1000px;
+    }
+}
+
+.landscape-modal {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    background: var(--white);
+    position: relative;
+}
+
+/* Close Button - Landscape */
+.btn-close-landscape {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+}
+
+.btn-close-landscape i {
+    color: var(--text-dark);
+    font-size: 20px;
+    transition: all 0.3s ease;
+}
+
+.btn-close-landscape:hover {
+    background: var(--pink-primary);
+    transform: rotate(90deg) scale(1.15);
+    box-shadow: 0 8px 30px rgba(236, 72, 153, 0.5);
+}
+
+.btn-close-landscape:hover i {
+    color: var(--white);
+    transform: rotate(-90deg);
+}
+
+/* Modal Inner Layout */
+.modal-inner {
+    display: flex;
+    flex-direction: row;
+    min-height: 600px;
+    max-height: 85vh;
+}
+
+/* Left Side - Image */
+.image-side {
+    flex: 0 0 45%;
+    background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.image-bg-pattern {
+    position: absolute;
+    inset: 0;
+    background-image: 
+        radial-gradient(circle at 20% 50%, rgba(236, 72, 153, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(190, 24, 93, 0.1) 0%, transparent 50%);
+    pointer-events: none;
+}
+
+.image-wrapper {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
+
+.product-img-landscape {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    border-radius: 16px;
+    transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.2));
+    position: relative;
+    z-index: 2;
+}
+
+.product-img-landscape:hover {
+    transform: scale(1.08) rotate(2deg);
+}
+
+.image-glow {
+    position: absolute;
+    inset: 10%;
+    background: radial-gradient(circle, rgba(236, 72, 153, 0.3), transparent 70%);
+    filter: blur(40px);
+    opacity: 0.6;
+    pointer-events: none;
+    animation: pulse-glow 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% { opacity: 0.4; transform: scale(1); }
+    50% { opacity: 0.7; transform: scale(1.1); }
+}
+
+/* Stock Badge - Landscape */
+.stock-badge-landscape {
+    position: absolute;
+    top: 24px;
+    left: 24px;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    padding: 12px 20px;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    z-index: 10;
+}
+
+.stock-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--pink-primary), var(--pink-dark));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--white);
+    font-size: 16px;
+}
+
+.stock-info {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.stock-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+}
+
+.stock-number {
+    font-size: 18px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--pink-primary), var(--pink-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Right Side - Content */
+.content-side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--white);
+}
+
+.content-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.content-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.content-scroll::-webkit-scrollbar-track {
+    background: var(--gray-bg);
+}
+
+.content-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, var(--pink-primary), var(--pink-dark));
+    border-radius: 4px;
+}
+
+/* Product Header - Landscape */
+.product-header-landscape {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.category-pill {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--pink-primary), var(--pink-dark));
+    color: var(--white);
+    padding: 8px 20px;
+    border-radius: 50px;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    align-self: flex-start;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.product-name-landscape {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-dark);
+    line-height: 1.2;
+    margin: 0;
+}
+
+/* Price Box - Landscape */
+.price-box-landscape {
+    background: linear-gradient(135deg, var(--pink-ultra-light), var(--pink-light));
+    border-radius: 16px;
+   width:150px;
+   padding: 6px;
+        border: 2px solid var(--pink-light);
+}
+
+.price-main {
+    display: flex;
+    align-items: baseline;
+   
+}
+
+.price-value {
+    font-size: 25px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--pink-primary), var(--pink-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: -1px;
+}
+
+.price-per {
+    font-size: 14px;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+/* Description - Landscape */
+.description-landscape {
+    background: var(--gray-bg);
+    border-radius: 12px;
+    padding: 16px 20px;
+    width:500px;
+    height:700px;
+    border-left: 4px solid var(--pink-primary);
+}
+
+.desc-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    color: var(--pink-dark);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.desc-header i {
+    font-size: 16px;
+}
+
+.desc-text {
+   
+    line-height: 1.6;
+    color: var(--text-dark);
+    margin: 0;
+    
+    max-height: 90px;
+    font-size: 12px;
+}
+
+
+.desc-text::-webkit-scrollbar {
+    width: 4px;
+}
+
+.desc-text::-webkit-scrollbar-thumb {
+    background: var(--pink-primary);
+    border-radius: 2px;
+}
+
+/* Controls Row */
+.controls-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+}
+
+.control-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-dark);
+    margin-bottom: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.control-label i {
+    color: var(--pink-primary);
+    font-size: 14px;
+}
+
+/* Quantity Box - Landscape */
+.quantity-box-landscape {
+    background: var(--white);
+    border: 2px solid var(--pink-light);
+    border-radius: 14px;
+    padding: 12px;
+    width: 150px;
+}
+
+.qty-control-landscape {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: linear-gradient(135deg, var(--pink-ultra-light), var(--pink-light));
+    border-radius: 12px;
+    padding: 2px;
+    gap: 2px;
+}
+
+.qty-btn-land {
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    background: var(--white);
+    border: 2px solid var(--pink-primary);
+    color: var(--pink-primary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    font-size: 14px;
+    font-weight: bold;
+}
+
+.qty-btn-land:hover {
+    background: var(--pink-primary);
+    color: var(--white);
+    transform: scale(1.1);
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.3);
+}
+
+.qty-btn-land:active {
+    transform: scale(0.95);
+}
+
+.qty-display-land {
+    flex: 1;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--pink-dark);
+    background: transparent;
+    border: none;
+    outline: none;
+}
+
+/* Add-ons Box - Landscape */
+.addons-box-landscape {
+    background: var(--white);
+    border: 2px solid var(--pink-light);
+    border-radius: 14px;
+    padding: 16px;
+}
+
+.addons-list-landscape {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 120px;
+    overflow-y: auto;
+}
+
+.addons-list-landscape::-webkit-scrollbar {
+    width: 4px;
+}
+
+.addons-list-landscape::-webkit-scrollbar-thumb {
+    background: var(--pink-primary);
+    border-radius: 2px;
+}
+
+.add-on-item {
+    background: var(--gray-bg);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 10px 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.add-on-item:hover {
+    border-color: var(--pink-primary);
+    background: var(--pink-ultra-light);
+    transform: translateX(4px);
+}
+
+.add-on-item.selected {
+    border-color: var(--pink-primary);
+    background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(190, 24, 93, 0.15));
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.2);
+}
+
+.add-on-info {
+    flex: 1;
+}
+
+.add-on-name {
+    display: block;
+    font-weight: 700;
+    font-size: 13px;
+    color: var(--text-dark);
+    margin-bottom: 2px;
+}
+
+.add-on-desc {
+    display: block;
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.add-on-price {
+    font-weight: 800;
+    font-size: 13px;
+    color: var(--pink-primary);
+    margin-right: 8px;
+}
+
+.add-on-item .fa-check-circle {
+    color: var(--pink-primary);
+    font-size: 18px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.add-on-item.selected .fa-check-circle {
+    opacity: 1;
+    transform: scale(1) rotate(360deg);
+}
+
+/* Footer - Landscape */
+.modal-footer-landscape {
+    background: var(--white);
+    border-top: 2px solid var(--pink-light);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+}
+
+.total-box-landscape {
+    flex: 1;
+}
+
+.total-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.total-label-land {
+    font-size: 12px;
+    color: var(--text-muted);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.total-value-land {
+    font-size: 32px;
+    font-weight: 900;
+    background: linear-gradient(135deg, var(--pink-primary), var(--pink-dark));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Action Buttons - Landscape */
+.action-group-landscape {
+    display: flex;
+    gap: 12px;
+}
+
+.btn-land {
+    padding: 14px 28px;
+    border-radius: 12px;
+    border: none;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    overflow: hidden;
+    white-space: nowrap;
+}
+
+.btn-land::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn-land:hover::before {
+    width: 400px;
+    height: 400px;
+}
+
+.btn-cart-land {
+    background: var(--white);
+    color: var(--pink-primary);
+    border: 2px solid var(--pink-primary);
+}
+
+.btn-cart-land:hover {
+    background: var(--pink-primary);
+    color: var(--white);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(236, 72, 153, 0.4);
+}
+
+.btn-buy-land {
+    background: linear-gradient(135deg, var(--pink-primary), var(--pink-dark));
+    color: var(--white);
+    box-shadow: 0 8px 24px rgba(236, 72, 153, 0.3);
+}
+
+.btn-buy-land:hover {
+    background: linear-gradient(135deg, var(--pink-dark), var(--pink-darker));
+    transform: translateY(-2px);
+    box-shadow: 0 12px 32px rgba(236, 72, 153, 0.5);
+}
+
+.btn-land:active {
+    transform: translateY(0);
+}
+
+/* Loading State */
+.btn-land.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-land.loading i,
+.btn-land.loading span {
+    opacity: 0;
+}
+
+.btn-land.loading::after {
+    content: '';
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-top-color: var(--white);
+    border-radius: 50%;
+    animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Modal Animation */
+.product-modal.fade .modal-dialog {
+    transform: scale(0.8);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.product-modal.show .modal-dialog {
+    transform: scale(1);
+    opacity: 1;
+}
+
+/* Responsive - Tablet */
+@media (max-width: 991px) {
+    .product-modal .modal-dialog {
+        max-width: 90%;
     }
 
-    /* Custom X Close Button */
-    .btn-close-pink {
-        width: 20px;
-        height: 20px;
-        border-radius: 50%;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        opacity: 1;
-        position: relative;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 2px solid white;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        background: white !important;
+    .modal-inner {
+        min-height: 450px;
     }
 
-    .btn-close-pink i {
-        color: #ec4899;
-        font-size: 1.2rem;
-        font-weight: bold;
-        transition: transform 0.3s ease;
+    .image-side {
+        flex: 0 0 40%;
     }
 
-    .btn-close-pink:hover {
-        background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%) !important;
-        transform: translateY(-2px) rotate(90deg);
-        box-shadow: 0 6px 20px rgba(236, 72, 153, 0.4);
+    .content-scroll {
+        padding: 24px;
+        gap: 20px;
     }
 
-    .btn-close-pink:hover i {
-        color: white;
-        transform: scale(1.1);
+    .product-name-landscape {
+        font-size: 24px;
     }
 
-    .btn-close-pink:active {
-        transform: translateY(0) rotate(90deg);
-        box-shadow: 0 3px 10px rgba(236, 72, 153, 0.3);
+    .price-value {
+        font-size: 32px;
+    }
+}
+
+/* Responsive - Mobile */
+@media (max-width: 767px) {
+    .product-modal .modal-dialog {
+        margin: 0;
+        max-width: 100%;
+        height: 100vh;
     }
 
-    /* Alternative Close Button Style (Circle with X) */
-    .close-button-wrapper {
-        position: absolute;
-        top: -15px;
-        right: -15px;
-        z-index: 1000;
+    .landscape-modal {
+        border-radius: 0;
+        height: 100vh;
     }
 
-    .close-button-circle {
-        width: 45px;
-        height: 45px;
-        border-radius: 50%;
-        background: white;
-        border: 2px solid #ec4899;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: #ec4899;
-        font-size: 1.3rem;
-        font-weight: bold;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        box-shadow: 0 4px 15px rgba(236, 72, 153, 0.2);
+    .modal-inner {
+        flex-direction: column;
+        min-height: 100vh;
+        max-height: 100vh;
     }
 
-    .close-button-circle:hover {
-        background: #ec4899;
-        color: white;
-        transform: scale(1.1) rotate(90deg);
-        box-shadow: 0 6px 25px rgba(236, 72, 153, 0.3);
+    .image-side {
+        flex: 0 0 280px;
     }
 
-    /* Pink Backgrounds */
-    .bg-gradient-pink {
-        background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-    }
-
-    .bg-pink-light {
-        background-color: #fdf2f8;
-    }
-
-    .bg-pink-soft {
-        background-color: #fce7f3;
-    }
-
-    .bg-pink {
-        background-color: #ec4899 !important;
-    }
-
-    /* Pink Text Colors */
-    .text-pink {
-        color: #ec4899 !important;
-    }
-
-    .text-pink-dark {
-        color: #be185d !important;
-    }
-
-    .text-pink-muted {
-        color: #9d174d !important;
-    }
-
-    .text-gradient-pink {
-        background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    /* Pink Buttons */
-    .btn-gradient-pink {
-        background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-        border: none;
-        color: white;
-        transition: all 0.3s ease;
-    }
-
-    .btn-gradient-pink:hover {
-        background: linear-gradient(135deg, #db2777 0%, #be185d 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(236, 72, 153, 0.3);
-    }
-
-    .btn-outline-pink {
-        border: 2px solid #ec4899;
-        color: #ec4899;
-        background: white;
-        transition: all 0.3s ease;
-    }
-
-    .btn-outline-pink:hover {
-        background: linear-gradient(135deg, #f472b6 0%, #ec4899 100%);
-        color: white;
-        border-color: transparent;
-        transform: translateY(-2px);
-        box-shadow: 0 8px 20px rgba(236, 72, 153, 0.2);
-    }
-
-    /* Pink Borders */
-    .border-pink {
-        border-color: #ec4899 !important;
-    }
-
-    .border-pink-soft {
-        border-color: #fce7f3 !important;
-    }
-
-    /* Modal Content Styling */
-    .modal-content {
-        border: none;
+    .content-side {
+        flex: 1;
         overflow: hidden;
-        box-shadow: 0 20px 40px rgba(236, 72, 153, 0.15);
-        position: relative;
     }
 
-    /* Product Image Container */
-    .product-image-container {
-        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
-        min-height: 100%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        position: relative;
+    .content-scroll {
+        padding: 20px;
+        gap: 16px;
     }
 
-    .product-modal-image {
-        max-height: 400px;
-        object-fit: contain;
-        transition: transform 0.3s ease;
-        border: 2px solid #fce7f3;
+    .product-name-landscape {
+        font-size: 22px;
     }
 
-    .product-modal-image:hover {
-        transform: scale(1.05);
+    .price-value {
+        font-size: 28px;
     }
 
-    /* Stock Badge */
-    .stock-badge .badge {
-        font-size: 0.85rem;
-        padding: 8px 16px;
-        backdrop-filter: blur(10px);
-        background: rgba(236, 72, 153, 0.9) !important;
-        color: white;
+    .controls-row {
+        grid-template-columns: 1fr;
     }
 
-    /* Quantity Controls */
-    .quantity-controls {
-        width: 140px;
-        border-color: #fce7f3 !important;
+    .modal-footer-landscape {
+        flex-direction: column;
+        align-items: stretch;
+        padding: 16px 20px;
     }
 
-    .quantity-btn {
-        background: white;
-        transition: all 0.2s ease;
+    .total-box-landscape {
+        text-align: center;
     }
 
-    .quantity-btn:hover {
-        background: #fdf2f8;
-    }
-
-    .quantity-btn:active {
-        transform: scale(0.95);
-    }
-
-    .quantity-input {
-        font-size: 1.2rem;
-        width: 60px;
-        background: transparent;
-    }
-
-    .quantity-input:focus {
-        box-shadow: none;
-        border-color: #fce7f3;
-    }
-
-    /* Add-ons Styling */
-    .add-ons-list {
-        max-height: 200px;
-        overflow-y: auto;
-        padding-right: 5px;
-    }
-
-    .add-ons-list::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .add-ons-list::-webkit-scrollbar-track {
-        background: #fdf2f8;
-        border-radius: 10px;
-    }
-
-    .add-ons-list::-webkit-scrollbar-thumb {
-        background: #f472b6;
-        border-radius: 10px;
-    }
-
-    .add-on-item {
-        padding: 14px 18px;
-        margin-bottom: 10px;
-        border: 2px solid #fce7f3;
-        border-radius: 14px;
-        background: white;
-        cursor: pointer;
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        position: relative;
-        overflow: hidden;
-    }
-
-    .add-on-item:hover {
-        border-color: #f472b6;
-        background: linear-gradient(135deg, rgba(244, 114, 182, 0.05) 0%, rgba(236, 72, 153, 0.05) 100%);
-        transform: translateY(-2px);
-        box-shadow: 0 4px 15px rgba(236, 72, 153, 0.1);
-    }
-
-    .add-on-item.selected {
-        border-color: #ec4899;
-        background: linear-gradient(135deg, rgba(244, 114, 182, 0.1) 0%, rgba(236, 72, 153, 0.1) 100%);
-        animation: pinkSelectPulse 0.6s ease;
-    }
-
-    .add-on-item.selected::before {
-        content: '';
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        height: 3px;
-        background: linear-gradient(90deg, #f472b6 0%, #ec4899 100%);
-    }
-
-    .add-on-item .fa-check-circle {
-        color: #ec4899;
-        font-size: 1.3em;
-        opacity: 0;
-        transform: scale(0);
-        transition: all 0.3s ease;
-    }
-
-    .add-on-item.selected .fa-check-circle {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    @keyframes pinkSelectPulse {
-        0% { 
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7);
-        }
-        70% { 
-            transform: scale(1.02);
-            box-shadow: 0 0 0 10px rgba(236, 72, 153, 0);
-        }
-        100% { 
-            transform: scale(1);
-            box-shadow: 0 0 0 0 rgba(236, 72, 153, 0);
-        }
-    }
-
-    /* Description Section */
-    .description-section {
-        background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 100%);
-        padding: 18px;
-        border-radius: 14px;
-        border-left: 5px solid #ec4899;
-    }
-
-    /* Total Price Section */
-    .total-price-section {
-        animation: pinkSlideUp 0.5s ease;
-    }
-
-    @keyframes pinkSlideUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* Modal Animations */
-    .modal.fade .modal-content {
-        transform: translateY(-50px);
-        opacity: 0;
-        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .modal.show .modal-content {
-        transform: translateY(0);
-        opacity: 1;
-    }
-
-    /* Floating Hearts Animation */
-    .hearts-animation {
-        position: absolute;
+    .action-group-landscape {
+        flex-direction: column;
         width: 100%;
-        height: 100%;
-        pointer-events: none;
-        z-index: 1;
     }
 
-    .heart {
-        position: absolute;
-        color: rgba(236, 72, 153, 0.3);
-        font-size: 1.5rem;
-        animation: floatHeart 3s ease-in-out infinite;
+    .btn-land {
+        width: 100%;
+        justify-content: center;
+        padding: 16px;
     }
 
-    @keyframes floatHeart {
-        0%, 100% {
-            transform: translateY(0) rotate(0deg);
-            opacity: 0;
-        }
-        10%, 90% {
-            opacity: 1;
-        }
-        50% {
-            transform: translateY(-100px) rotate(180deg);
-        }
+    .btn-close-landscape {
+        top: 16px;
+        right: 16px;
+        width: 40px;
+        height: 40px;
     }
 
-    /* Loading States */
-    .btn.loading {
-        position: relative;
-        color: transparent !important;
+    .stock-badge-landscape {
+        top: 16px;
+        left: 16px;
+        padding: 10px 16px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 575px) {
+    .image-side {
+        flex: 0 0 240px;
     }
 
-    .btn.loading::after {
-        content: '';
-        position: absolute;
-        left: 50%;
-        top: 50%;
-        width: 20px;
-        height: 20px;
-        margin: -10px 0 0 -10px;
-        border: 2px solid rgba(255, 255, 255, 0.3);
-        border-top-color: white;
-        border-radius: 50%;
-        animation: spin 0.6s linear infinite;
+    .product-name-landscape {
+        font-size: 20px;
     }
 
-    @keyframes spin {
-        to { transform: rotate(360deg); }
+    .price-value {
+        font-size: 24px;
     }
 
-    /* Pink Badge Variants */
-    .badge.bg-pink-soft {
-        background-color: rgba(236, 72, 153, 0.1) !important;
-        color: #be185d;
+    .total-value-land {
+        font-size: 28px;
     }
-
-    /* Pink Hover Effects */
-    .text-pink-hover:hover {
-        color: #ec4899 !important;
-    }
-
-    /* Pink Shadow Effects */
-    .shadow-pink {
-        box-shadow: 0 10px 25px rgba(236, 72, 153, 0.15);
-    }
-
-    /* Responsive Adjustments */
-    @media (max-width: 768px) {
-        .modal-dialog {
-            margin: 1rem;
-        }
-        
-        .modal-body .row {
-            flex-direction: column;
-        }
-        
-        .product-image-container {
-            min-height: 280px;
-        }
-        
-        .product-modal-image {
-            max-height: 220px;
-        }
-        
-        .modal-footer .btn {
-            padding: 14px !important;
-            font-size: 1rem;
-        }
-        
-        .modal-header, .modal-footer {
-            padding: 1rem !important;
-        }
-        
-        /* Smaller close button on mobile */
-        .btn-close-pink {
-            width: 35px;
-            height: 35px;
-        }
-        
-        .btn-close-pink i {
-            font-size: 1rem;
-        }
-    }
-
-    /* Pink Focus States */
-    .btn-gradient-pink:focus,
-    .btn-outline-pink:focus {
-        box-shadow: 0 0 0 3px rgba(236, 72, 153, 0.25);
-    }
-
-    /* Pink Transitions */
-    .pink-transition {
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    /* Glow Effect for Special Elements */
-    .pink-glow {
-        box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
-    }
-
-    .pink-glow:hover {
-        box-shadow: 0 0 30px rgba(236, 72, 153, 0.4);
-    }
+}
 </style>
 
 <script>
-    // Keep all the original JavaScript code here - unchanged
-    // (All your existing JavaScript code remains exactly the same)
-    // Global variables for modal
     let currentProduct = null;
     let selectedAddOns = [];
     let basePrice = 0;
     let modalInstance = null;
 
-    /**
-     * Open product modal with product details
-     */
     function openProductModal(productElement) {
         console.log('Opening modal for product:', productElement);
         
-        // Extract product data from element
         currentProduct = {
             id: productElement.dataset.productId,
             name: productElement.dataset.productName,
@@ -629,7 +898,6 @@
             addons: []
         };
 
-        // Parse add-ons from JSON if available
         if (currentProduct.hasAddons && productElement.dataset.productAddons) {
             try {
                 const addonsData = JSON.parse(productElement.dataset.productAddons);
@@ -640,30 +908,22 @@
             }
         }
 
-        console.log('Current product data:', currentProduct);
-
-        // Reset modal state
         selectedAddOns = [];
         basePrice = currentProduct.price;
 
-        // Populate modal with product data
         document.getElementById('modalProductName').textContent = currentProduct.name;
         document.getElementById('modalProductImage').src = currentProduct.image;
         document.getElementById('modalProductImage').alt = currentProduct.name;
         document.getElementById('modalProductPrice').textContent = `₱${currentProduct.price.toFixed(2)}`;
         document.getElementById('modalProductCategory').textContent = currentProduct.category;
         document.getElementById('modalProductDescription').textContent = currentProduct.description;
-        document.getElementById('modalProductStock').textContent = `${currentProduct.stock} pieces`;
+        document.getElementById('stockCount').textContent = currentProduct.stock;
         document.getElementById('modalQuantity').value = 1;
         document.getElementById('modalQuantity').max = currentProduct.stock;
 
-        // Populate add-ons section
         populateAddOns();
-
-        // Update total price
         updateModalTotalPrice();
 
-        // Show modal
         const modalElement = document.getElementById('productModal');
         if (!modalInstance) {
             modalInstance = new bootstrap.Modal(modalElement);
@@ -671,21 +931,15 @@
         modalInstance.show();
     }
 
-    /**
-     * Populate add-ons dynamically
-     */
     function populateAddOns() {
         const addOnsSection = document.getElementById('addOnsSection');
         const addOnsList = document.getElementById('addOnsList');
         
-        // Clear previous add-ons
         addOnsList.innerHTML = '';
         
         if (currentProduct.addons && currentProduct.addons.length > 0) {
-            // Show add-ons section
             addOnsSection.classList.remove('d-none');
             
-            // Create add-on elements
             currentProduct.addons.forEach(addon => {
                 const addonElement = document.createElement('div');
                 addonElement.className = 'add-on-item';
@@ -694,15 +948,13 @@
                 addonElement.dataset.addonPrice = addon.price;
                 
                 addonElement.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <strong>${addon.name}</strong>
-                            ${addon.description ? `<small class="text-muted d-block">${addon.description}</small>` : ''}
-                        </div>
-                        <div class="text-end">
-                            <span class="text-pink fw-bold">+₱${parseFloat(addon.price).toFixed(2)}</span>
-                            <i class="fas fa-check-circle ms-2 d-none"></i>
-                        </div>
+                    <div class="add-on-info">
+                        <span class="add-on-name">${addon.name}</span>
+                        ${addon.description ? `<span class="add-on-desc">${addon.description}</span>` : ''}
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <span class="add-on-price">+₱${parseFloat(addon.price).toFixed(2)}</span>
+                        <i class="fas fa-check-circle"></i>
                     </div>
                 `;
                 
@@ -713,57 +965,37 @@
                 addOnsList.appendChild(addonElement);
             });
         } else {
-            // Hide add-ons section if no add-ons available
             addOnsSection.classList.add('d-none');
         }
     }
 
-    /**
-     * Change quantity in modal
-     */
     function changeModalQuantity(delta) {
         if (!currentProduct) return;
         
         const input = document.getElementById('modalQuantity');
         let qty = parseInt(input.value) || 1;
-        
-        // Calculate new quantity
         qty = qty + delta;
-        
-        // Ensure quantity is within bounds
         qty = Math.max(1, Math.min(currentProduct.stock, qty));
-        
         input.value = qty;
         updateModalTotalPrice();
     }
 
-    /**
-     * Toggle add-on selection
-     */
     function toggleAddOn(addOnElement) {
         const id = addOnElement.dataset.addonId;
         const name = addOnElement.dataset.addonName;
         const price = parseFloat(addOnElement.dataset.addonPrice);
-        const checkIcon = addOnElement.querySelector('.fa-check-circle');
 
         if (addOnElement.classList.contains('selected')) {
-            // Deselect
             addOnElement.classList.remove('selected');
-            checkIcon.classList.add('d-none');
             selectedAddOns = selectedAddOns.filter(a => a.id !== id);
         } else {
-            // Select
             addOnElement.classList.add('selected');
-            checkIcon.classList.remove('d-none');
             selectedAddOns.push({ id, name, price });
         }
         
         updateModalTotalPrice();
     }
 
-    /**
-     * Update total price display
-     */
     function updateModalTotalPrice() {
         if (!currentProduct) return;
         
@@ -774,9 +1006,6 @@
         document.getElementById('modalTotalPrice').textContent = `₱${total.toFixed(2)}`;
     }
 
-    /**
-     * Add to cart from modal
-     */
     function modalAddToCart() {
         if (!currentProduct) {
             showToast("No product selected", true);
@@ -786,10 +1015,8 @@
         const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
         const button = document.getElementById('modalAddToCart');
         
-        // Disable button and show loading
         button.disabled = true;
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Adding...';
+        button.classList.add('loading');
 
         fetch("{{ route('cart.add') }}", {
             method: "POST",
@@ -808,35 +1035,22 @@
         .then(data => {
             if (data.success) {
                 updateCartCount(data.cart_count);
-                
-                let message = `${currentProduct.name} (${qty}) added to cart!`;
-                if (selectedAddOns.length > 0) {
-                    message += ` with ${selectedAddOns.length} add-on(s)`;
-                }
-                showToast(message);
-                
-                setTimeout(() => {
-                    if (modalInstance) {
-                        modalInstance.hide();
-                    }
-                }, 1000);
+                showToast(`${currentProduct.name} added!`);
+                setTimeout(() => modalInstance?.hide(), 1000);
             } else {
                 showToast(data.message || "Failed to add to cart", true);
             }
         })
         .catch(error => {
-            console.error('Error adding to cart:', error);
+            console.error('Error:', error);
             showToast("Error adding to cart", true);
         })
         .finally(() => {
             button.disabled = false;
-            button.innerHTML = originalHTML;
+            button.classList.remove('loading');
         });
     }
 
-    /**
-     * Buy now from modal - FIXED VERSION
-     */
     function modalBuyNow() {
         if (!currentProduct) {
             showToast("No product selected", true);
@@ -846,24 +1060,16 @@
         const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
         const button = document.getElementById('modalBuyNow');
         
-        // Check if user is logged in
         const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
         if (!isLoggedIn) {
             showToast("Please login to continue", true);
-            setTimeout(() => {
-                window.location.href = "{{ route('login') }}";
-            }, 1500);
+            setTimeout(() => window.location.href = "{{ route('login') }}", 1500);
             return;
         }
         
-        // Disable button and show loading
         button.disabled = true;
-        const originalHTML = button.innerHTML;
-        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        button.classList.add('loading');
 
-        console.log('Buy Now - Starting request for product:', currentProduct.id);
-
-        // Make AJAX request to buy-now endpoint
         fetch("{{ route('cart.buy-now') }}", {
             method: "POST",
             headers: {
@@ -879,145 +1085,54 @@
             })
         })
         .then(response => {
-            console.log('Buy Now - Response received, status:', response.status);
-            console.log('Buy Now - Response OK:', response.ok);
-            
-            // Check if response is OK (status 200-299)
             if (!response.ok) {
-                // Try to parse error response
                 return response.json().then(errorData => {
-                    console.error('Buy Now - Server error:', errorData);
                     throw new Error(errorData.message || `Server error: ${response.status}`);
-                }).catch(parseError => {
-                    // If JSON parsing fails, throw generic error
-                    console.error('Buy Now - Failed to parse error response:', parseError);
-                    throw new Error(`Server error: ${response.status}`);
                 });
             }
-            
-            // Parse successful response
             return response.json();
         })
         .then(data => {
-            console.log('Buy Now - Success data:', data);
-            
             if (data.success) {
-                console.log('Buy Now - Success! Redirecting to checkout...');
-                
                 showToast("Redirecting to checkout...");
-                
-                // Close modal immediately
-                if (modalInstance) {
-                    modalInstance.hide();
-                }
-                
-                // Get redirect URL from response or use default
+                modalInstance?.hide();
                 const checkoutUrl = data.redirect_url || "{{ route('checkout.index') }}";
-                console.log('Buy Now - Final redirect URL:', checkoutUrl);
-                
-                // Force redirect after short delay
-                setTimeout(() => {
-                    console.log('Buy Now - Executing redirect NOW');
-                    window.location.href = checkoutUrl;
-                }, 300);
-                
+                setTimeout(() => window.location.href = checkoutUrl, 300);
             } else {
-                // Server returned success:false
-                console.error('Buy Now - Server returned success:false', data);
                 showToast(data.message || "Failed to process order", true);
                 button.disabled = false;
-                button.innerHTML = originalHTML;
+                button.classList.remove('loading');
             }
         })
         .catch(error => {
-            console.error('Buy Now - Fetch error:', error);
-            console.error('Buy Now - Error stack:', error.stack);
-            
-            showToast(error.message || "Error processing order. Please try again.", true);
+            console.error('Error:', error);
+            showToast(error.message || "Error processing order", true);
             button.disabled = false;
-            button.innerHTML = originalHTML;
+            button.classList.remove('loading');
         });
     }
 
-    /**
-     * Update cart count badge
-     */
     function updateCartCount(newCount) {
         const badge = document.querySelector('.cart-badge');
-        if (badge) {
-            badge.textContent = newCount;
-            badge.style.animation = 'none';
-            setTimeout(() => {
-                badge.style.animation = 'pulse 0.6s';
-            }, 10);
-        }
+        if (badge) badge.textContent = newCount;
     }
 
-    /**
-     * Show toast notification
-     */
     function showToast(message, isError = false) {
         const toastId = isError ? "errorToast" : "cartToast";
         const toastEl = document.getElementById(toastId);
-        
-        if (!toastEl) {
-            console.error('Toast element not found:', toastId);
-            return;
-        }
-        
+        if (!toastEl) return;
         const messageSpan = toastEl.querySelector("span");
-        if (messageSpan) {
-            messageSpan.textContent = message;
-        }
-        
-        const toast = new bootstrap.Toast(toastEl, {
-            autohide: true,
-            delay: 3000
-        });
+        if (messageSpan) messageSpan.textContent = message;
+        const toast = new bootstrap.Toast(toastEl, { autohide: true, delay: 3000 });
         toast.show();
     }
 
-    /**
-     * Initialize modal event listeners
-     */
     document.addEventListener("DOMContentLoaded", () => {
-        console.log('Initializing modal event listeners');
-        console.log('Buy Now route:', "{{ route('cart.buy-now') }}");
-        console.log('Checkout route:', "{{ route('checkout.index') }}");
-        
-        // Quantity buttons
-        const decreaseBtn = document.getElementById("modalDecreaseBtn");
-        const increaseBtn = document.getElementById("modalIncreaseBtn");
-        
-        if (decreaseBtn) {
-            decreaseBtn.addEventListener("click", () => changeModalQuantity(-1));
-        }
-        
-        if (increaseBtn) {
-            increaseBtn.addEventListener("click", () => changeModalQuantity(1));
-        }
-        
-        // Action buttons
-        const addToCartBtn = document.getElementById("modalAddToCart");
-        const buyNowBtn = document.getElementById("modalBuyNow");
-        
-        if (addToCartBtn) {
-            console.log('Add to Cart button found, binding click event');
-            addToCartBtn.addEventListener("click", modalAddToCart);
-        } else {
-            console.error('Add to Cart button NOT found!');
-        }
-        
-        if (buyNowBtn) {
-            console.log('Buy Now button found, binding click event');
-            buyNowBtn.addEventListener("click", modalBuyNow);
-        } else {
-            console.error('Buy Now button NOT found!');
-        }
-        
-        console.log('Modal event listeners initialized');
+        document.getElementById("modalDecreaseBtn")?.addEventListener("click", () => changeModalQuantity(-1));
+        document.getElementById("modalIncreaseBtn")?.addEventListener("click", () => changeModalQuantity(1));
+        document.getElementById("modalAddToCart")?.addEventListener("click", modalAddToCart);
+        document.getElementById("modalBuyNow")?.addEventListener("click", modalBuyNow);
     });
 
-    // Make function globally accessible
     window.openProductModal = openProductModal;
 </script>

@@ -395,21 +395,21 @@
                 <div class="price-range-container">
                     <div class="price-values">
                         <span>₱20</span>
-                        <span>₱1,000</span>
+                        <span>₱2,000</span>
                     </div>
                     <input type="range" 
                            class="price-slider" 
                            id="priceRange" 
                            min="20" 
-                           max="1000" 
-                           value="1000">
+                           max="2000" 
+                           value="2000">
                     <div class="max-price-input">
                         <span>Max:</span>
                         <input type="number" 
                                id="maxPrice" 
                                min="20" 
-                               max="1000" 
-                               value="1000">
+                               max="2000" 
+                               value="2000">
                     </div>
                 </div>
             </div>
@@ -599,7 +599,7 @@
     const ShopState = {
         filters: {
             category: 'all',
-            price: 1000,
+            price: 2000,
             search: '',
             sort: 'default'
         },
@@ -633,7 +633,7 @@
         resetFilters() {
             this.filters = {
                 category: 'all',
-                price: 1000,
+                price: 2000,
                 search: '',
                 sort: 'default'
             };
@@ -721,10 +721,10 @@
                 ShopState.elements.productSearch.value = '';
             }
             if (ShopState.elements.priceRange) {
-                ShopState.elements.priceRange.value = 1000;
+                ShopState.elements.priceRange.value = 2000;
             }
             if (ShopState.elements.maxPrice) {
-                ShopState.elements.maxPrice.value = 1000;
+                ShopState.elements.maxPrice.value = 2000;
             }
             if (ShopState.elements.sortSelect) {
                 ShopState.elements.sortSelect.value = 'default';
@@ -800,7 +800,7 @@
         
         constrainValue(value) {
             if (value < 20) return 20;
-            if (value > 1000) return 1000;
+            if (value > 2000) return 2000;
             return value;
         }
     };

@@ -18,6 +18,7 @@
             overflow: hidden;
         }
         
+        
         .receipt-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -59,6 +60,76 @@
             border-bottom: none;
         }
         
+         .payment-wrapper {
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 1rem;
+            padding-top: 2rem;
+        }
+
+        /* Progress Steps */
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+
+        .progress-steps::before {
+            content: '';
+            position: absolute;
+            top: 20px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: #e0e6ed;
+            z-index: 0;
+        }
+
+        .step {
+            flex: 1;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: white;
+            border: 2px solid #e0e6ed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 0.5rem;
+            font-weight: 600;
+            color: #94a3b8;
+            transition: all 0.3s ease;
+        }
+
+        .step.active .step-circle {
+            background: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .step.completed .step-circle {
+            background: #10b981;
+            border-color: #10b981;
+            color: white;
+        }
+
+        .step-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: 500;
+        }
+
+        .step.active .step-label {
+            color: #0f172a;
+        }
+
         .section-title {
             color: #667eea;
             font-weight: bold;
@@ -423,6 +494,23 @@
 @include('components.signup_modal')
 @include('components.navbar')
 
+<div class="payment-wrapper">
+    <!-- Progress Steps -->
+    <div class="progress-steps">
+        <div class="step completed">
+            <div class="step-circle"><i class="bi bi-check"></i></div>
+            <div class="step-label">Order</div>
+        </div>
+        <div class="step completed">
+             <div class="step-circle"><i class="bi bi-check"></i></div>
+            <div class="step-label">Payment</div>
+        </div>
+        <div class="step active">
+            <div class="step-circle">3</div>
+            <div class="step-label">Complete</div>
+        </div>
+    </div>
+    </div>
 <!-- Image Modal -->
 <div id="imageModal" class="image-modal">
     <span class="modal-close">&times;</span>
@@ -446,18 +534,35 @@
 
 <section class="thankyou py-5">
     <div class="container">
-        <!-- Success Message -->
-        <div class="row mb-4">
-            <div class="col-12 text-center">
-                <div class="alert alert-success d-flex align-items-center justify-content-center" role="alert">
-                    <i class="bi bi-check-circle-fill me-2" style="font-size: 1.5rem;"></i>
-                    <div>
-                        <h4 class="alert-heading mb-0">Order Placed Successfully!</h4>
-                        <p class="mb-0">Thank you for your purchase. Your order has been confirmed.</p>
-                    </div>
-                </div>
+            <!-- Success Message -->
+    <!-- ================= SUCCESS POPUP MODAL ================= -->
+<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content text-center p-4 border-0 shadow-lg" style="border-radius:15px;">
+            
+            <div class="modal-body">
+                <i class="bi bi-check-circle-fill text-success" 
+                   style="font-size: 4rem;"></i>
+
+                <h3 class="mt-3 fw-bold text-success">
+                    Order Placed Successfully!
+                </h3>
+
+                <p class="text-muted mb-2">
+                    Thank you for your purchase. Your order has been confirmed.
+                </p>
+
+                <p class="small text-muted mb-0">
+                    This message will close automatically in 
+                    <span id="countdown">3</span> seconds.
+                </p>
             </div>
+
         </div>
+    </div>
+</div>
+<!-- ======================================================= -->
+
 
         <!-- Receipt Container -->
         <div class="receipt-container" id="receiptContainer">
@@ -897,6 +1002,35 @@
             setTimeout(() => toastContainer.remove(), 300);
         }, 3000);
     }
+
+    // ================= SUCCESS MODAL AUTO SHOW + AUTO CLOSE =================
+document.addEventListener('DOMContentLoaded', function () {
+
+    const modalElement = document.getElementById('successModal');
+    const successModal = new bootstrap.Modal(modalElement, {
+        backdrop: 'static',
+        keyboard: false
+    });
+
+    // Show modal automatically
+    successModal.show();
+
+    let seconds = 3;
+    const countdownElement = document.getElementById('countdown');
+
+    const countdownInterval = setInterval(() => {
+        seconds--;
+        countdownElement.textContent = seconds;
+
+        if (seconds <= 0) {
+            clearInterval(countdownInterval);
+            successModal.hide();
+        }
+    }, 1000);
+
+});
+// ========================================================================
+
 </script>
 </body>
 </html>

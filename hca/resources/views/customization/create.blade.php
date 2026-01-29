@@ -656,7 +656,7 @@
                                 Reference Product
                             </div>
                             <div class="product-preview-flex">
-                                <img src="{{ asset('uploads/' . $referenceProduct->image) }}" 
+                                <img src="{{ asset('asset/images/' . $referenceProduct->image) }}" 
                                      alt="{{ $referenceProduct->name }}"
                                      onerror="this.src='{{ asset('images/placeholder.jpg') }}'">
                                 <div class="product-info">
@@ -745,7 +745,7 @@
                                 <i class="fas fa-paper-plane"></i>
                                 Submit Customization Request
                             </button>
-                            <a href="{{ route('customization.create') }}" class="btn btn-secondary">
+                            <!-- <a href="{{ route('customization.create') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-left"></i>
                                 Change Category
                             </a>
@@ -753,7 +753,7 @@
                              <a href="{{ route('customization.my-customizations') }}" class="btn btn-secondary">
                                 <i class="fas fa-arrow-right"></i>
                                 View My Customization
-                            </a>
+                            </a> -->
                         </div>
                     </form>
                 @endif
