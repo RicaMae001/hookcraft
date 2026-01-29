@@ -788,7 +788,7 @@ class AdminController extends Controller
             // 1. First update order status to Cancelled
             DB::table('orders')->where('id', $id)->update([
                 'delivery_status' => 'Cancelled',
-                'payment_status' => 'Cancelled'
+                'payment_status' => 'Unsuccessful',
             ]);
             
             // 2. Send cancellation notifications BEFORE deletion - FIXED: Changed delivery_coordinator_id to coordinator_id

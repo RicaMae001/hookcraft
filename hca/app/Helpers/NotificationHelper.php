@@ -168,47 +168,54 @@ class NotificationHelper
      * When delivery status changes
      * Notifies admin, customer, and delivery coordinator if applicable
      */
-    public static function deliveryStatusChanged($orderId, $orderNumber, $oldStatus, $newStatus, $userId = null, $coordinatorId = null)
-    {
+    public static function deliveryStatusChanged(
+        $orderId, 
+        $orderNumber, 
+        $oldStatus, 
+        $newStatus, 
+        $userId = null, 
+        $coordinatorId = null
+    ) {
         try {
             // Notify customer
-            self::getService()->notifyDeliveryStatusChanged($orderId, $orderNumber, $newStatus, $userId);
-            
+            if ($userId) {
+                self::getService()->create([
+                    'recipient_type' => 'user',
+                    'recipient_id'   => $userId,
+                    'type'           => 'delivery_status_changed',
+                    'title'          => 'Delivery Status Updated',
+                    'message'        => "Order {$orderNumber}: {$oldStatus} → {$newStatus}",
+                    'entity_type'    => 'order',
+                    'entity_id'      => $orderId,
+                    'action_url'     => "/user/orders/{$orderId}",
+                    'priority'       => 'normal',
+                ]);
+            }
+
             // Notify admin
             self::getService()->create([
                 'recipient_type' => 'admin',
-                'type' => 'delivery_status_changed',
-                'title' => 'Delivery Status Updated',
-                'message' => "Order {$orderNumber} delivery status changed: {$oldStatus} → {$newStatus}",
-                'entity_type' => 'order',
-                'entity_id' => $orderId,
-                'action_url' => "/admin/orders/{$orderId}",
-                'priority' => 'normal',
-                'metadata' => [
-                    'order_id' => $orderId,
-                    'order_number' => $orderNumber,
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus
-                ]
+                'type'           => 'delivery_status_changed',
+                'title'          => 'Delivery Status Updated',
+                'message'        => "Order {$orderNumber}: {$oldStatus} → {$newStatus}",
+                'entity_type'    => 'order',
+                'entity_id'      => $orderId,
+                'action_url'     => "/admin/orders/{$orderId}",
+                'priority'       => 'normal',
             ]);
 
             // If delivery coordinator exists and status is relevant, notify them too
-            if ($coordinatorId && in_array($newStatus, ['Pending', 'Out for Delivery'])) {
+            if (!empty($coordinatorId) && in_array($newStatus, ['Pending', 'Out for Delivery', 'Delivered', 'Cancelled'])) {
                 self::getService()->create([
                     'recipient_type' => 'delivery',
-                    'recipient_id' => $coordinatorId,
-                    'type' => 'delivery_status_changed',
-                    'title' => 'Delivery Status Updated',
-                    'message' => "Order {$orderNumber} status changed to: {$newStatus}",
-                    'entity_type' => 'order',
-                    'entity_id' => $orderId,
-                    'action_url' => "/delivery/deliveries",
-                    'priority' => 'normal',
-                    'metadata' => [
-                        'order_id' => $orderId,
-                        'order_number' => $orderNumber,
-                        'new_status' => $newStatus
-                    ]
+                    'recipient_id'   => $coordinatorId,
+                    'type'           => 'delivery_status_changed',
+                    'title'          => 'Order Status Updated',
+                    'message'        => "Order {$orderNumber} status: {$newStatus}",
+                    'entity_type'    => 'order',
+                    'entity_id'      => $orderId,
+                    'action_url'     => "/delivery/deliveries",
+                    'priority'       => 'normal',
                 ]);
             }
             
@@ -219,10 +226,11 @@ class NotificationHelper
                 'user_id' => $userId,
                 'coordinator_id' => $coordinatorId
             ]);
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to send delivery status notification', [
                 'order_id' => $orderId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
@@ -290,32 +298,134 @@ class NotificationHelper
     /**
      * When order is cancelled
      * ENHANCED: Notifies ALL parties: admin, delivery coordinator (if assigned), and customer
+     * SAFE: works even if delivery coordinator is NOT assigned
+     * FIXED: Uses correct database column name (coordinator_id) and broadcasts to ALL admins
      */
-    public static function orderCancelled($orderId, $customerName, $reason = null, $userId = null, $coordinatorId = null)
-    {
+    public static function orderCancelled(
+        $orderId,
+        $customerName,
+        $reason = 'Order cancelled',
+        $userId = null,
+        $coordinatorId = null
+    ) {
         try {
-            // If coordinator ID is not provided, try to get it from the order
-            if ($coordinatorId === null) {
+            Log::info('Starting order cancellation notification process', [
+                'order_id' => $orderId,
+                'customer_name' => $customerName,
+                'reason' => $reason,
+                'user_id' => $userId,
+                'coordinator_id' => $coordinatorId
+            ]);
+
+            // Fetch order only if needed
+            if ($coordinatorId === null || $userId === null) {
                 $order = DB::table('orders')->where('id', $orderId)->first();
-                if ($order && $order->delivery_coordinator_id) {
-                    $coordinatorId = $order->delivery_coordinator_id;
+
+                if ($order) {
+                    $userId = $userId ?? $order->user_id;
+                    $coordinatorId = $coordinatorId ?? $order->coordinator_id; // FIXED: was delivery_coordinator_id
+                    
+                    Log::info('Fetched order data', [
+                        'order_id' => $orderId,
+                        'user_id' => $userId,
+                        'coordinator_id' => $coordinatorId
+                    ]);
                 }
             }
 
-            // Use the enhanced service method that notifies all parties
-            self::getService()->orderCancelled($orderId, $customerName, $reason, $userId, $coordinatorId);
-            
-            Log::info('Order cancelled notification sent to all parties', [
+            /* ---------- ADMIN (ALWAYS) - BROADCAST TO ALL ADMINS ---------- */
+            $adminNotificationId = self::getService()->create([
+                'recipient_type' => 'admin',
+                'recipient_id'   => null,  // null means ALL admins (broadcast)
+                'type'           => 'order_cancelled',
+                'title'          => 'Order Cancelled',
+                'message'        => "Order #{$orderId} ({$customerName}) was cancelled. Reason: {$reason}",
+                'entity_type'    => 'order',
+                'entity_id'      => $orderId,
+                'action_url'     => "/admin/orders/{$orderId}",
+                'priority'       => 'high',
+                'metadata'       => [
+                    'order_id' => $orderId,
+                    'customer_name' => $customerName,
+                    'reason' => $reason,
+                ],
+            ]);
+
+            Log::info('✅ Admin notification created for order cancellation', [
+                'notification_id' => $adminNotificationId,
+                'order_id' => $orderId,
+                'customer_name' => $customerName,
+                'reason' => $reason
+            ]);
+
+            /* ---------- USER ---------- */
+            if ($userId) {
+                $userNotificationId = self::getService()->create([
+                    'recipient_type' => 'user',
+                    'recipient_id'   => $userId,
+                    'type'           => 'order_cancelled',
+                    'title'          => 'Order Cancelled',
+                    'message'        => "Your order #{$orderId} has been cancelled. Reason: {$reason}",
+                    'entity_type'    => 'order',
+                    'entity_id'      => $orderId,
+                    'action_url'     => "/user/orders/{$orderId}",
+                    'priority'       => 'high',
+                    'metadata'       => [
+                        'order_id' => $orderId,
+                        'reason'   => $reason,
+                    ],
+                ]);
+
+                Log::info('✅ Customer notification created for order cancellation', [
+                    'notification_id' => $userNotificationId,
+                    'order_id' => $orderId,
+                    'user_id' => $userId
+                ]);
+            }
+
+            /* ---------- DELIVERY COORDINATOR (ONLY IF ASSIGNED) ---------- */
+            if (!empty($coordinatorId)) {
+                $coordinatorNotificationId = self::getService()->create([
+                    'recipient_type' => 'delivery',
+                    'recipient_id'   => $coordinatorId,
+                    'type'           => 'order_cancelled',
+                    'title'          => 'Assigned Order Cancelled',
+                    'message'        => "Order #{$orderId} ({$customerName}) has been cancelled.",
+                    'entity_type'    => 'order',
+                    'entity_id'      => $orderId,
+                    'action_url'     => "/delivery/deliveries",
+                    'priority'       => 'high',
+                    'metadata'       => [
+                        'order_id' => $orderId,
+                        'reason'   => $reason,
+                    ],
+                ]);
+
+                Log::info('✅ Delivery coordinator notification created for order cancellation', [
+                    'notification_id' => $coordinatorNotificationId,
+                    'order_id' => $orderId,
+                    'coordinator_id' => $coordinatorId
+                ]);
+            }
+
+            Log::info('✅✅✅ ALL order cancellation notifications sent successfully', [
                 'order_id' => $orderId,
                 'user_id' => $userId,
                 'coordinator_id' => $coordinatorId,
-                'reason' => $reason
+                'admin_notified' => true,
+                'user_notified' => !empty($userId),
+                'coordinator_notified' => !empty($coordinatorId)
             ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to send order cancelled notification', [
+
+        } catch (\Throwable $e) {
+            Log::error('❌ Order cancelled notification failed', [
                 'order_id' => $orderId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
+            
+            // Re-throw to ensure the error is visible
+            throw $e;
         }
     }
 
@@ -683,43 +793,41 @@ class NotificationHelper
     public static function checkProductStock($productId, $productName, $currentStock, $lowStockThreshold = 5)
     {
         try {
-            if ($currentStock <= $lowStockThreshold && $currentStock > 0) {
-                // Low stock warning
-                self::getService()->notifyLowStock($productId, $productName, $currentStock);
-                
-                Log::info('Low stock notification sent', [
-                    'product_id' => $productId,
-                    'product_name' => $productName,
-                    'current_stock' => $currentStock
-                ]);
-            } elseif ($currentStock == 0) {
-                // Out of stock alert
+            if ($currentStock <= $lowStockThreshold) {
+                $priority = $currentStock == 0 ? 'urgent' : 'high';
+                $message = $currentStock == 0 
+                    ? "{$productName} is out of stock! Please restock immediately."
+                    : "{$productName} stock is low ({$currentStock} remaining).";
+
                 self::getService()->create([
                     'recipient_type' => 'admin',
-                    'type' => 'product_out_of_stock',
-                    'title' => 'Product Out of Stock',
-                    'message' => "{$productName} is now out of stock! Please restock immediately.",
+                    'type' => $currentStock == 0 ? 'product_out_of_stock' : 'low_stock',
+                    'title' => $currentStock == 0 ? 'Product Out of Stock' : 'Low Stock Alert',
+                    'message' => $message,
                     'entity_type' => 'product',
                     'entity_id' => $productId,
                     'action_url' => "/admin/products/{$productId}/edit",
-                    'priority' => 'urgent',
+                    'priority' => $priority,
                     'metadata' => [
                         'product_id' => $productId,
                         'product_name' => $productName,
-                        'current_stock' => 0,
+                        'current_stock' => $currentStock,
                         'action' => 'restock_needed'
                     ]
                 ]);
                 
-                Log::info('Out of stock notification sent', [
+                Log::info('Stock notification sent', [
                     'product_id' => $productId,
-                    'product_name' => $productName
+                    'product_name' => $productName,
+                    'current_stock' => $currentStock,
+                    'threshold' => $lowStockThreshold
                 ]);
             }
-        } catch (\Exception $e) {
+        } catch (\Throwable $e) {
             Log::error('Failed to send stock notification', [
                 'product_id' => $productId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
         }
     }
