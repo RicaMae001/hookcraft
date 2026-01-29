@@ -3,11 +3,15 @@
 namespace App\Helpers;
 
 use App\Services\NotificationService;
+use Illuminate\Support\Facades\Log;
 
 class NotificationHelper
 {
     private static $service;
 
+    /**
+     * Get or create notification service instance
+     */
     private static function getService()
     {
         if (!self::$service) {
@@ -17,169 +21,504 @@ class NotificationHelper
     }
 
     /**
-     * Example: When a new order is created
-     * Call this in your order creation logic
+     * When a new order is created
+     * Notifies admin and optionally the customer
      */
     public static function orderCreated($orderId, $customerName, $total, $userId = null)
     {
-        self::getService()->notifyOrderCreated($orderId, $customerName, $total);
-        
-        // Also notify the customer if userId is provided
-        if ($userId) {
-            self::getService()->create([
-                'recipient_type' => 'user',
-                'recipient_id' => $userId,
-                'type' => 'order_created',
-                'title' => 'Order Confirmed',
-                'message' => 'Your order has been received and is being processed.',
-                'entity_type' => 'order',
-                'entity_id' => $orderId,
-                'action_url' => "/user/orders/{$orderId}",
-                'priority' => 'normal',
+        try {
+            // Notify admins
+            self::getService()->notifyOrderCreated($orderId, $customerName, $total);
+            
+            // Also notify the customer if userId is provided
+            if ($userId) {
+                self::getService()->create([
+                    'recipient_type' => 'user',
+                    'recipient_id' => $userId,
+                    'type' => 'order_created',
+                    'title' => 'Order Confirmed',
+                    'message' => 'Your order has been received and is being processed. Thank you for your purchase!',
+                    'entity_type' => 'order',
+                    'entity_id' => $orderId,
+                    'action_url' => "/user/orders/{$orderId}",
+                    'priority' => 'normal',
+                    'metadata' => [
+                        'order_id' => $orderId,
+                        'customer_name' => $customerName,
+                        'total' => $total,
+                        'action' => 'order_created'
+                    ]
+                ]);
+                
+                Log::info('Order created notification sent', [
+                    'order_id' => $orderId,
+                    'user_id' => $userId
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send order created notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
             ]);
         }
     }
 
     /**
-     * Example: When payment proof is uploaded
+     * When payment proof is uploaded
+     * Notifies admin to review the payment
      */
     public static function paymentProofUploaded($orderId, $orderNumber, $amount)
     {
-        self::getService()->create([
-            'recipient_type' => 'admin',
-            'type' => 'payment_proof_uploaded',
-            'title' => 'Payment Proof Uploaded',
-            'message' => "Customer uploaded payment proof for order {$orderNumber} (₱" . number_format($amount, 2) . ")",
-            'entity_type' => 'order',
-            'entity_id' => $orderId,
-            'action_url' => "/admin/orders/{$orderId}",
-            'priority' => 'high',
-        ]);
-    }
-
-    /**
-     * Example: When payment is verified
-     */
-    public static function paymentVerified($orderId, $orderNumber, $amount, $userId)
-    {
-        // Notify admins
-        self::getService()->notifyPaymentReceived($orderId, $orderNumber, $amount);
-        
-        // Notify customer
-        self::getService()->create([
-            'recipient_type' => 'user',
-            'recipient_id' => $userId,
-            'type' => 'payment_received',
-            'title' => 'Payment Confirmed',
-            'message' => 'Your payment has been verified. Your order will be processed shortly.',
-            'entity_type' => 'order',
-            'entity_id' => $orderId,
-            'action_url' => "/user/orders/{$orderId}",
-            'priority' => 'normal',
-        ]);
-    }
-
-    /**
-     * Example: When delivery status changes
-     */
-    public static function deliveryStatusChanged($orderId, $orderNumber, $oldStatus, $newStatus, $userId = null)
-    {
-        self::getService()->notifyDeliveryStatusChanged($orderId, $orderNumber, $newStatus, $userId);
-    }
-
-    /**
-     * Example: When order is assigned to delivery coordinator
-     */
-    public static function deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName)
-    {
-        self::getService()->deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName);
-    }
-
-    /**
-     * Example: When product stock is low
-     */
-    public static function checkProductStock($productId, $productName, $currentStock, $lowStockThreshold = 5)
-    {
-        if ($currentStock <= $lowStockThreshold && $currentStock > 0) {
-            self::getService()->notifyLowStock($productId, $productName, $currentStock);
-        } elseif ($currentStock == 0) {
+        try {
             self::getService()->create([
                 'recipient_type' => 'admin',
-                'type' => 'product_out_of_stock',
-                'title' => 'Product Out of Stock',
-                'message' => "{$productName} is now out of stock!",
-                'entity_type' => 'product',
-                'entity_id' => $productId,
-                'action_url' => "/admin/products/{$productId}/edit",
-                'priority' => 'urgent',
+                'type' => 'payment_proof_uploaded',
+                'title' => 'Payment Proof Uploaded',
+                'message' => "Customer uploaded payment proof for order {$orderNumber} (₱" . number_format($amount, 2) . ")",
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/admin/orders/{$orderId}",
+                'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'order_number' => $orderNumber,
+                    'amount' => $amount,
+                    'action' => 'payment_proof_uploaded'
+                ]
+            ]);
+            
+            Log::info('Payment proof uploaded notification sent', [
+                'order_id' => $orderId,
+                'order_number' => $orderNumber
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send payment proof notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
             ]);
         }
     }
 
     /**
-     * Example: When a new chat message is received
+     * When payment is verified
+     * Notifies both admin and customer
+     */
+    public static function paymentVerified($orderId, $orderNumber, $amount, $userId)
+    {
+        try {
+            // Notify admins
+            self::getService()->notifyPaymentReceived($orderId, $orderNumber, $amount);
+            
+            // Notify customer
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $userId,
+                'type' => 'payment_received',
+                'title' => 'Payment Confirmed',
+                'message' => 'Your payment has been verified. Your order will be processed shortly.',
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/user/orders/{$orderId}",
+                'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'order_number' => $orderNumber,
+                    'amount' => $amount,
+                    'action' => 'payment_verified'
+                ]
+            ]);
+            
+            Log::info('Payment verified notification sent', [
+                'order_id' => $orderId,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send payment verified notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When delivery status changes
+     * Notifies admin and customer
+     */
+    public static function deliveryStatusChanged($orderId, $orderNumber, $oldStatus, $newStatus, $userId = null)
+    {
+        try {
+            self::getService()->notifyDeliveryStatusChanged($orderId, $orderNumber, $newStatus, $userId);
+            
+            Log::info('Delivery status changed notification sent', [
+                'order_id' => $orderId,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus,
+                'user_id' => $userId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send delivery status notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When order is assigned to delivery coordinator
+     * Notifies the delivery coordinator only
+     */
+    public static function deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName)
+    {
+        try {
+            self::getService()->deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName);
+            
+            Log::info('Delivery assignment notification sent', [
+                'order_id' => $orderId,
+                'coordinator_id' => $coordinatorId,
+                'coordinator_name' => $coordinatorName
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send delivery assignment notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Check product stock and notify if low or out of stock
+     * This can be called after product updates or order placements
+     */
+    public static function checkProductStock($productId, $productName, $currentStock, $lowStockThreshold = 5)
+    {
+        try {
+            if ($currentStock <= $lowStockThreshold && $currentStock > 0) {
+                // Low stock warning
+                self::getService()->notifyLowStock($productId, $productName, $currentStock);
+                
+                Log::info('Low stock notification sent', [
+                    'product_id' => $productId,
+                    'product_name' => $productName,
+                    'current_stock' => $currentStock
+                ]);
+            } elseif ($currentStock == 0) {
+                // Out of stock alert
+                self::getService()->create([
+                    'recipient_type' => 'admin',
+                    'type' => 'product_out_of_stock',
+                    'title' => 'Product Out of Stock',
+                    'message' => "{$productName} is now out of stock! Please restock immediately.",
+                    'entity_type' => 'product',
+                    'entity_id' => $productId,
+                    'action_url' => "/admin/products/{$productId}/edit",
+                    'priority' => 'urgent',
+                    'metadata' => [
+                        'product_id' => $productId,
+                        'product_name' => $productName,
+                        'current_stock' => $currentStock,
+                        'action' => 'out_of_stock'
+                    ]
+                ]);
+                
+                Log::warning('Out of stock notification sent', [
+                    'product_id' => $productId,
+                    'product_name' => $productName
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send stock notification', [
+                'product_id' => $productId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * When a new chat message is received
+     * Notifies the recipient (admin or user)
      */
     public static function newChatMessage($sessionId, $senderName, $message, $recipientType, $recipientId = null)
     {
-        $messagePreview = strlen($message) > 50 ? substr($message, 0, 50) . '...' : $message;
-        
-        self::getService()->create([
-            'recipient_type' => $recipientType,
-            'recipient_id' => $recipientId,
-            'type' => 'chat_message',
-            'title' => 'New Message from ' . $senderName,
-            'message' => $messagePreview,
-            'entity_type' => 'chat_session',
-            'entity_id' => $sessionId,
-            'action_url' => $recipientType === 'admin' ? "/admin/chat/{$sessionId}" : "/chat",
-            'priority' => 'normal',
-        ]);
+        try {
+            $messagePreview = strlen($message) > 50 ? substr($message, 0, 50) . '...' : $message;
+            
+            self::getService()->create([
+                'recipient_type' => $recipientType,
+                'recipient_id' => $recipientId,
+                'type' => 'chat_message',
+                'title' => 'New Message from ' . $senderName,
+                'message' => $messagePreview,
+                'entity_type' => 'chat_session',
+                'entity_id' => $sessionId,
+                'action_url' => $recipientType === 'admin' ? "/admin/chat/{$sessionId}" : "/chat",
+                'priority' => 'normal',
+                'metadata' => [
+                    'session_id' => $sessionId,
+                    'sender_name' => $senderName,
+                    'full_message' => $message,
+                    'action' => 'chat_message'
+                ]
+            ]);
+            
+            Log::info('Chat message notification sent', [
+                'session_id' => $sessionId,
+                'recipient_type' => $recipientType,
+                'recipient_id' => $recipientId
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send chat message notification', [
+                'session_id' => $sessionId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
-     * Example: System alert notification
+     * Send a system alert notification
+     * Flexible method for custom notifications
      */
     public static function systemAlert($title, $message, $recipientType = 'admin', $recipientId = null, $priority = 'normal')
     {
-        self::getService()->create([
-            'recipient_type' => $recipientType,
-            'recipient_id' => $recipientId,
-            'type' => 'system_alert',
-            'title' => $title,
-            'message' => $message,
-            'priority' => $priority,
-        ]);
+        try {
+            self::getService()->create([
+                'recipient_type' => $recipientType,
+                'recipient_id' => $recipientId,
+                'type' => 'system_alert',
+                'title' => $title,
+                'message' => $message,
+                'priority' => $priority,
+                'metadata' => [
+                    'action' => 'system_alert',
+                    'timestamp' => now()->toDateTimeString()
+                ]
+            ]);
+            
+            Log::info('System alert notification sent', [
+                'title' => $title,
+                'recipient_type' => $recipientType,
+                'recipient_id' => $recipientId,
+                'priority' => $priority
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send system alert notification', [
+                'title' => $title,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
-     * Example: When order is updated
+     * When order is updated
+     * Notifies admin about changes
      */
     public static function orderUpdated($orderId, $customerName, $oldPaymentStatus, $newPaymentStatus, $updatedBy)
     {
-        self::getService()->orderUpdated($orderId, $customerName, $oldPaymentStatus, $newPaymentStatus, $updatedBy);
+        try {
+            self::getService()->orderUpdated($orderId, $customerName, $oldPaymentStatus, $newPaymentStatus, $updatedBy);
+            
+            Log::info('Order updated notification sent', [
+                'order_id' => $orderId,
+                'old_status' => $oldPaymentStatus,
+                'new_status' => $newPaymentStatus,
+                'updated_by' => $updatedBy
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send order updated notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
-     * Example: When order is cancelled
+     * When order is cancelled
+     * Notifies admin and optionally the customer
      */
     public static function orderCancelled($orderId, $customerName, $reason = null, $userId = null)
     {
-        self::getService()->orderCancelled($orderId, $customerName, $reason, $userId);
+        try {
+            self::getService()->orderCancelled($orderId, $customerName, $reason, $userId);
+            
+            Log::info('Order cancelled notification sent', [
+                'order_id' => $orderId,
+                'user_id' => $userId,
+                'reason' => $reason
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send order cancelled notification', [
+                'order_id' => $orderId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
-     * Example: When product is created
+     * When product is created
+     * Notifies admin about new product
      */
     public static function productCreated($productId, $productName, $price, $adminName)
     {
-        self::getService()->productCreated($productId, $productName, $price, $adminName);
+        try {
+            self::getService()->productCreated($productId, $productName, $price, $adminName);
+            
+            Log::info('Product created notification sent', [
+                'product_id' => $productId,
+                'product_name' => $productName,
+                'price' => $price
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send product created notification', [
+                'product_id' => $productId,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     /**
-     * Example: When product is updated
+     * When product is updated
+     * Notifies admin about product changes
      */
     public static function productUpdated($productId, $productName, $updatedBy)
     {
-        self::getService()->productUpdated($productId, $productName, $updatedBy);
+        try {
+            self::getService()->productUpdated($productId, $productName, $updatedBy);
+            
+            Log::info('Product updated notification sent', [
+                'product_id' => $productId,
+                'product_name' => $productName,
+                'updated_by' => $updatedBy
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Failed to send product updated notification', [
+                'product_id' => $productId,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
+    /**
+     * Batch notification sending
+     * Send the same notification to multiple users
+     */
+    public static function notifyMultipleUsers(array $userIds, $type, $title, $message, $entityType = null, $entityId = null, $actionUrl = null, $priority = 'normal')
+    {
+        try {
+            $successCount = 0;
+            $failCount = 0;
+
+            foreach ($userIds as $userId) {
+                try {
+                    self::getService()->create([
+                        'recipient_type' => 'user',
+                        'recipient_id' => $userId,
+                        'type' => $type,
+                        'title' => $title,
+                        'message' => $message,
+                        'entity_type' => $entityType,
+                        'entity_id' => $entityId,
+                        'action_url' => $actionUrl,
+                        'priority' => $priority,
+                    ]);
+                    $successCount++;
+                } catch (\Exception $e) {
+                    $failCount++;
+                    Log::error('Failed to send batch notification to user', [
+                        'user_id' => $userId,
+                        'error' => $e->getMessage()
+                    ]);
+                }
+            }
+
+            Log::info('Batch notifications sent', [
+                'success' => $successCount,
+                'failed' => $failCount,
+                'total' => count($userIds)
+            ]);
+
+            return [
+                'success' => $successCount,
+                'failed' => $failCount,
+                'total' => count($userIds)
+            ];
+        } catch (\Exception $e) {
+            Log::error('Failed to send batch notifications', [
+                'error' => $e->getMessage()
+            ]);
+            return [
+                'success' => 0,
+                'failed' => count($userIds),
+                'total' => count($userIds)
+            ];
+        }
+    }
+
+    /**
+     * Broadcast notification to all users
+     * Sends to all users without specifying recipient_id
+     */
+    public static function broadcastToAllUsers($type, $title, $message, $priority = 'normal')
+    {
+        try {
+            self::getService()->create([
+                'recipient_type' => 'user',
+                'recipient_id' => null, // Broadcast to all users
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'priority' => $priority,
+                'metadata' => [
+                    'broadcast' => true,
+                    'timestamp' => now()->toDateTimeString()
+                ]
+            ]);
+
+            Log::info('Broadcast notification sent to all users', [
+                'type' => $type,
+                'title' => $title,
+                'priority' => $priority
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send broadcast notification', [
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
+    }
+
+    /**
+     * Broadcast notification to all admins
+     * Sends to all admin users
+     */
+    public static function broadcastToAllAdmins($type, $title, $message, $priority = 'normal')
+    {
+        try {
+            self::getService()->create([
+                'recipient_type' => 'admin',
+                'recipient_id' => null, // Broadcast to all admins
+                'type' => $type,
+                'title' => $title,
+                'message' => $message,
+                'priority' => $priority,
+                'metadata' => [
+                    'broadcast' => true,
+                    'timestamp' => now()->toDateTimeString()
+                ]
+            ]);
+
+            Log::info('Broadcast notification sent to all admins', [
+                'type' => $type,
+                'title' => $title,
+                'priority' => $priority
+            ]);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Failed to send admin broadcast notification', [
+                'error' => $e->getMessage()
+            ]);
+            return false;
+        }
     }
 }
