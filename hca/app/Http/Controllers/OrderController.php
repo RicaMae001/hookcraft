@@ -43,30 +43,24 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            // Update order status
+            // Update order status first
             DB::table('orders')->where('id', $id)->update([
-                'delivery_status' => 'Cancelled'
+                'delivery_status' => 'Cancelled',
+                'payment_status' => 'Cancelled'
             ]);
 
             // Restore stock if paid
             if ($order->payment_status === 'Paid') {
-                $orderItems = DB::table('order_item')->where('order_id', $id)->get();
-                foreach ($orderItems as $item) {
-                    // Only restore stock for non-customization items
-                    if (!$item->is_customization) {
-                        DB::table('products')->where('id', $item->product_id)->increment('stock', $item->quantity);
-                    }
-                }
+                $this->restoreStockFromOrder($id);
             }
 
-            // ===== NOTIFY ALL PARTIES =====
-            // Pass coordinator ID to ensure delivery coordinator is notified
+            // Send cancellation notifications
             NotificationHelper::orderCancelled(
                 $id, 
                 $order->customer_name, 
                 'Cancelled by customer', 
-                auth()->id(),  // User ID
-                $order->delivery_coordinator_id  // Coordinator ID (if assigned)
+                auth()->id(),
+                $order->delivery_coordinator_id
             );
 
             DB::commit();
@@ -85,7 +79,8 @@ class OrderController extends Controller
             Log::error('Error cancelling order', [
                 'order_id' => $id,
                 'user_id' => auth()->id(),
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return back()->with('error', 'Failed to cancel order. Please try again.');
@@ -141,7 +136,7 @@ class OrderController extends Controller
                     $reason = $request->reason ?? 'Order cancelled by admin';
                     
                     // Restore stock if order was paid
-                    if ($newPaymentStatus === 'Paid') {
+                    if ($order->payment_status === 'Paid') {
                         $this->restoreStockFromOrder($id);
                     }
                     
@@ -150,8 +145,8 @@ class OrderController extends Controller
                         $id, 
                         $order->customer_name, 
                         $reason, 
-                        $order->user_id,  // Customer user ID
-                        $order->delivery_coordinator_id  // Coordinator ID (if assigned)
+                        $order->user_id,
+                        $order->delivery_coordinator_id
                     );
                     
                 } else {
@@ -187,7 +182,8 @@ class OrderController extends Controller
             
             Log::error('Error updating order status', [
                 'order_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return response()->json(['success' => false, 'message' => 'Failed to update order: ' . $e->getMessage()], 500);
@@ -230,8 +226,8 @@ class OrderController extends Controller
                     $id, 
                     $order->customer_name, 
                     $reason, 
-                    $order->user_id,  // Customer user ID
-                    session('coordinator_id')  // Current coordinator ID
+                    $order->user_id,
+                    session('coordinator_id')
                 );
                 
             } else {
@@ -258,7 +254,8 @@ class OrderController extends Controller
             
             Log::error('Error updating delivery status', [
                 'order_id' => $id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return back()->with('error', 'Failed to update delivery status.');
@@ -298,11 +295,11 @@ class OrderController extends Controller
                 $changes = [];
                 
                 if ($oldPaymentStatus !== $newPaymentStatus) {
-                    $changes[] = "Payment: {$oldPaymentStatus} → {$newPaymentStatus}";
+                    $changes[] = "Payment: {$oldPaymentStatus} â†’ {$newPaymentStatus}";
                 }
                 
                 if ($oldDeliveryStatus !== $newDeliveryStatus) {
-                    $changes[] = "Delivery: {$oldDeliveryStatus} → {$newDeliveryStatus}";
+                    $changes[] = "Delivery: {$oldDeliveryStatus} â†’ {$newDeliveryStatus}";
                 }
 
                 Log::info('Order status updated', [
