@@ -23,24 +23,7 @@
             </li>
             <!-- Gallery Management -->
               <!-- In sidebar.blade.php - Add this menu item -->
-<li class="nav-item">
-<a href="{{ route('admin.customizations.index') }}"
-   class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
-    <i class="fas fa-palette"></i>
-    <span>Customizations</span>
 
-    @php
-        $pendingCustomizations = \App\Models\ProductCustomization::where('status', 'Pending')->count();
-    @endphp
-
-    @if($pendingCustomizations > 0)
-        <span class="badge badge-warning ms-auto">
-            {{ $pendingCustomizations }}
-        </span>
-    @endif
-</a>
-
-</li>
             <!-- Live Chat -->
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.livechat.*') ? 'active' : '' }}" href="{{ route('admin.livechat.index') }}">

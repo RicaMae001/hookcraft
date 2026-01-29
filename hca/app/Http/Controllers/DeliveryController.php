@@ -44,6 +44,74 @@ class DeliveryController extends Controller
         ]);
     }
 
+    // ===== NEW: Add notification to USER (customer) =====
+    private function addUserNotification($order, $oldStatus, $newStatus)
+    {
+        // Only notify if order has a user_id (registered user)
+        if (!$order->user_id) {
+            Log::info('Skipping user notification - no user_id for order', ['order_id' => $order->id]);
+            return;
+        }
+
+        try {
+            // Determine notification details based on status
+            $title = 'Delivery Status Update';
+            $message = "Your order #{$order->id} delivery status: {$oldStatus} → {$newStatus}";
+            $priority = 'normal';
+
+            if ($newStatus === 'Out for Delivery') {
+                $title = 'Order is Out for Delivery! 🚚';
+                $message = "Great news! Your order #{$order->id} is now out for delivery and will arrive soon.";
+                $priority = 'high';
+            } elseif ($newStatus === 'Delivered') {
+                $title = 'Order Delivered Successfully! ✓';
+                $message = "Your order #{$order->id} has been delivered. Thank you for your purchase!";
+                $priority = 'high';
+            } elseif ($newStatus === 'Cancelled') {
+                $title = 'Delivery Cancelled';
+                $message = "The delivery for order #{$order->id} has been cancelled.";
+                $priority = 'high';
+            }
+
+            // Create notification using NotificationService
+            $this->notificationService->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $order->user_id,
+                'sender_type' => 'delivery',
+                'sender_id' => session('coordinator_id'),
+                'type' => 'delivery_status_changed',
+                'title' => $title,
+                'message' => $message,
+                'entity_type' => 'order',
+                'entity_id' => $order->id,
+                'action_url' => '/profile/track-order',
+                'priority' => $priority,
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'customer_name' => $order->customer_name,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                    'coordinator_id' => session('coordinator_id'),
+                    'coordinator_name' => session('coordinator_name'),
+                ]
+            ]);
+
+            Log::info('User notified of delivery update', [
+                'user_id' => $order->user_id,
+                'order_id' => $order->id,
+                'old_status' => $oldStatus,
+                'new_status' => $newStatus
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error notifying user of delivery update', [
+                'order_id' => $order->id,
+                'user_id' => $order->user_id,
+                'error' => $e->getMessage()
+            ]);
+        }
+    }
+
     // Add notification for payment proof upload - FIXED VERSION
     private function addPaymentProofNotification($orderId, $coordinatorName, $customerName)
     {
@@ -65,6 +133,46 @@ class DeliveryController extends Controller
                 'customer_name' => $customerName,
             ]
         ]);
+    }
+
+    // ===== NEW: Notify user when payment is confirmed =====
+    private function addUserPaymentNotification($order)
+    {
+        if (!$order->user_id) {
+            return;
+        }
+
+        try {
+            $this->notificationService->create([
+                'recipient_type' => 'user',
+                'recipient_id' => $order->user_id,
+                'sender_type' => 'delivery',
+                'sender_id' => session('coordinator_id'),
+                'type' => 'payment_received',
+                'title' => 'Payment Confirmed ✓',
+                'message' => "Your GCash payment for order #{$order->id} has been confirmed. Thank you!",
+                'entity_type' => 'order',
+                'entity_id' => $order->id,
+                'action_url' => '/profile/track-order',
+                'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $order->id,
+                    'payment_method' => 'GCash',
+                    'customer_name' => $order->customer_name,
+                ]
+            ]);
+
+            Log::info('User notified of payment confirmation', [
+                'user_id' => $order->user_id,
+                'order_id' => $order->id
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error notifying user of payment confirmation', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+        }
     }
 
     // Login with role-based verification
@@ -256,7 +364,7 @@ class DeliveryController extends Controller
         return view('admin.delivery.deliveries', compact('deliveries'));
     }
 
-    // Update Delivery Status
+    // Update Delivery Status - NOW WITH USER NOTIFICATIONS
     public function updateStatus(Request $request, $id)
     {
         // Check role authorization
@@ -313,7 +421,7 @@ class DeliveryController extends Controller
             'new_status' => $newStatus
         ]);
 
-        // Create notification for admin using FIXED method
+        // ===== NOTIFY ADMIN =====
         $this->addAdminNotification(
             $id,
             $coordinatorName,
@@ -322,10 +430,13 @@ class DeliveryController extends Controller
             $newStatus
         );
 
-        return redirect()->back()->with('success', 'Delivery status updated successfully. Admin has been notified.');
+        // ===== NOTIFY USER (CUSTOMER) =====
+        $this->addUserNotification($order, $oldStatus, $newStatus);
+
+        return redirect()->back()->with('success', 'Delivery status updated successfully. Customer and admin have been notified.');
     }
 
-    // Upload GCash Payment Proof
+    // Upload GCash Payment Proof - NOW WITH USER NOTIFICATION
     public function uploadPaymentProof(Request $request, $id)
     {
         // Check role authorization
@@ -407,14 +518,17 @@ class DeliveryController extends Controller
                     Log::error("Failed to update payment proof for Order #{$id}");
                 }
                 
-                // Create notification for admin using FIXED method
+                // ===== NOTIFY ADMIN =====
                 $this->addPaymentProofNotification($id, $coordinatorName, $order->customer_name);
+                
+                // ===== NOTIFY USER (CUSTOMER) =====
+                $this->addUserPaymentNotification($order);
                 
                 // Verify the update was successful
                 $verifyOrder = DB::table('orders')->where('id', $id)->first();
                 
                 if ($verifyOrder->payment_proof === $filename && $verifyOrder->payment_status === 'Paid') {
-                    return back()->with('success', 'Payment proof uploaded successfully! Payment status updated to Paid. Admin has been notified.');
+                    return back()->with('success', 'Payment proof uploaded successfully! Payment status updated to Paid. Customer and admin have been notified.');
                 } else {
                     return back()->with('error', 'File uploaded but database update failed. Please contact administrator.');
                 }

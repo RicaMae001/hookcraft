@@ -3,244 +3,229 @@
 namespace App\Services;
 
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
     /**
      * Create a new notification
      */
-    public function create($data)
+    public function create(array $data)
     {
-        return DB::table('notifications')->insertGetId([
-            'recipient_type' => $data['recipient_type'],
-            'recipient_id' => $data['recipient_id'] ?? null,
-            'sender_type' => $data['sender_type'] ?? 'system',
-            'sender_id' => $data['sender_id'] ?? null,
-            'type' => $data['type'],
-            'title' => $data['title'],
-            'message' => $data['message'],
-            'entity_type' => $data['entity_type'] ?? null,
-            'entity_id' => $data['entity_id'] ?? null,
-            'action_url' => $data['action_url'] ?? null,
-            'priority' => $data['priority'] ?? 'normal',
-            'metadata' => isset($data['metadata']) ? json_encode($data['metadata']) : null,
-            'is_read' => 0,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        try {
+            // Set defaults
+            $defaults = [
+                'sender_type' => 'system',
+                'sender_id' => null,
+                'entity_type' => null,
+                'entity_id' => null,
+                'action_url' => null,
+                'priority' => 'normal',
+                'metadata' => null,
+                'is_read' => false,
+            ];
+
+            $notificationData = array_merge($defaults, $data);
+
+            // Convert metadata to JSON if it's an array
+            if (isset($notificationData['metadata']) && is_array($notificationData['metadata'])) {
+                $notificationData['metadata'] = json_encode($notificationData['metadata']);
+            }
+
+            $id = DB::table('notifications')->insertGetId($notificationData);
+
+            Log::info('Notification created', [
+                'id' => $id,
+                'recipient_type' => $notificationData['recipient_type'],
+                'recipient_id' => $notificationData['recipient_id'] ?? 'all',
+                'type' => $notificationData['type']
+            ]);
+
+            return $id;
+        } catch (\Exception $e) {
+            Log::error('Error creating notification: ' . $e->getMessage(), [
+                'data' => $data,
+                'trace' => $e->getTraceAsString()
+            ]);
+            return false;
+        }
     }
 
     /**
-     * Get notifications for a specific recipient
+     * Get notifications for a recipient with improved query
      */
-    public function getNotifications($recipientType, $recipientId, $limit = 50, $unreadOnly = false)
+    public function getNotifications($recipientType, $recipientId = null, $limit = 50, $unreadOnly = false)
     {
-        $query = DB::table('notifications')
-            ->where('recipient_type', $recipientType);
-        
-        if ($recipientId !== null) {
-            $query->where(function($q) use ($recipientId) {
-                $q->where('recipient_id', $recipientId)
-                  ->orWhereNull('recipient_id'); // Include broadcast notifications
-            });
+        try {
+            $query = DB::table('notifications')
+                ->where('recipient_type', $recipientType);
+
+            // Handle both specific recipient and broadcast notifications
+            if ($recipientId !== null) {
+                $query->where(function($q) use ($recipientId) {
+                    $q->where('recipient_id', $recipientId)
+                      ->orWhereNull('recipient_id'); // Include broadcast notifications
+                });
+            } else {
+                $query->whereNull('recipient_id'); // Only broadcast notifications
+            }
+
+            if ($unreadOnly) {
+                $query->where('is_read', false);
+            }
+
+            $notifications = $query
+                ->orderBy('priority', 'desc') // Urgent first
+                ->orderBy('created_at', 'desc')
+                ->limit($limit)
+                ->get();
+
+            // Convert to array and format
+            return $notifications->map(function ($notification) {
+                return [
+                    'id' => $notification->id,
+                    'recipient_type' => $notification->recipient_type,
+                    'recipient_id' => $notification->recipient_id,
+                    'sender_type' => $notification->sender_type,
+                    'sender_id' => $notification->sender_id,
+                    'type' => $notification->type,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'entity_type' => $notification->entity_type,
+                    'entity_id' => $notification->entity_id,
+                    'action_url' => $notification->action_url,
+                    'is_read' => (bool) $notification->is_read,
+                    'read_at' => $notification->read_at,
+                    'priority' => $notification->priority,
+                    'metadata' => $notification->metadata ? json_decode($notification->metadata, true) : null,
+                    'created_at' => $notification->created_at,
+                    'updated_at' => $notification->updated_at,
+                ];
+            })->toArray();
+        } catch (\Exception $e) {
+            Log::error('Error fetching notifications: ' . $e->getMessage());
+            return [];
         }
-        
-        if ($unreadOnly) {
-            $query->where('is_read', 0);
-        }
-        
-        $notifications = $query->orderBy('created_at', 'desc')
-            ->limit($limit)
-            ->get();
-        
-        // Format notifications
-        return $notifications->map(function($notification) {
-            return $this->formatNotification($notification);
-        })->toArray();
     }
 
     /**
-     * Get unread count
+     * Get unread count with improved query
      */
-    public function getUnreadCount($recipientType, $recipientId)
+    public function getUnreadCount($recipientType, $recipientId = null)
     {
-        $query = DB::table('notifications')
-            ->where('recipient_type', $recipientType)
-            ->where('is_read', 0);
-        
-        if ($recipientId !== null) {
-            $query->where(function($q) use ($recipientId) {
-                $q->where('recipient_id', $recipientId)
-                  ->orWhereNull('recipient_id');
-            });
+        try {
+            $query = DB::table('notifications')
+                ->where('recipient_type', $recipientType)
+                ->where('is_read', false);
+
+            if ($recipientId !== null) {
+                $query->where(function($q) use ($recipientId) {
+                    $q->where('recipient_id', $recipientId)
+                      ->orWhereNull('recipient_id');
+                });
+            } else {
+                $query->whereNull('recipient_id');
+            }
+
+            return $query->count();
+        } catch (\Exception $e) {
+            Log::error('Error getting unread count: ' . $e->getMessage());
+            return 0;
         }
-        
-        return $query->count();
     }
 
     /**
      * Mark notification as read
      */
-    public function markAsRead($notificationId)
+    public function markAsRead($id)
     {
-        return DB::table('notifications')
-            ->where('id', $notificationId)
-            ->update([
-                'is_read' => 1,
-                'read_at' => now(),
-                'updated_at' => now(),
-            ]);
-    }
-
-    /**
-     * Mark all as read for a recipient
-     */
-    public function markAllAsRead($recipientType, $recipientId)
-    {
-        $query = DB::table('notifications')
-            ->where('recipient_type', $recipientType)
-            ->where('is_read', 0);
-        
-        if ($recipientId !== null) {
-            $query->where(function($q) use ($recipientId) {
-                $q->where('recipient_id', $recipientId)
-                  ->orWhereNull('recipient_id');
-            });
-        }
-        
-        return $query->update([
-            'is_read' => 1,
-            'read_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    /**
-     * Delete a notification
-     */
-    public function delete($notificationId)
-    {
-        return DB::table('notifications')
-            ->where('id', $notificationId)
-            ->delete();
-    }
-
-    /**
-     * Format notification with additional data
-     */
-    private function formatNotification($notification)
-    {
-        // Convert to array for easier manipulation
-        $notificationArray = (array) $notification;
-        
-        $notificationArray['time_ago'] = $this->getTimeAgo($notification->created_at);
-        $notificationArray['icon'] = $this->getIcon($notification->type);
-        $notificationArray['color_class'] = $this->getColorClass($notification->type);
-        
-        if ($notification->metadata) {
-            $notificationArray['metadata'] = json_decode($notification->metadata, true);
-        }
-        
-        // Convert is_read to boolean
-        $notificationArray['is_read'] = (bool) $notification->is_read;
-        
-        return (object) $notificationArray;
-    }
-
-    /**
-     * Get icon for notification type
-     */
-    private function getIcon($type)
-    {
-        $icons = [
-            'order_created' => 'fa-shopping-cart',
-            'order_updated' => 'fa-edit',
-            'order_cancelled' => 'fa-times-circle',
-            'payment_received' => 'fa-credit-card',
-            'payment_proof_uploaded' => 'fa-file-upload',
-            'delivery_assigned' => 'fa-truck',
-            'delivery_status_changed' => 'fa-shipping-fast',
-            'product_low_stock' => 'fa-exclamation-triangle',
-            'product_out_of_stock' => 'fa-ban',
-            'product_created' => 'fa-plus-circle',
-            'product_updated' => 'fa-sync',
-            'chat_message' => 'fa-comment',
-            'system_alert' => 'fa-bell',
-        ];
-        
-        return $icons[$type] ?? 'fa-bell';
-    }
-
-    /**
-     * Get color class for notification type
-     */
-    private function getColorClass($type)
-    {
-        $colors = [
-            'order_created' => 'success',
-            'order_updated' => 'info',
-            'order_cancelled' => 'danger',
-            'payment_received' => 'success',
-            'payment_proof_uploaded' => 'info',
-            'delivery_assigned' => 'primary',
-            'delivery_status_changed' => 'info',
-            'product_low_stock' => 'warning',
-            'product_out_of_stock' => 'danger',
-            'product_created' => 'success',
-            'product_updated' => 'info',
-            'chat_message' => 'primary',
-            'system_alert' => 'warning',
-        ];
-        
-        return $colors[$type] ?? 'info';
-    }
-
-    /**
-     * Get human-readable time ago
-     */
-    private function getTimeAgo($datetime)
-    {
-        if (!$datetime) {
-            return 'Unknown';
-        }
-
         try {
-            $timestamp = strtotime($datetime);
-            if ($timestamp === false) {
-                return 'Unknown';
-            }
-            
-            $difference = time() - $timestamp;
-            
-            if ($difference < 60) {
-                return 'Just now';
-            } elseif ($difference < 3600) {
-                $mins = floor($difference / 60);
-                return $mins . ' minute' . ($mins > 1 ? 's' : '') . ' ago';
-            } elseif ($difference < 86400) {
-                $hours = floor($difference / 3600);
-                return $hours . ' hour' . ($hours > 1 ? 's' : '') . ' ago';
-            } elseif ($difference < 604800) {
-                $days = floor($difference / 86400);
-                return $days . ' day' . ($days > 1 ? 's' : '') . ' ago';
-            } else {
-                return date('M j, Y', $timestamp);
-            }
+            $updated = DB::table('notifications')
+                ->where('id', $id)
+                ->update([
+                    'is_read' => true,
+                    'read_at' => now(),
+                    'updated_at' => now()
+                ]);
+
+            return $updated > 0;
         } catch (\Exception $e) {
-            return 'Unknown';
+            Log::error('Error marking notification as read: ' . $e->getMessage());
+            return false;
         }
     }
 
-    // Helper methods for creating specific notification types
+    /**
+     * Mark all notifications as read
+     */
+    public function markAllAsRead($recipientType, $recipientId = null)
+    {
+        try {
+            $query = DB::table('notifications')
+                ->where('recipient_type', $recipientType)
+                ->where('is_read', false);
 
+            if ($recipientId !== null) {
+                $query->where(function($q) use ($recipientId) {
+                    $q->where('recipient_id', $recipientId)
+                      ->orWhereNull('recipient_id');
+                });
+            } else {
+                $query->whereNull('recipient_id');
+            }
+
+            return $query->update([
+                'is_read' => true,
+                'read_at' => now(),
+                'updated_at' => now()
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error marking all as read: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    /**
+     * Delete notification
+     */
+    public function delete($id)
+    {
+        try {
+            return DB::table('notifications')->where('id', $id)->delete() > 0;
+        } catch (\Exception $e) {
+            Log::error('Error deleting notification: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Delete old read notifications (cleanup)
+     */
+    public function deleteOldNotifications($days = 30)
+    {
+        try {
+            return DB::table('notifications')
+                ->where('is_read', true)
+                ->where('created_at', '<', now()->subDays($days))
+                ->delete();
+        } catch (\Exception $e) {
+            Log::error('Error deleting old notifications: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    // ==================== PRESET NOTIFICATION METHODS ====================
+
+    /**
+     * Notify when order is created
+     */
     public function notifyOrderCreated($orderId, $customerName, $total)
     {
         return $this->create([
             'recipient_type' => 'admin',
             'type' => 'order_created',
             'title' => 'New Order Received',
-            'message' => "{$customerName} placed a new order worth ₱" . number_format($total, 2),
+            'message' => "New order from {$customerName} (₱" . number_format($total, 2) . ")",
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
@@ -248,62 +233,107 @@ class NotificationService
             'metadata' => [
                 'order_id' => $orderId,
                 'customer_name' => $customerName,
-                'total' => $total,
-            ],
+                'total' => $total
+            ]
         ]);
     }
 
+    /**
+     * Notify when payment is received
+     */
     public function notifyPaymentReceived($orderId, $orderNumber, $amount)
     {
         return $this->create([
             'recipient_type' => 'admin',
             'type' => 'payment_received',
             'title' => 'Payment Received',
-            'message' => "Payment of ₱" . number_format($amount, 2) . " received for order {$orderNumber}",
+            'message' => "Payment verified for order {$orderNumber} (₱" . number_format($amount, 2) . ")",
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
-            'priority' => 'normal',
+            'priority' => 'high',
+            'metadata' => [
+                'order_id' => $orderId,
+                'order_number' => $orderNumber,
+                'amount' => $amount
+            ]
         ]);
     }
 
+    /**
+     * Notify when delivery status changes
+     */
     public function notifyDeliveryStatusChanged($orderId, $orderNumber, $newStatus, $userId = null)
     {
-        // Notify admin/delivery
+        // Notify admin
         $this->create([
             'recipient_type' => 'admin',
             'type' => 'delivery_status_changed',
             'title' => 'Delivery Status Updated',
-            'message' => "Order {$orderNumber} status changed to {$newStatus}",
+            'message' => "Order {$orderNumber} status changed to: {$newStatus}",
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
             'priority' => 'normal',
         ]);
 
-        // Notify customer if userId provided
+        // Notify customer if userId is provided
         if ($userId) {
+            $statusMessages = [
+                'Pending' => 'Your order is being prepared.',
+                'Out for Delivery' => 'Your order is out for delivery!',
+                'Delivered' => 'Your order has been delivered. Thank you for your purchase!',
+                'Cancelled' => 'Your order delivery has been cancelled.',
+            ];
+
             $this->create([
                 'recipient_type' => 'user',
                 'recipient_id' => $userId,
                 'type' => 'delivery_status_changed',
-                'title' => 'Order Status Updated',
-                'message' => "Your order {$orderNumber} is now {$newStatus}",
+                'title' => 'Order Status Update',
+                'message' => $statusMessages[$newStatus] ?? "Your order status has been updated to: {$newStatus}",
                 'entity_type' => 'order',
                 'entity_id' => $orderId,
-                'action_url' => "/orders/{$orderId}",
-                'priority' => 'high',
+                'action_url' => "/user/orders/{$orderId}",
+                'priority' => 'normal',
             ]);
         }
     }
 
+    /**
+     * Notify when delivery is assigned
+     */
+    public function deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName)
+    {
+        return $this->create([
+            'recipient_type' => 'delivery',
+            'recipient_id' => $coordinatorId,
+            'type' => 'delivery_assigned',
+            'title' => 'New Delivery Assignment',
+            'message' => "Order for {$customerName} has been assigned to you for delivery.",
+            'entity_type' => 'order',
+            'entity_id' => $orderId,
+            'action_url' => "/delivery/deliveries",
+            'priority' => 'high',
+            'metadata' => [
+                'order_id' => $orderId,
+                'coordinator_id' => $coordinatorId,
+                'coordinator_name' => $coordinatorName,
+                'customer_name' => $customerName
+            ]
+        ]);
+    }
+
+    /**
+     * Notify when product stock is low
+     */
     public function notifyLowStock($productId, $productName, $currentStock)
     {
         return $this->create([
             'recipient_type' => 'admin',
             'type' => 'product_low_stock',
             'title' => 'Low Stock Alert',
-            'message' => "{$productName} is running low on stock ({$currentStock} remaining)",
+            'message' => "{$productName} is running low on stock (Only {$currentStock} left)",
             'entity_type' => 'product',
             'entity_id' => $productId,
             'action_url' => "/admin/products/{$productId}/edit",
@@ -311,20 +341,9 @@ class NotificationService
         ]);
     }
 
-    public function notifyChatMessage($sessionId, $senderName, $messagePreview)
-    {
-        return $this->create([
-            'recipient_type' => 'admin',
-            'type' => 'chat_message',
-            'title' => 'New Chat Message',
-            'message' => "{$senderName}: {$messagePreview}",
-            'entity_type' => 'chat_session',
-            'entity_id' => $sessionId,
-            'action_url' => "/admin/chat/{$sessionId}",
-            'priority' => 'normal',
-        ]);
-    }
-
+    /**
+     * Notify when order is updated
+     */
     public function orderUpdated($orderId, $customerName, $oldPaymentStatus, $newPaymentStatus, $updatedBy)
     {
         return $this->create([
@@ -341,48 +360,118 @@ class NotificationService
                 'customer_name' => $customerName,
                 'old_payment_status' => $oldPaymentStatus,
                 'new_payment_status' => $newPaymentStatus,
-                'updated_by' => $updatedBy,
-            ],
+                'updated_by' => $updatedBy
+            ]
         ]);
     }
 
-    public function orderCancelled($orderId, $customerName, $reason = null, $userId = null)
+    /**
+     * Notify when order is cancelled
+     * Enhanced to notify ALL parties: admin, delivery coordinator, and customer
+     */
+    public function orderCancelled($orderId, $customerName, $reason = null, $userId = null, $coordinatorId = null)
     {
-        // Notify admin
+        // 1. NOTIFY ADMIN/STAFF
         $this->create([
             'recipient_type' => 'admin',
             'type' => 'order_cancelled',
             'title' => 'Order Cancelled',
-            'message' => "Order for {$customerName} has been cancelled" . ($reason ? ": {$reason}" : ""),
+            'message' => "Order #{$orderId} for {$customerName} has been cancelled." . ($reason ? " Reason: {$reason}" : ""),
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
             'priority' => 'high',
+            'metadata' => [
+                'order_id' => $orderId,
+                'customer_name' => $customerName,
+                'reason' => $reason,
+                'cancelled_by' => $this->determineCancelledBy($userId, $coordinatorId)
+            ]
         ]);
 
-        // Notify customer if userId provided
+        // 2. NOTIFY DELIVERY COORDINATOR (if assigned)
+        if ($coordinatorId) {
+            $this->create([
+                'recipient_type' => 'delivery',
+                'recipient_id' => $coordinatorId,
+                'type' => 'order_cancelled',
+                'title' => 'Delivery Cancelled',
+                'message' => "Order #{$orderId} for {$customerName} has been cancelled and removed from your deliveries." . ($reason ? " Reason: {$reason}" : ""),
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/delivery/deliveries",
+                'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'customer_name' => $customerName,
+                    'reason' => $reason,
+                    'action' => 'delivery_cancelled'
+                ]
+            ]);
+
+            Log::info('Delivery coordinator notified of cancellation', [
+                'order_id' => $orderId,
+                'coordinator_id' => $coordinatorId
+            ]);
+        }
+
+        // 3. NOTIFY CUSTOMER (if userId provided)
         if ($userId) {
             $this->create([
                 'recipient_type' => 'user',
                 'recipient_id' => $userId,
                 'type' => 'order_cancelled',
                 'title' => 'Order Cancelled',
-                'message' => "Your order has been cancelled" . ($reason ? ": {$reason}" : ""),
+                'message' => "Your order #{$orderId} has been cancelled." . ($reason ? " Reason: {$reason}" : "") . " If you have any questions, please contact us.",
                 'entity_type' => 'order',
                 'entity_id' => $orderId,
-                'action_url' => "/profile/purchase-history",
+                'action_url' => "/user/orders/{$orderId}",
                 'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'reason' => $reason,
+                    'action' => 'order_cancelled'
+                ]
+            ]);
+
+            Log::info('Customer notified of order cancellation', [
+                'order_id' => $orderId,
+                'user_id' => $userId
             ]);
         }
     }
 
-    public function productCreated($productId, $productName, $price, $adminName)
+    /**
+     * Helper to determine who cancelled the order
+     */
+    private function determineCancelledBy($userId, $coordinatorId)
     {
+        if ($userId && session('admin_id')) {
+            return 'admin';
+        } elseif ($userId) {
+            return 'customer';
+        } elseif ($coordinatorId) {
+            return 'delivery_coordinator';
+        }
+        return 'system';
+    }
+
+    /**
+     * Notify when product is created
+     * Price parameter is optional for backward compatibility
+     */
+    public function productCreated($productId, $productName, $adminName, $price = null)
+    {
+        $message = "{$adminName} added a new product: {$productName}";
+        if ($price !== null) {
+            $message .= " (₱" . number_format($price, 2) . ")";
+        }
+        
         return $this->create([
             'recipient_type' => 'admin',
             'type' => 'product_created',
             'title' => 'New Product Added',
-            'message' => "{$adminName} added new product: {$productName} (₱" . number_format($price, 2) . ")",
+            'message' => $message,
             'entity_type' => 'product',
             'entity_id' => $productId,
             'action_url' => "/admin/products/{$productId}",
@@ -390,42 +479,20 @@ class NotificationService
         ]);
     }
 
+    /**
+     * Notify when product is updated
+     */
     public function productUpdated($productId, $productName, $updatedBy)
     {
         return $this->create([
             'recipient_type' => 'admin',
             'type' => 'product_updated',
             'title' => 'Product Updated',
-            'message' => "{$updatedBy} updated product: {$productName}",
+            'message' => "{$updatedBy} updated the product: {$productName}",
             'entity_type' => 'product',
             'entity_id' => $productId,
             'action_url' => "/admin/products/{$productId}",
             'priority' => 'normal',
-        ]);
-    }
-
-    public function deliveryAssigned($orderId, $coordinatorId, $coordinatorName, $customerName)
-    {
-        $orderNumber = 'ORD-' . str_pad($orderId, 5, '0', STR_PAD_LEFT);
-        
-        // Notify the delivery coordinator
-        return $this->create([
-            'recipient_type' => 'delivery',
-            'recipient_id' => $coordinatorId,
-            'type' => 'delivery_assigned',
-            'title' => 'New Delivery Assignment',
-            'message' => "Order {$orderNumber} for {$customerName} has been assigned to you for delivery.",
-            'entity_type' => 'order',
-            'entity_id' => $orderId,
-            'action_url' => "/delivery/deliveries",
-            'priority' => 'high',
-            'metadata' => [
-                'order_id' => $orderId,
-                'order_number' => $orderNumber,
-                'customer_name' => $customerName,
-                'coordinator_id' => $coordinatorId,
-                'coordinator_name' => $coordinatorName,
-            ],
         ]);
     }
 }

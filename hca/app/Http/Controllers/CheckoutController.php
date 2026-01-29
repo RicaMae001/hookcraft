@@ -6,14 +6,22 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
 use App\Models\OrderItem;
+use App\Helpers\NotificationHelper;
+use App\Services\NotificationService;
 
 class CheckoutController extends Controller
 {
+    protected $notificationService;
+
+    public function __construct(NotificationService $notificationService)
+    {
+        $this->notificationService = $notificationService;
+    }
+
     /**
      * Display the checkout page (handles both regular products and customizations)
      */
@@ -180,6 +188,14 @@ class CheckoutController extends Controller
                 }
             }
 
+            // ===== NOTIFY ADMIN OF NEW ORDER =====
+            try {
+                NotificationHelper::orderCreated($order->id, $order->customer_name, $order->total, Auth::id());
+                Log::info('Order created notification sent', ['order_id' => $order->id]);
+            } catch (\Exception $e) {
+                Log::error('Failed to send order created notification', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+            }
+
             // Delete the cart
             $cart->delete();
             
@@ -213,6 +229,7 @@ class CheckoutController extends Controller
             Log::error('Checkout error', [
                 'message' => $e->getMessage(),
                 'user_id' => Auth::id(),
+                'trace' => $e->getTraceAsString()
             ]);
             
             return redirect()->back()->with('error', 'Failed to process order. Please try again.');
@@ -246,7 +263,7 @@ class CheckoutController extends Controller
     public function submitGCashPayment(Request $request, $orderId)
     {
         $request->validate([
-            'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:5120', // 5MB max
+            'payment_proof' => 'required|image|mimes:jpeg,png,jpg|max:5120',
         ]);
 
         $order = Order::where('id', $orderId)
@@ -257,6 +274,8 @@ class CheckoutController extends Controller
             return redirect()->route('thankyou', ['order_id' => $order->id])
                 ->with('info', 'Payment proof already submitted.');
         }
+
+        DB::beginTransaction();
 
         try {
             // Create uploads/payments directory if it doesn't exist
@@ -273,17 +292,30 @@ class CheckoutController extends Controller
                 // Update order with payment proof
                 $order->update([
                     'payment_proof' => $filename,
-                    'payment_status' => 'Pending', // Admin will verify and approve
+                    'payment_status' => 'Pending',
                 ]);
+
+                // ===== NOTIFY ADMIN OF PAYMENT PROOF =====
+                try {
+                    NotificationHelper::paymentProofUploaded($order->id, "#{$order->id}", $order->total);
+                    Log::info('Payment proof notification sent', ['order_id' => $order->id]);
+                } catch (\Exception $e) {
+                    Log::error('Failed to notify admin of payment proof', ['order_id' => $order->id, 'error' => $e->getMessage()]);
+                }
             }
+
+            DB::commit();
 
             return redirect()->route('thankyou', ['order_id' => $order->id])
                 ->with('success', 'Payment proof submitted successfully! We will verify and process your order.');
 
         } catch (\Exception $e) {
+            DB::rollBack();
+            
             Log::error('GCash payment proof upload error', [
                 'order_id' => $orderId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
             ]);
 
             return redirect()->back()

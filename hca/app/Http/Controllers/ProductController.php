@@ -40,11 +40,20 @@ class ProductController extends Controller
      */
     public function shop()
     {
-        
-        $products = Product::with('category')->get();
-        $categories = Category::orderByDesc('limited_edition')->orderBy('name')->get(); // Limited Edition first
+        // Get all available products with their categories
+        $products = Product::where('is_available', 1)
+            ->with('category')
+            ->get();
+            
+        $categories = Category::orderByDesc('limited_edition')
+            ->orderBy('name')
+            ->get();
         
         $cartCount = $this->getCartCount();
+        
+        // Debug: Log the data
+        \Log::info('Shop Products Count: ' . $products->count());
+        \Log::info('Products with category: ' . $products->whereNotNull('category_id')->count());
 
         return view('pages.shop', compact('products', 'categories', 'cartCount'));
     }

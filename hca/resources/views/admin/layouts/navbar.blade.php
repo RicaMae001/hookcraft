@@ -558,19 +558,58 @@
 <script>
 let notificationUpdateInterval;
 
+// Format time ago
+function formatTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+    
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    
+    return date.toLocaleDateString();
+}
+
+// Get notification icon and color based on type
+function getNotificationIcon(type) {
+    const iconMap = {
+        'order_created': { icon: 'fa-shopping-bag', color: 'primary' },
+        'payment_proof_uploaded': { icon: 'fa-money-bill-wave', color: 'info' },
+        'payment_received': { icon: 'fa-check-circle', color: 'success' },
+        'delivery_status_changed': { icon: 'fa-truck', color: 'info' },
+        'delivery_assigned': { icon: 'fa-user-check', color: 'warning' },
+        'product_low_stock': { icon: 'fa-box-open', color: 'danger' },
+        'product_out_of_stock': { icon: 'fa-exclamation-triangle', color: 'danger' },
+        'order_updated': { icon: 'fa-edit', color: 'info' },
+        'order_cancelled': { icon: 'fa-times-circle', color: 'danger' },
+        'product_created': { icon: 'fa-plus-circle', color: 'success' },
+        'product_updated': { icon: 'fa-edit', color: 'info' },
+        'chat_message': { icon: 'fa-comment-dots', color: 'primary' },
+        'system_alert': { icon: 'fa-exclamation-circle', color: 'warning' }
+    };
+    
+    return iconMap[type] || { icon: 'fa-bell', color: 'primary' };
+}
+
 // Fetch and display notifications
 async function fetchNotifications() {
     try {
         const response = await fetch('/api/notifications?limit=10', {
+            method: 'GET',
+            credentials: 'same-origin', // IMPORTANT: Include session cookies
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                'Accept': 'application/json'
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
             }
         });
         
         if (!response.ok) {
             console.error('Failed to fetch notifications:', response.status);
             hideLoading();
+            showEmpty();
             return;
         }
         
@@ -579,6 +618,9 @@ async function fetchNotifications() {
         if (data.success) {
             updateNotificationBadge(data.unread_count);
             displayNotifications(data.notifications);
+        } else {
+            hideLoading();
+            showEmpty();
         }
     } catch (error) {
         console.error('Error fetching notifications:', error);
@@ -630,6 +672,7 @@ function displayNotifications(notifications) {
     }
     
     const html = notifications.map(notification => {
+        const { icon, color } = getNotificationIcon(notification.type);
         const priorityBadge = (notification.priority === 'urgent' || notification.priority === 'high') 
             ? `<span class="notification-priority-badge ${notification.priority}">${notification.priority.toUpperCase()}</span>` 
             : '';
@@ -638,8 +681,8 @@ function displayNotifications(notifications) {
             <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
                  onclick="handleNotificationClick(${notification.id}, '${notification.action_url || '#'}')">
                 <div class="d-flex gap-3">
-                    <div class="notification-icon ${notification.color_class}">
-                        <i class="fas ${notification.icon}"></i>
+                    <div class="notification-icon ${color}">
+                        <i class="fas ${icon}"></i>
                     </div>
                     <div class="flex-grow-1">
                         <div class="notification-title">
@@ -648,7 +691,7 @@ function displayNotifications(notifications) {
                         </div>
                         <div class="notification-message">${escapeHtml(notification.message)}</div>
                         <div class="notification-time">
-                            <i class="fas fa-clock me-1"></i>${notification.time_ago}
+                            <i class="fas fa-clock me-1"></i>${formatTimeAgo(notification.created_at)}
                         </div>
                     </div>
                 </div>
@@ -672,6 +715,7 @@ async function handleNotificationClick(notificationId, actionUrl) {
     try {
         await fetch(`/api/notifications/${notificationId}/read`, {
             method: 'POST',
+            credentials: 'same-origin', // IMPORTANT: Include session cookies
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Content-Type': 'application/json',
@@ -679,8 +723,10 @@ async function handleNotificationClick(notificationId, actionUrl) {
             }
         });
         
+        // Refresh notifications
         await fetchNotifications();
         
+        // Navigate to action URL if provided
         if (actionUrl && actionUrl !== '#' && actionUrl !== 'null') {
             window.location.href = actionUrl;
         }
@@ -694,6 +740,7 @@ async function markAllAsRead() {
     try {
         const response = await fetch('/api/notifications/mark-all-read', {
             method: 'POST',
+            credentials: 'same-origin', // IMPORTANT: Include session cookies
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Content-Type': 'application/json',

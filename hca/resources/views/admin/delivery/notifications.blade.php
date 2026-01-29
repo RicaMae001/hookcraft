@@ -54,36 +54,68 @@
         
         <div class="p-4">
             @forelse($notifications as $notification)
-            <div class="notification-card {{ $notification->is_read ? '' : 'unread' }}" 
-                 onclick="handleNotificationClick({{ $notification->id }}, '{{ $notification->action_url }}')">
+            @php
+                // Determine icon and color based on notification type
+                $type = $notification['type'] ?? '';
+                $priority = $notification['priority'] ?? 'normal';
+                
+                // Set icon and color class
+                if (str_contains($type, 'delivery_assigned')) {
+                    $icon = 'fa-truck';
+                    $colorClass = 'info';
+                } elseif (str_contains($type, 'delivery_status')) {
+                    $icon = 'fa-shipping-fast';
+                    $colorClass = 'primary';
+                } elseif (str_contains($type, 'order')) {
+                    $icon = 'fa-shopping-cart';
+                    $colorClass = 'success';
+                } elseif (str_contains($type, 'payment')) {
+                    $icon = 'fa-money-bill-wave';
+                    $colorClass = 'success';
+                } else {
+                    $icon = 'fa-bell';
+                    $colorClass = 'primary';
+                }
+                
+                // Calculate time ago
+                $timeAgo = \Carbon\Carbon::parse($notification['created_at'])->diffForHumans();
+            @endphp
+            
+            <div class="notification-card {{ $notification['is_read'] ? '' : 'unread' }}" 
+                 onclick="handleNotificationClick({{ $notification['id'] }}, '{{ $notification['action_url'] ?? '#' }}')">
                 <div class="d-flex gap-3 align-items-start">
-                    <div class="notification-icon {{ $notification->color_class }}">
-                        <i class="fas {{ $notification->icon }}"></i>
+                    <div class="notification-icon {{ $colorClass }}">
+                        <i class="fas {{ $icon }}"></i>
                     </div>
                     <div class="flex-grow-1">
                         <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="notification-title mb-0">{{ $notification->title }}</h5>
-                            <small class="text-muted">{{ $notification->time_ago }}</small>
+                            <h5 class="notification-title mb-0">{{ $notification['title'] }}</h5>
+                            <small class="text-muted">{{ $timeAgo }}</small>
                         </div>
-                        <p class="notification-message mb-2">{{ $notification->message }}</p>
+                        <p class="notification-message mb-2">{{ $notification['message'] }}</p>
                         <div class="d-flex gap-2 align-items-center">
-                            <span class="badge badge-modern badge-{{ $notification->color_class }}">
-                                {{ ucfirst(str_replace('_', ' ', $notification->type)) }}
+                            <span class="badge badge-modern badge-{{ $colorClass }}">
+                                {{ ucfirst(str_replace('_', ' ', $notification['type'])) }}
                             </span>
-                            @if($notification->priority === 'high' || $notification->priority === 'urgent')
+                            @if($priority === 'high' || $priority === 'urgent')
                             <span class="badge badge-modern badge-danger">
-                                <i class="fas fa-exclamation-circle me-1"></i>{{ ucfirst($notification->priority) }}
+                                <i class="fas fa-exclamation-circle me-1"></i>{{ ucfirst($priority) }}
+                            </span>
+                            @endif
+                            @if(!$notification['is_read'])
+                            <span class="badge badge-modern badge-info">
+                                <i class="fas fa-circle me-1" style="font-size: 0.5rem;"></i>New
                             </span>
                             @endif
                         </div>
                     </div>
-                    <div>
-                        @if(!$notification->is_read)
-                        <button class="btn btn-sm btn-modern-primary" onclick="event.stopPropagation(); markAsRead({{ $notification->id }})">
+                    <div class="d-flex gap-2">
+                        @if(!$notification['is_read'])
+                        <button class="btn btn-sm btn-modern-primary" onclick="event.stopPropagation(); markAsRead({{ $notification['id'] }})" title="Mark as read">
                             <i class="fas fa-check"></i>
                         </button>
                         @endif
-                        <button class="btn btn-sm btn-modern-danger" onclick="event.stopPropagation(); deleteNotification({{ $notification->id }})">
+                        <button class="btn btn-sm btn-modern-danger" onclick="event.stopPropagation(); deleteNotification({{ $notification['id'] }})" title="Delete">
                             <i class="fas fa-trash"></i>
                         </button>
                     </div>
@@ -120,6 +152,10 @@
 .notification-card.unread {
     background: rgba(102, 126, 234, 0.05);
     border-left: 4px solid var(--primary-blue);
+}
+
+.notification-card:last-child {
+    margin-bottom: 0;
 }
 
 .notification-icon {
@@ -309,6 +345,8 @@ async function markAsRead(notificationId) {
         
         if (response.ok) {
             location.reload();
+        } else {
+            console.error('Failed to mark notification as read');
         }
     } catch (error) {
         console.error('Error marking notification as read:', error);
@@ -327,6 +365,8 @@ async function markAllAsRead() {
         
         if (response.ok) {
             location.reload();
+        } else {
+            console.error('Failed to mark all notifications as read');
         }
     } catch (error) {
         console.error('Error marking all as read:', error);
@@ -349,6 +389,8 @@ async function deleteNotification(notificationId) {
         
         if (response.ok) {
             location.reload();
+        } else {
+            console.error('Failed to delete notification');
         }
     } catch (error) {
         console.error('Error deleting notification:', error);
@@ -356,10 +398,14 @@ async function deleteNotification(notificationId) {
 }
 
 function handleNotificationClick(notificationId, actionUrl) {
-    if (actionUrl && actionUrl !== '#' && actionUrl !== 'null') {
+    // Mark as read first
+    if (actionUrl && actionUrl !== '#' && actionUrl !== 'null' && actionUrl !== '') {
         markAsRead(notificationId).then(() => {
             window.location.href = actionUrl;
         });
+    } else {
+        // Just mark as read if no action URL
+        markAsRead(notificationId);
     }
 }
 </script>
