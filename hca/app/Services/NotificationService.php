@@ -367,47 +367,111 @@ class NotificationService
 
     /**
      * Notify when order is cancelled
+     * Enhanced to notify ALL parties: admin, delivery coordinator, and customer
      */
-    public function orderCancelled($orderId, $customerName, $reason = null, $userId = null)
+    public function orderCancelled($orderId, $customerName, $reason = null, $userId = null, $coordinatorId = null)
     {
-        // Notify admin
+        // 1. NOTIFY ADMIN/STAFF
         $this->create([
             'recipient_type' => 'admin',
             'type' => 'order_cancelled',
             'title' => 'Order Cancelled',
-            'message' => "Order for {$customerName} has been cancelled." . ($reason ? " Reason: {$reason}" : ""),
+            'message' => "Order #{$orderId} for {$customerName} has been cancelled." . ($reason ? " Reason: {$reason}" : ""),
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
-            'priority' => 'normal',
+            'priority' => 'high',
+            'metadata' => [
+                'order_id' => $orderId,
+                'customer_name' => $customerName,
+                'reason' => $reason,
+                'cancelled_by' => $this->determineCancelledBy($userId, $coordinatorId)
+            ]
         ]);
 
-        // Notify customer if userId provided
+        // 2. NOTIFY DELIVERY COORDINATOR (if assigned)
+        if ($coordinatorId) {
+            $this->create([
+                'recipient_type' => 'delivery',
+                'recipient_id' => $coordinatorId,
+                'type' => 'order_cancelled',
+                'title' => 'Delivery Cancelled',
+                'message' => "Order #{$orderId} for {$customerName} has been cancelled and removed from your deliveries." . ($reason ? " Reason: {$reason}" : ""),
+                'entity_type' => 'order',
+                'entity_id' => $orderId,
+                'action_url' => "/delivery/deliveries",
+                'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'customer_name' => $customerName,
+                    'reason' => $reason,
+                    'action' => 'delivery_cancelled'
+                ]
+            ]);
+
+            Log::info('Delivery coordinator notified of cancellation', [
+                'order_id' => $orderId,
+                'coordinator_id' => $coordinatorId
+            ]);
+        }
+
+        // 3. NOTIFY CUSTOMER (if userId provided)
         if ($userId) {
             $this->create([
                 'recipient_type' => 'user',
                 'recipient_id' => $userId,
                 'type' => 'order_cancelled',
                 'title' => 'Order Cancelled',
-                'message' => "Your order has been cancelled." . ($reason ? " Reason: {$reason}" : ""),
+                'message' => "Your order #{$orderId} has been cancelled." . ($reason ? " Reason: {$reason}" : "") . " If you have any questions, please contact us.",
                 'entity_type' => 'order',
                 'entity_id' => $orderId,
                 'action_url' => "/user/orders/{$orderId}",
-                'priority' => 'normal',
+                'priority' => 'high',
+                'metadata' => [
+                    'order_id' => $orderId,
+                    'reason' => $reason,
+                    'action' => 'order_cancelled'
+                ]
+            ]);
+
+            Log::info('Customer notified of order cancellation', [
+                'order_id' => $orderId,
+                'user_id' => $userId
             ]);
         }
     }
 
     /**
-     * Notify when product is created
+     * Helper to determine who cancelled the order
      */
-    public function productCreated($productId, $productName, $price, $adminName)
+    private function determineCancelledBy($userId, $coordinatorId)
     {
+        if ($userId && session('admin_id')) {
+            return 'admin';
+        } elseif ($userId) {
+            return 'customer';
+        } elseif ($coordinatorId) {
+            return 'delivery_coordinator';
+        }
+        return 'system';
+    }
+
+    /**
+     * Notify when product is created
+     * Price parameter is optional for backward compatibility
+     */
+    public function productCreated($productId, $productName, $adminName, $price = null)
+    {
+        $message = "{$adminName} added a new product: {$productName}";
+        if ($price !== null) {
+            $message .= " (₱" . number_format($price, 2) . ")";
+        }
+        
         return $this->create([
             'recipient_type' => 'admin',
             'type' => 'product_created',
             'title' => 'New Product Added',
-            'message' => "{$adminName} added a new product: {$productName} (₱" . number_format($price, 2) . ")",
+            'message' => $message,
             'entity_type' => 'product',
             'entity_id' => $productId,
             'action_url' => "/admin/products/{$productId}",

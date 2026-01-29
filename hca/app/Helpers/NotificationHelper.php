@@ -4,6 +4,7 @@ namespace App\Helpers;
 
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 
 class NotificationHelper
 {
@@ -220,7 +221,7 @@ class NotificationHelper
                     ]
                 ]);
                 
-                Log::warning('Out of stock notification sent', [
+                Log::info('Out of stock notification sent', [
                     'product_id' => $productId,
                     'product_name' => $productName
                 ]);
@@ -234,73 +235,35 @@ class NotificationHelper
     }
 
     /**
-     * When a new chat message is received
-     * Notifies the recipient (admin or user)
+     * Send a generic notification
+     * Useful for custom scenarios
      */
-    public static function newChatMessage($sessionId, $senderName, $message, $recipientType, $recipientId = null)
+    public static function send($recipientType, $recipientId, $type, $title, $message, $options = [])
     {
         try {
-            $messagePreview = strlen($message) > 50 ? substr($message, 0, 50) . '...' : $message;
-            
-            self::getService()->create([
+            $data = [
                 'recipient_type' => $recipientType,
                 'recipient_id' => $recipientId,
-                'type' => 'chat_message',
-                'title' => 'New Message from ' . $senderName,
-                'message' => $messagePreview,
-                'entity_type' => 'chat_session',
-                'entity_id' => $sessionId,
-                'action_url' => $recipientType === 'admin' ? "/admin/chat/{$sessionId}" : "/chat",
-                'priority' => 'normal',
-                'metadata' => [
-                    'session_id' => $sessionId,
-                    'sender_name' => $senderName,
-                    'full_message' => $message,
-                    'action' => 'chat_message'
-                ]
-            ]);
-            
-            Log::info('Chat message notification sent', [
-                'session_id' => $sessionId,
-                'recipient_type' => $recipientType,
-                'recipient_id' => $recipientId
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Failed to send chat message notification', [
-                'session_id' => $sessionId,
-                'error' => $e->getMessage()
-            ]);
-        }
-    }
-
-    /**
-     * Send a system alert notification
-     * Flexible method for custom notifications
-     */
-    public static function systemAlert($title, $message, $recipientType = 'admin', $recipientId = null, $priority = 'normal')
-    {
-        try {
-            self::getService()->create([
-                'recipient_type' => $recipientType,
-                'recipient_id' => $recipientId,
-                'type' => 'system_alert',
+                'type' => $type,
                 'title' => $title,
                 'message' => $message,
-                'priority' => $priority,
-                'metadata' => [
-                    'action' => 'system_alert',
-                    'timestamp' => now()->toDateTimeString()
-                ]
-            ]);
+                'entity_type' => $options['entity_type'] ?? null,
+                'entity_id' => $options['entity_id'] ?? null,
+                'action_url' => $options['action_url'] ?? null,
+                'priority' => $options['priority'] ?? 'normal',
+                'metadata' => $options['metadata'] ?? null,
+            ];
+
+            self::getService()->create($data);
             
-            Log::info('System alert notification sent', [
-                'title' => $title,
+            Log::info('Generic notification sent', [
                 'recipient_type' => $recipientType,
                 'recipient_id' => $recipientId,
-                'priority' => $priority
+                'type' => $type,
+                'title' => $title
             ]);
         } catch (\Exception $e) {
-            Log::error('Failed to send system alert notification', [
+            Log::error('Failed to send generic notification', [
                 'title' => $title,
                 'error' => $e->getMessage()
             ]);
@@ -332,16 +295,32 @@ class NotificationHelper
 
     /**
      * When order is cancelled
-     * Notifies admin and optionally the customer
+     * ENHANCED: Notifies ALL parties: admin, delivery coordinator (if assigned), and customer
+     * 
+     * @param int $orderId The order ID
+     * @param string $customerName Customer's name
+     * @param string|null $reason Reason for cancellation
+     * @param int|null $userId Customer user ID (if registered user)
+     * @param int|null $coordinatorId Delivery coordinator ID (if assigned)
      */
-    public static function orderCancelled($orderId, $customerName, $reason = null, $userId = null)
+    public static function orderCancelled($orderId, $customerName, $reason = null, $userId = null, $coordinatorId = null)
     {
         try {
-            self::getService()->orderCancelled($orderId, $customerName, $reason, $userId);
+            // If coordinator ID is not provided, try to get it from the order
+            if ($coordinatorId === null) {
+                $order = DB::table('orders')->where('id', $orderId)->first();
+                if ($order && $order->delivery_coordinator_id) {
+                    $coordinatorId = $order->delivery_coordinator_id;
+                }
+            }
+
+            // Use the enhanced service method that notifies all parties
+            self::getService()->orderCancelled($orderId, $customerName, $reason, $userId, $coordinatorId);
             
-            Log::info('Order cancelled notification sent', [
+            Log::info('Order cancelled notification sent to all parties', [
                 'order_id' => $orderId,
                 'user_id' => $userId,
+                'coordinator_id' => $coordinatorId,
                 'reason' => $reason
             ]);
         } catch (\Exception $e) {
@@ -355,11 +334,12 @@ class NotificationHelper
     /**
      * When product is created
      * Notifies admin about new product
+     * Price parameter is optional
      */
-    public static function productCreated($productId, $productName, $price, $adminName)
+    public static function productCreated($productId, $productName, $adminName, $price = null)
     {
         try {
-            self::getService()->productCreated($productId, $productName, $price, $adminName);
+            self::getService()->productCreated($productId, $productName, $adminName, $price);
             
             Log::info('Product created notification sent', [
                 'product_id' => $productId,

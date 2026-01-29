@@ -652,7 +652,7 @@
                                 Reference Product
                             </div>
                             <div class="product-preview-flex">
-                                <img src="{{ asset('uploads/' . $referenceProduct->image) }}" 
+                                <img src="{{ asset('asset/images/' . $referenceProduct->image) }}" 
                                      alt="{{ $referenceProduct->name }}"
                                      onerror="this.src='{{ asset('images/placeholder.jpg') }}'">
                                 <div class="product-info">

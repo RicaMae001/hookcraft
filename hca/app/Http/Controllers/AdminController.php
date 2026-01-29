@@ -12,6 +12,8 @@ use App\Models\GalleryImage;
 use App\Models\Category;
 use App\Models\User;
 use App\Models\Product;
+use App\Models\Cart;
+use App\Models\CartItem;
 use App\Services\NotificationService;
 use App\Models\ProductCustomization;
 
@@ -160,7 +162,7 @@ class AdminController extends Controller
 
                 // Check for low stock notification
                 if ($newStock <= 5 && $newStock > 0) {
-                    $this->notificationService->productLowStock(
+                    $this->notificationService->notifyLowStock(
                         $product->id, 
                         $product->name, 
                         $newStock
@@ -169,10 +171,16 @@ class AdminController extends Controller
                 
                 // Check for out of stock notification
                 if ($newStock <= 0) {
-                    $this->notificationService->productOutOfStock(
-                        $product->id, 
-                        $product->name
-                    );
+                    $this->notificationService->create([
+                        'recipient_type' => 'admin',
+                        'type' => 'product_out_of_stock',
+                        'title' => 'Product Out of Stock',
+                        'message' => "{$product->name} is now out of stock!",
+                        'entity_type' => 'product',
+                        'entity_id' => $product->id,
+                        'action_url' => "/admin/products/{$product->id}/edit",
+                        'priority' => 'urgent',
+                    ]);
                 }
             }
         }
@@ -471,11 +479,12 @@ class AdminController extends Controller
             'admin_id' => session('admin_id'),
         ]);
 
-        // Send product created notification
+        // FIXED: Send product created notification WITH PRICE (4th parameter)
         $this->notificationService->productCreated(
             $product->id,
             $validated['name'],
-            session('admin_name')
+            session('admin_name'),
+            $validated['price']  // ← THIS IS THE FIX - Added the price parameter
         );
 
         Log::info('Product created', [
@@ -527,16 +536,22 @@ class AdminController extends Controller
 
         // Check stock levels for notifications
         if ($product->stock <= 5 && $product->stock > 0) {
-            $this->notificationService->productLowStock(
+            $this->notificationService->notifyLowStock(
                 $product->id, 
                 $product->name, 
                 $product->stock
             );
         } elseif ($product->stock <= 0) {
-            $this->notificationService->productOutOfStock(
-                $product->id, 
-                $product->name
-            );
+            $this->notificationService->create([
+                'recipient_type' => 'admin',
+                'type' => 'product_out_of_stock',
+                'title' => 'Product Out of Stock',
+                'message' => "{$product->name} is now out of stock!",
+                'entity_type' => 'product',
+                'entity_id' => $product->id,
+                'action_url' => "/admin/products/{$product->id}/edit",
+                'priority' => 'urgent',
+            ]);
         }
 
         Log::info('Product updated', [
@@ -660,178 +675,181 @@ class AdminController extends Controller
     // ORDER MANAGEMENT - ADMIN HAS FULL ACCESS
     // ============================================
     
-   public function orders()
-{
-    $authCheck = $this->checkAdminAuth();
-    if ($authCheck) return $authCheck;
+    public function orders()
+    {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
-    // Paginated orders - 15 per page
-    $orders = DB::table('orders')
-        ->orderBy('created_at', 'desc')
-        ->paginate(10);
-    
-    // Get all orders for stats (not paginated)
-    $allOrders = DB::table('orders')->get();
-    
-    $coordinators = DB::table('delivery_coordinator')
-        ->where('status', 'Active')
-        ->orderBy('name', 'asc')
-        ->get();
-    
-    $isAdmin = $this->isAdmin();
-    $isStaff = $this->isStaff();
-    
-    return view('admin.orders', compact('orders', 'allOrders', 'coordinators', 'isAdmin', 'isStaff'));
-}
+        // Paginated orders - 10 per page
+        $orders = DB::table('orders')
+            ->orderBy('created_at', 'desc')
+            ->paginate(10);
+        
+        // Get all orders for stats (not paginated)
+        $allOrders = DB::table('orders')->get();
+        
+        $coordinators = DB::table('delivery_coordinator')
+            ->where('status', 'Active')
+            ->orderBy('name', 'asc')
+            ->get();
+        
+        $isAdmin = $this->isAdmin();
+        $isStaff = $this->isStaff();
+        
+        return view('admin.orders', compact('orders', 'allOrders', 'coordinators', 'isAdmin', 'isStaff'));
+    }
 
-public function updateOrderStatus(Request $request, $id)
-{
-    $authCheck = $this->checkAdminAuth();
-    if ($authCheck) return $authCheck;
+    public function updateOrderStatus(Request $request, $id)
+    {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
-    $validated = $request->validate([
-        'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
-        'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
-    ]);
-
-    $currentOrder = DB::table('orders')->where('id', $id)->first();
-    
-    DB::beginTransaction();
-
-    try {
-        DB::table('orders')->where('id', $id)->update([
-            'payment_status' => $validated['payment_status'],
-            'delivery_status' => $validated['delivery_status'],
+        $validated = $request->validate([
+            'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
+            'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
         ]);
 
-        if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
-            $this->deductStockFromOrder($id);
-            
-            // Send payment received notification
-            if ($currentOrder->customer_name && $currentOrder->total) {
-                $this->notificationService->paymentReceived(
+        $currentOrder = DB::table('orders')->where('id', $id)->first();
+        
+        DB::beginTransaction();
+
+        try {
+            DB::table('orders')->where('id', $id)->update([
+                'payment_status' => $validated['payment_status'],
+                'delivery_status' => $validated['delivery_status'],
+            ]);
+
+            if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
+                $this->deductStockFromOrder($id);
+                
+                // Send payment received notification
+                if ($currentOrder->customer_name && $currentOrder->total) {
+                    $this->notificationService->notifyPaymentReceived(
+                        $id,
+                        "#{$id}",
+                        $currentOrder->total
+                    );
+                }
+            }
+
+            if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
+                $this->restoreStockFromOrder($id);
+            }
+
+            // Send order updated notification
+            if ($currentOrder->customer_name) {
+                $this->notificationService->orderUpdated(
                     $id,
                     $currentOrder->customer_name,
-                    $currentOrder->total
+                    $currentOrder->payment_status,
+                    $validated['payment_status'],
+                    session('admin_name')
                 );
             }
+
+            DB::commit();
+
+            Log::info('Order status updated', [
+                'order_id' => $id,
+                'admin_id' => session('admin_id')
+            ]);
+
+            return redirect()->back()->with('success', 'Order status updated successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Order update failed', [
+                'order_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
         }
-
-        if ($currentOrder->payment_status === 'Paid' && $validated['payment_status'] !== 'Paid') {
-            $this->restoreStockFromOrder($id);
-        }
-
-        // Send order updated notification
-        if ($currentOrder->customer_name) {
-            $this->notificationService->orderUpdated(
-                $id,
-                $currentOrder->customer_name,
-                $currentOrder->payment_status,
-                $validated['payment_status'],
-                session('admin_name')
-            );
-        }
-
-        DB::commit();
-
-        Log::info('Order status updated', [
-            'order_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
-
-        return redirect()->back()->with('success', 'Order status updated successfully');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Order update failed', [
-            'order_id' => $id,
-            'error' => $e->getMessage()
-        ]);
-        return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
     }
-}
 
-public function deleteOrder($id)
-{
-    $authCheck = $this->checkAdminAuth();
-    if ($authCheck) return $authCheck;
+    public function deleteOrder($id)
+    {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
 
-    DB::beginTransaction();
+        DB::beginTransaction();
 
-    try {
+        try {
+            $order = DB::table('orders')->where('id', $id)->first();
+            
+            if ($order && $order->payment_status === 'Paid') {
+                $this->restoreStockFromOrder($id);
+            }
+
+            // Send order cancelled notification if applicable
+            if ($order && $order->customer_name && $order->delivery_status !== 'Cancelled') {
+                $this->notificationService->orderCancelled(
+                    $id,
+                    $order->customer_name,
+                    'Order deleted by admin',
+                    $order->user_id ?? null,
+                    $order->delivery_coordinator_id ?? null
+                );
+            }
+
+            DB::table('orders')->where('id', $id)->delete();
+
+            DB::commit();
+
+            Log::info('Order deleted', [
+                'order_id' => $id,
+                'admin_id' => session('admin_id')
+            ]);
+
+            return redirect()->back()->with('success', 'Order deleted successfully');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Order deletion failed', [
+                'order_id' => $id,
+                'error' => $e->getMessage()
+            ]);
+            return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
+        }
+    }
+
+    public function assignCoordinator(Request $request, $id)
+    {
+        $authCheck = $this->checkAdminAuth();
+        if ($authCheck) return $authCheck;
+
+        $validated = $request->validate([
+            'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
+        ]);
+
         $order = DB::table('orders')->where('id', $id)->first();
-        
-        if ($order && $order->payment_status === 'Paid') {
-            $this->restoreStockFromOrder($id);
-        }
+        $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
 
-        // Send order cancelled notification if applicable
-        if ($order && $order->customer_name && $order->delivery_status !== 'Cancelled') {
-            $this->notificationService->orderCancelled(
+        DB::table('orders')
+            ->where('id', $id)
+            ->update([
+                'delivery_coordinator_id' => $validated['coordinator_id'],
+                'admin_id' => session('admin_id')
+            ]);
+
+        // Send delivery assignment notification
+        if ($order && $coordinator) {
+            $this->notificationService->deliveryAssigned(
                 $id,
-                $order->customer_name,
-                'Order deleted by admin'
+                $coordinator->coordinator_id,
+                $coordinator->name,
+                $order->customer_name ?? 'Customer'
             );
         }
 
-        DB::table('orders')->where('id', $id)->delete();
-
-        DB::commit();
-
-        Log::info('Order deleted', [
+        Log::info('Coordinator assigned', [
             'order_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
-
-        return redirect()->back()->with('success', 'Order deleted successfully');
-
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Order deletion failed', [
-            'order_id' => $id,
-            'error' => $e->getMessage()
-        ]);
-        return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
-    }
-}
-
-public function assignCoordinator(Request $request, $id)
-{
-    $authCheck = $this->checkAdminAuth();
-    if ($authCheck) return $authCheck;
-
-    $validated = $request->validate([
-        'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
-    ]);
-
-    $order = DB::table('orders')->where('id', $id)->first();
-    $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
-
-    DB::table('orders')
-        ->where('id', $id)
-        ->update([
             'coordinator_id' => $validated['coordinator_id'],
             'admin_id' => session('admin_id')
         ]);
 
-    // Send delivery assignment notification
-    if ($order && $coordinator) {
-        $this->notificationService->deliveryAssigned(
-            $id,
-            $coordinator->coordinator_id,
-            $coordinator->name,
-            $order->customer_name ?? 'Customer'
-        );
+        return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
     }
 
-    Log::info('Coordinator assigned', [
-        'order_id' => $id,
-        'coordinator_id' => $validated['coordinator_id'],
-        'admin_id' => session('admin_id')
-    ]);
-
-    return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
-}
     // ============================================
     // STAFF MANAGEMENT - ADMIN ONLY
     // ============================================
@@ -1185,196 +1203,194 @@ public function assignCoordinator(Request $request, $id)
 
         return back()->with('success', 'Gallery status updated successfully!');
     }
-    // In AdminController.php - ADD THESE METHODS
-// ============================================
-// CUSTOMIZATION MANAGEMENT - ADMIN ONLY
-// ============================================
-// In AdminController.php - Make sure these methods exist
 
-public function customizations()
-{
-    $roleCheck = $this->requireAdmin();
-    if ($roleCheck) return $roleCheck;
+    // ============================================
+    // CUSTOMIZATION MANAGEMENT - ADMIN ONLY
+    // ============================================
 
-    $customizations = ProductCustomization::with(['user', 'product'])
-        ->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
-        ->orderBy('created_at', 'desc')
-        ->paginate(20);
+    public function customizations()
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
 
-    return view('admin.customizations.index', compact('customizations'));
-}
+        $customizations = ProductCustomization::with(['user', 'product'])
+            ->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
 
-public function customizationShow($id)
-{
-    $roleCheck = $this->requireAdmin();
-    if ($roleCheck) return $roleCheck;
-
-    $customization = ProductCustomization::with(['user', 'product', 'options'])
-        ->findOrFail($id);
-
-    return view('admin.customizations.show', compact('customization'));
-}
-
-public function customizationUpdate(Request $request, $id)
-{
-    $roleCheck = $this->requireAdmin();
-    if ($roleCheck) return $roleCheck;
-
-    $request->validate([
-        'status' => 'required|in:Pending,Approved,Rejected,Completed',
-        'admin_price' => 'required_if:status,Approved|numeric|min:0',
-        'admin_notes' => 'nullable|string',
-    ]);
-
-    $customization = ProductCustomization::findOrFail($id);
-
-    $updateData = [
-        'status' => $request->status,
-        'admin_notes' => $request->admin_notes,
-        'admin_id' => session('admin_id'),
-    ];
-
-    if ($request->status === 'Approved' && $request->has('admin_price')) {
-        $updateData['admin_price'] = $request->admin_price;
-        $updateData['total_price'] = $request->admin_price;
-    } elseif ($request->status !== 'Approved') {
-        $updateData['admin_price'] = null;
+        return view('admin.customizations.index', compact('customizations'));
     }
 
-    $customization->update($updateData);
+    public function customizationShow($id)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
 
-    return redirect()->route('admin.customizations.index')
-        ->with('success', 'Customization updated successfully');
-}
+        $customization = ProductCustomization::with(['user', 'product', 'options'])
+            ->findOrFail($id);
 
-public function customizationDestroy($id)
-{
-    $roleCheck = $this->requireAdmin();
-    if ($roleCheck) return $roleCheck;
-
-    $customization = ProductCustomization::findOrFail($id);
-    
-    if ($customization->custom_image) {
-        $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
-        if (file_exists($imagePath)) {
-            unlink($imagePath);
-        }
+        return view('admin.customizations.show', compact('customization'));
     }
 
-    $customization->delete();
+    public function customizationUpdate(Request $request, $id)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
 
-    return redirect()->route('admin.customizations.index')
-        ->with('success', 'Customization deleted successfully');
-}
-// Add these methods to CustomizationController
-
-/**
- * Show checkout page for approved customization
- */
-public function checkout($id)
-{
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
-
-    $customization = ProductCustomization::where('user_id', Auth::id())
-        ->with('product')
-        ->findOrFail($id);
-
-    // Check if customization is approved
-    if (!$customization->isApproved() || !$customization->admin_price) {
-        return redirect()->route('customization.my-customizations')
-            ->with('error', 'This customization is not yet approved or priced.');
-    }
-
-    // Check if already has order
-    if ($customization->order_id) {
-        return redirect()->route('customization.my-customizations')
-            ->with('info', 'This customization has already been ordered.');
-    }
-
-    return view('customization.checkout', compact('customization'));
-}
-
-/**
- * Add approved customization to cart
- */
-public function addToCart(Request $request, $id)
-{
-    if (!Auth::check()) {
-        return redirect()->route('login');
-    }
-
-    $customization = ProductCustomization::where('user_id', Auth::id())
-        ->with('product')
-        ->findOrFail($id);
-
-    // Validate customization can be added to cart
-    if (!$customization->isApproved()) {
-        return back()->with('error', 'Customization must be approved before adding to cart.');
-    }
-
-    if ($customization->order_id) {
-        return back()->with('error', 'This customization has already been ordered.');
-    }
-
-    if (!$customization->admin_price) {
-        return back()->with('error', 'No price has been set for this customization.');
-    }
-
-    DB::beginTransaction();
-    
-    try {
-        // Get or create regular cart
-        $cart = Cart::firstOrCreate(
-            ['user_id' => Auth::id(), 'is_buy_now' => 0]
-        );
-
-        // Check if customization is already in cart
-        $existingItem = CartItem::where('cart_id', $cart->id)
-            ->where('product_id', $customization->product_id)
-            ->where('is_customization', 1)
-            ->where('customization_id', $customization->id)
-            ->first();
-
-        if ($existingItem) {
-            return back()->with('info', 'This customization is already in your cart.');
-        }
-
-        // Create cart item for customization
-        CartItem::create([
-            'cart_id' => $cart->id,
-            'product_id' => $customization->product_id,
-            'category_id' => $customization->product->category_id,
-            'quantity' => 1,
-            'price' => $customization->admin_price,
-            'subtotal' => $customization->admin_price,
-            'is_customization' => 1,
-            'customization_id' => $customization->id,
+        $request->validate([
+            'status' => 'required|in:Pending,Approved,Rejected,Completed',
+            'admin_price' => 'required_if:status,Approved|numeric|min:0',
+            'admin_notes' => 'nullable|string',
         ]);
 
-        // Update session cart count
-        $cartCount = CartItem::whereHas('cart', function($query) {
-            $query->where('user_id', Auth::id())
-                  ->where('is_buy_now', 0);
-        })->sum('quantity');
-        
-        session(['cart_count' => $cartCount]);
+        $customization = ProductCustomization::findOrFail($id);
 
-        DB::commit();
+        $updateData = [
+            'status' => $request->status,
+            'admin_notes' => $request->admin_notes,
+            'admin_id' => session('admin_id'),
+        ];
 
-        return redirect()->route('cart.index')
-            ->with('success', 'Customization added to cart successfully!');
+        if ($request->status === 'Approved' && $request->has('admin_price')) {
+            $updateData['admin_price'] = $request->admin_price;
+            $updateData['total_price'] = $request->admin_price;
+        } elseif ($request->status !== 'Approved') {
+            $updateData['admin_price'] = null;
+        }
 
-    } catch (\Exception $e) {
-        DB::rollBack();
-        Log::error('Failed to add customization to cart', [
-            'error' => $e->getMessage(),
-            'customization_id' => $id,
-            'user_id' => Auth::id()
-        ]);
-        
-        return back()->with('error', 'Failed to add customization to cart.');
+        $customization->update($updateData);
+
+        return redirect()->route('admin.customizations.index')
+            ->with('success', 'Customization updated successfully');
     }
-}
+
+    public function customizationDestroy($id)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $customization = ProductCustomization::findOrFail($id);
+        
+        if ($customization->custom_image) {
+            $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
+            if (file_exists($imagePath)) {
+                unlink($imagePath);
+            }
+        }
+
+        $customization->delete();
+
+        return redirect()->route('admin.customizations.index')
+            ->with('success', 'Customization deleted successfully');
+    }
+
+    /**
+     * Show checkout page for approved customization
+     */
+    public function checkout($id)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
+            ->findOrFail($id);
+
+        // Check if customization is approved
+        if (!$customization->isApproved() || !$customization->admin_price) {
+            return redirect()->route('customization.my-customizations')
+                ->with('error', 'This customization is not yet approved or priced.');
+        }
+
+        // Check if already has order
+        if ($customization->order_id) {
+            return redirect()->route('customization.my-customizations')
+                ->with('info', 'This customization has already been ordered.');
+        }
+
+        return view('customization.checkout', compact('customization'));
+    }
+
+    /**
+     * Add approved customization to cart
+     */
+    public function addToCart(Request $request, $id)
+    {
+        if (!Auth::check()) {
+            return redirect()->route('login');
+        }
+
+        $customization = ProductCustomization::where('user_id', Auth::id())
+            ->with('product')
+            ->findOrFail($id);
+
+        // Validate customization can be added to cart
+        if (!$customization->isApproved()) {
+            return back()->with('error', 'Customization must be approved before adding to cart.');
+        }
+
+        if ($customization->order_id) {
+            return back()->with('error', 'This customization has already been ordered.');
+        }
+
+        if (!$customization->admin_price) {
+            return back()->with('error', 'No price has been set for this customization.');
+        }
+
+        DB::beginTransaction();
+        
+        try {
+            // Get or create regular cart
+            $cart = Cart::firstOrCreate(
+                ['user_id' => Auth::id(), 'is_buy_now' => 0]
+            );
+
+            // Check if customization is already in cart
+            $existingItem = CartItem::where('cart_id', $cart->id)
+                ->where('product_id', $customization->product_id)
+                ->where('is_customization', 1)
+                ->where('customization_id', $customization->id)
+                ->first();
+
+            if ($existingItem) {
+                return back()->with('info', 'This customization is already in your cart.');
+            }
+
+            // Create cart item for customization
+            CartItem::create([
+                'cart_id' => $cart->id,
+                'product_id' => $customization->product_id,
+                'category_id' => $customization->product->category_id,
+                'quantity' => 1,
+                'price' => $customization->admin_price,
+                'subtotal' => $customization->admin_price,
+                'is_customization' => 1,
+                'customization_id' => $customization->id,
+            ]);
+
+            // Update session cart count
+            $cartCount = CartItem::whereHas('cart', function($query) {
+                $query->where('user_id', Auth::id())
+                      ->where('is_buy_now', 0);
+            })->sum('quantity');
+            
+            session(['cart_count' => $cartCount]);
+
+            DB::commit();
+
+            return redirect()->route('cart.index')
+                ->with('success', 'Customization added to cart successfully!');
+
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error('Failed to add customization to cart', [
+                'error' => $e->getMessage(),
+                'customization_id' => $id,
+                'user_id' => Auth::id()
+            ]);
+            
+            return back()->with('error', 'Failed to add customization to cart.');
+        }
+    }
 }
