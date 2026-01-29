@@ -300,284 +300,6 @@
         border-color: #FF69B4;
     }
 
-    /* Category Section Styles */
-    .category-section {
-        margin-bottom: 40px;
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    .category-section.hidden {
-        display: none;
-    }
-
-    .category-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-        padding-bottom: 15px;
-        border-bottom: 2px solid #FF69B4;
-    }
-
-    .category-title {
-        font-size: 24px;
-        font-weight: 600;
-        color: #2d3748;
-        margin: 0;
-        display: flex;
-        align-items: center;
-    }
-
-    .category-count {
-        font-size: 14px;
-        color: #718096;
-        background: #f7fafc;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-weight: 500;
-    }
-
-    .products-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 20px;
-    }
-
-    .product-item {
-        animation: fadeInUp 0.5s ease-out;
-        opacity: 1;
-        transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-
-    .product-item.hidden {
-        display: none;
-    }
-
-    .product-card {
-        background: white;
-        border-radius: 12px;
-        overflow: hidden;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-        transition: all 0.3s ease;
-        cursor: pointer;
-        height: 100%;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-    }
-
-    .category-badge-overlay {
-        position: absolute;
-        top: 15px;
-        left: 15px;
-        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-        color: white;
-        padding: 4px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        font-weight: 500;
-        z-index: 2;
-    }
-
-    .stock-badge {
-        position: absolute;
-        top: 15px;
-        right: 15px;
-        z-index: 2;
-    }
-
-    .product-image-wrapper {
-        position: relative;
-        padding-top: 75%;
-        overflow: hidden;
-        background: #f8f9fa;
-    }
-
-    .product-image {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        transition: transform 0.5s ease;
-    }
-
-    .product-card:hover .product-image {
-        transform: scale(1.05);
-    }
-
-    .product-info {
-        padding: 20px;
-        flex-grow: 1;
-        display: flex;
-        flex-direction: column;
-    }
-
-    .product-title {
-        font-size: 16px;
-        font-weight: 600;
-        color: #2d3748;
-        margin-bottom: 10px;
-        line-height: 1.4;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-
-    .product-price {
-        font-size: 20px;
-        font-weight: 700;
-        color: #FF1493;
-        margin-bottom: 15px;
-    }
-
-    .cart-section {
-        margin-top: auto;
-    }
-
-    .quantity-selector {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 15px;
-        gap: 10px;
-    }
-
-    .quantity-btn {
-        width: 36px;
-        height: 36px;
-        border: 1px solid #e2e8f0;
-        background: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        color: #4a5568;
-        font-size: 14px;
-    }
-
-    .quantity-btn:hover {
-        background: #f7fafc;
-        border-color: #FF69B4;
-        color: #FF69B4;
-    }
-
-    .quantity-btn:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-    }
-
-    .quantity-input {
-        width: 60px;
-        text-align: center;
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        padding: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        color: #2d3748;
-        background: white;
-    }
-
-    .quantity-input:focus {
-        outline: none;
-        border-color: #FF69B4;
-        box-shadow: 0 0 0 3px rgba(255, 105, 180, 0.1);
-    }
-
-    .add-to-cart-btn {
-        width: 100%;
-        padding: 12px;
-        background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 8px;
-    }
-
-    .add-to-cart-btn:hover:not(:disabled) {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(255, 105, 180, 0.4);
-    }
-
-    .add-to-cart-btn:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        background: #6c757d;
-    }
-
-    .add-to-cart-btn.loading {
-        background: #6c757d;
-    }
-
-    .add-to-cart-btn.success {
-        background: #28a745;
-    }
-
-    .btn-text, .btn-loading, .btn-success {
-        display: flex;
-        align-items: center;
-    }
-
-    .empty-state {
-        text-align: center;
-        padding: 60px 20px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
-    }
-
-    .empty-state i {
-        color: #e2e8f0;
-        margin-bottom: 20px;
-    }
-
-    .empty-state h4 {
-        color: #2d3748;
-        margin-bottom: 10px;
-    }
-
-    .empty-state p {
-        color: #718096;
-        margin-bottom: 25px;
-    }
-
-    @keyframes fadeIn {
-        from {
-            opacity: 0;
-        }
-        to {
-            opacity: 1;
-        }
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
     /* Mobile Responsive */
     @media (max-width: 992px) {
         .shop-layout {
@@ -592,10 +314,6 @@
 
         .sidebar-section {
             margin-bottom: 20px;
-        }
-
-        .products-grid {
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
         }
     }
 
@@ -613,72 +331,8 @@
         .sort-dropdown {
             width: 100%;
         }
-
-        .products-grid {
-            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-            gap: 15px;
-        }
-
-        .category-header {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 10px;
-        }
-
-        .category-count {
-            align-self: flex-start;
-        }
     }
-
-    @media (max-width: 480px) {
-        .products-grid {
-            grid-template-columns: 1fr;
-        }
-    }
-
-    /* Toast Styles */
-    .toast-container {
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        z-index: 9999;
-    }
-
-    .toast {
-        min-width: 300px;
-        border: none;
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-        overflow: hidden;
-        background: white;
-    }
-
-    .cart-toast {
-        border-left: 4px solid #28a745;
-    }
-
-    .error-toast {
-        border-left: 4px solid #dc3545;
-    }
-
-    .toast-body {
-        padding: 15px;
-        font-size: 14px;
-        color: #2d3748;
-    }
-
-    .toast-body i {
-        font-size: 18px;
-    }
-
-    .cart-toast .toast-body i {
-        color: #28a745;
-    }
-
-    .error-toast .toast-body i {
-        color: #dc3545;
-    }
-</style>  
+  </style>  
 
 </head>
 <body>
@@ -811,21 +465,17 @@
                 @endphp
 
                 @foreach($categories as $category)
-                    @php
-                        $categoryProducts = isset($groupedProducts[$category->id]) ? $groupedProducts[$category->id] : collect([]);
-                    @endphp
-                    
-                    @if($categoryProducts->count() > 0)
+                    @if($groupedProducts->has($category->id))
                         <div class="category-section" data-category-id="{{ $category->id }}">
                             <div class="category-header">
                                 <h3 class="category-title">
                                     <i class="fas fa-tag me-2"></i>{{ $category->name }}
                                 </h3>
-                                <span class="category-count">{{ $categoryProducts->count() }} items</span>
+                                <span class="category-count">{{ $groupedProducts[$category->id]->count() }} items</span>
                             </div>
                             
                             <div class="products-grid">
-                                @foreach($categoryProducts as $product)
+                                @foreach($groupedProducts[$category->id] as $product)
                                 <div class="product-item"
                                      data-category="{{ $product->category_id }}"
                                      data-name="{{ strtolower($product->name) }}"
@@ -863,16 +513,9 @@
 
                                         <!-- Product Image -->
                                         <div class="product-image-wrapper">
-                                            @if($product->image)
-                                                <img src="{{ asset('asset/images/' . $product->image) }}" 
-                                                     alt="{{ $product->name }}" 
-                                                     class="product-image"
-                                                     onerror="this.onerror=null; this.src='{{ asset('asset/images/placeholder.jpg') }}';">
-                                            @else
-                                                <img src="{{ asset('asset/images/placeholder.jpg') }}" 
-                                                     alt="{{ $product->name }}" 
-                                                     class="product-image">
-                                            @endif
+                                            <img src="{{ asset('asset/images/' . $product->image) }}" 
+                                                 alt="{{ $product->name }}" 
+                                                 class="product-image">
                                         </div>
 
                                         <!-- Product Info -->
@@ -898,7 +541,7 @@
                                                         </button>
                                                     </div>
                                                     
-                                                    @auth
+                                                    @if($isLoggedIn)
                                                         <button type="button" 
                                                                 class="add-to-cart-btn" 
                                                                 id="add-btn-{{ $product->id }}"
@@ -918,7 +561,7 @@
                                                                 data-bs-toggle="modal" data-bs-target="#loginModal">
                                                             <i class="fas fa-sign-in-alt me-2"></i>Login to Purchase
                                                         </button>
-                                                    @endauth
+                                                    @endif
                                                 </div>
                                             @else
                                                 <button class="add-to-cart-btn" disabled style="background: #6c757d;">
@@ -933,102 +576,6 @@
                         </div>
                     @endif
                 @endforeach
-
-                <!-- Show Uncategorized Products -->
-                @php
-                    $uncategorizedProducts = $products->whereNull('category_id')->where('category_id', '!=', '');
-                @endphp
-                
-                @if($uncategorizedProducts->count() > 0)
-                    <div class="category-section" data-category-id="uncategorized">
-                        <div class="category-header">
-                            <h3 class="category-title">
-                                <i class="fas fa-question-circle me-2"></i>Uncategorized
-                            </h3>
-                            <span class="category-count">{{ $uncategorizedProducts->count() }} items</span>
-                        </div>
-                        
-                        <div class="products-grid">
-                            @foreach($uncategorizedProducts as $product)
-                            <div class="product-item"
-                                 data-category="uncategorized"
-                                 data-name="{{ strtolower($product->name) }}"
-                                 data-price="{{ $product->price }}"
-                                 data-product-id="{{ $product->id }}"
-                                 data-product-name="{{ $product->name }}"
-                                 data-product-image="{{ asset('asset/images/' . $product->image) }}"
-                                 data-product-description="{{ $product->description ?? 'Beautiful handcrafted crochet item.' }}"
-                                 data-product-stock="{{ $product->stock }}">
-                                <div class="product-card" onclick="openProductModal(this.parentElement)">
-                                    <div class="product-image-wrapper">
-                                        @if($product->image)
-                                            <img src="{{ asset('asset/images/' . $product->image) }}" 
-                                                 alt="{{ $product->name }}" 
-                                                 class="product-image"
-                                                 onerror="this.onerror=null; this.src='{{ asset('asset/images/placeholder.jpg') }}';">
-                                        @else
-                                            <img src="{{ asset('asset/images/placeholder.jpg') }}" 
-                                                 alt="{{ $product->name }}" 
-                                                 class="product-image">
-                                        @endif
-                                    </div>
-
-                                    <div class="product-info">
-                                        <h6 class="product-title">{{ $product->name }}</h6>
-                                        <span class="product-price">₱{{ number_format($product->price, 2) }}</span>
-                                        
-                                        @if($product->stock > 0)
-                                            <div class="cart-section" onclick="event.stopPropagation();">
-                                                <div class="quantity-selector">
-                                                    <button type="button" class="quantity-btn" onclick="decreaseQuantity({{ $product->id }})">
-                                                        <i class="fas fa-minus"></i>
-                                                    </button>
-                                                    <input type="number" 
-                                                           id="quantity-{{ $product->id }}" 
-                                                           class="quantity-input" 
-                                                           value="1" 
-                                                           min="1" 
-                                                           max="{{ $product->stock }}"
-                                                           readonly>
-                                                    <button type="button" class="quantity-btn" onclick="increaseQuantity({{ $product->id }}, {{ $product->stock }})">
-                                                        <i class="fas fa-plus"></i>
-                                                    </button>
-                                                </div>
-                                                
-                                                @auth
-                                                    <button type="button" 
-                                                            class="add-to-cart-btn" 
-                                                            id="add-btn-{{ $product->id }}"
-                                                            onclick="addToCart({{ $product->id }})">
-                                                        <span class="btn-text">
-                                                            <i class="fas fa-cart-plus me-2"></i>Add to Cart
-                                                        </span>
-                                                        <span class="btn-loading d-none">
-                                                            <i class="fas fa-spinner fa-spin me-2"></i>Adding...
-                                                        </span>
-                                                        <span class="btn-success d-none">
-                                                            <i class="fas fa-check me-2"></i>Added!
-                                                        </span>
-                                                    </button>
-                                                @else
-                                                    <button type="button" class="add-to-cart-btn" 
-                                                            data-bs-toggle="modal" data-bs-target="#loginModal">
-                                                        <i class="fas fa-sign-in-alt me-2"></i>Login to Purchase
-                                                    </button>
-                                                @endauth
-                                            </div>
-                                        @else
-                                            <button class="add-to-cart-btn" disabled style="background: #6c757d;">
-                                                <i class="fas fa-ban me-2"></i>Out of Stock
-                                            </button>
-                                        @endif
-                                    </div>
-                                </div>
-                            </div>
-                            @endforeach
-                        </div>
-                    </div>
-                @endif
 
                 <!-- Empty State -->
                 <div id="emptyState" class="empty-state" style="display: none;">
@@ -1096,29 +643,25 @@
     const FilterManager = {
         apply() {
             let totalVisibleCount = 0;
-            let hasVisibleSection = false;
             
             ShopState.elements.categorySections.forEach(section => {
                 const sectionCategoryId = section.dataset.categoryId;
                 const items = section.querySelectorAll('.product-item');
                 let visibleInSection = 0;
                 
-                // Check if this section should be visible based on category filter
                 const categoryMatch = (
                     ShopState.filters.category === 'all' || 
-                    ShopState.filters.category === sectionCategoryId
+                    sectionCategoryId === ShopState.filters.category
                 );
                 
                 if (!categoryMatch) {
-                    section.style.display = 'none';
+                    section.classList.add('hidden');
                     return;
                 }
                 
-                section.style.display = 'block';
-                
-                items.forEach((item) => {
-                    const itemPrice = parseFloat(item.dataset.price) || 0;
-                    const itemName = item.dataset.name.toLowerCase();
+                items.forEach((item, index) => {
+                    const itemPrice = parseFloat(item.dataset.price);
+                    const itemName = item.dataset.name;
                     
                     const priceMatch = itemPrice <= ShopState.filters.price;
                     const searchMatch = (
@@ -1126,8 +669,11 @@
                         itemName.includes(ShopState.filters.search.toLowerCase())
                     );
                     
-                    if (priceMatch && searchMatch) {
+                    const shouldShow = priceMatch && searchMatch;
+                    
+                    if (shouldShow) {
                         item.style.display = 'block';
+                        item.style.animationDelay = `${visibleInSection * 0.05}s`;
                         visibleInSection++;
                         totalVisibleCount++;
                     } else {
@@ -1135,26 +681,20 @@
                     }
                 });
                 
-                // Show/hide entire category section based on visible items
-                if (visibleInSection > 0) {
-                    section.style.display = 'block';
-                    hasVisibleSection = true;
-                } else {
-                    section.style.display = 'none';
-                }
+                section.classList.toggle('hidden', visibleInSection === 0);
             });
             
-            this.updateUI(totalVisibleCount, hasVisibleSection);
+            this.updateUI(totalVisibleCount);
             SortManager.apply();
         },
         
-        updateUI(totalCount, hasVisibleSection) {
+        updateUI(totalCount) {
             if (ShopState.elements.productCount) {
                 ShopState.elements.productCount.textContent = totalCount;
             }
             
             if (ShopState.elements.emptyState) {
-                ShopState.elements.emptyState.style.display = (totalCount === 0 || !hasVisibleSection) ? 'block' : 'none';
+                ShopState.elements.emptyState.style.display = totalCount === 0 ? 'block' : 'none';
             }
         },
         
@@ -1200,11 +740,9 @@
 
     const SortManager = {
         apply() {
-            const visibleSections = document.querySelectorAll('.category-section');
+            const visibleSections = document.querySelectorAll('.category-section:not(.hidden)');
             
             visibleSections.forEach(section => {
-                if (section.style.display === 'none') return;
-                
                 const container = section.querySelector('.products-grid');
                 const items = Array.from(container.querySelectorAll('.product-item'));
                 const visibleItems = items.filter(item => item.style.display !== 'none');
@@ -1217,11 +755,11 @@
         compareItems(a, b) {
             switch(ShopState.filters.sort) {
                 case 'price-low':
-                    return (parseFloat(a.dataset.price) || 0) - (parseFloat(b.dataset.price) || 0);
+                    return parseFloat(a.dataset.price) - parseFloat(b.dataset.price);
                 case 'price-high':
-                    return (parseFloat(b.dataset.price) || 0) - (parseFloat(a.dataset.price) || 0);
+                    return parseFloat(b.dataset.price) - parseFloat(a.dataset.price);
                 case 'name':
-                    return (a.dataset.name || '').localeCompare(b.dataset.name || '');
+                    return a.dataset.name.localeCompare(b.dataset.name);
                 default:
                     return 0;
             }
@@ -1430,7 +968,6 @@
         }
     };
 
-    // Global functions
     function filterProducts(category) {
         FilterManager.byCategory(category);
     }
@@ -1451,12 +988,6 @@
         CartManager.add(productId);
     }
 
-    function openProductModal(element) {
-        // Add your product modal logic here
-        console.log('Opening product modal for:', element.dataset.productName);
-    }
-
-    // Initialize everything when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
         ShopState.init();
         
@@ -1469,10 +1000,8 @@
             });
         }
         
-        // Apply initial filters
         FilterManager.apply();
         
-        // Smooth scroll for anchor links
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function(e) {
                 e.preventDefault();
