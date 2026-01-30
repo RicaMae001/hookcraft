@@ -7,7 +7,7 @@
     <link rel="icon" href="{{ asset('asset/images/logo.jpg') }}" type="image/png">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
+    <!-- <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}"> -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
@@ -42,8 +42,7 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
+            }
 
         /* Page Header */
         .page-header {
@@ -676,73 +675,7 @@
 
         <!-- Right Column: Order Summary & Payment - FIXED POSITION -->
         <div class="col-lg-4">
-            <div class="card order-summary">
-                <div class="card-header">
-                    <i class="bi bi-receipt"></i>
-                    Order Summary
-                </div>
-                <div class="card-body">
-                    <!-- Product List - UPDATED WITH CATEGORY INFORMATION -->
-                    <div class="summary-section">
-                        <h6 class="mb-3">Items ({{ $cartItems->count() }})</h6>
-                        @foreach($cartItems as $item)
-                            <div class="product-item">
-                                @if($item->is_customization && $item->customization)
-                                    {{-- CUSTOMIZED PRODUCT --}}
-                                    <img src="{{ $item->customization->custom_image 
-                                            ? asset('uploads/customizations/' . $item->customization->custom_image) 
-                                            : asset('uploads/' . $item->product->image) }}" 
-                                         alt="{{ $item->customization->customization_name }}" 
-                                         class="product-image">
-                                    <div class="product-details">
-                                        <div class="product-name">
-                                            {{ $item->customization->customization_name }}
-                                            <span class="badge bg-warning text-dark ms-2">✨ Custom</span>
-                                            @if($item->product->category)
-                                                <span class="category-badge">
-                                                    <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="product-meta">
-                                            <div>Based on: {{ $item->product->name }}</div>
-                                            @if($item->product->category)
-                                                <div>Category: {{ $item->product->category->name }}</div>
-                                            @endif
-                                            <div>Quantity: {{ $item->quantity }} × ₱{{ number_format($item->price, 2) }}</div>
-                                        </div>
-                                        <div class="product-price">
-                                            ₱{{ number_format($item->subtotal, 2) }}
-                                        </div>
-                                    </div>
-                                @else
-                                    {{-- REGULAR PRODUCT --}}
-                                    <img src="{{ asset('asset/images/' . $item->product->image) }}" 
-                                         alt="{{ $item->product->name }}" 
-                                         class="product-image">
-                                    <div class="product-details">
-                                        <div class="product-name">
-                                            {{ $item->product->name }}
-                                            @if($item->product->category)
-                                                <span class="category-badge">
-                                                    <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
-                                                </span>
-                                            @endif
-                                        </div>
-                                        <div class="product-meta">
-                                            @if($item->product->category)
-                                                <div>Category: {{ $item->product->category->name }}</div>
-                                            @endif
-                                            <div>Quantity: {{ $item->quantity }} × ₱{{ number_format($item->product->price, 2) }}</div>
-                                        </div>
-                                        <div class="product-price">
-                                            ₱{{ number_format($item->quantity * $item->product->price, 2) }}
-                                        </div>
-                                    </div>
-                                @endif
-                            </div>
-                        @endforeach
-                    </div>
+    
             <div class="right-column">
                 <div class="order-summary-wrapper">
                     <!-- Order Summary Card -->
