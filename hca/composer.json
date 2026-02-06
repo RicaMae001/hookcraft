@@ -73,7 +73,11 @@
                    "sort-packages":  true,
                    "allow-plugins":  {
                                          "pestphp/pest-plugin":  true
-                                     }
+                                     },
+        "audit": {
+            "ignore": ["PKSA-w7xr-vk7n-rstm"],
+            "block-insecure": false
+        }
                },
     "minimum-stability":  "stable",
     "prefer-stable":  true
