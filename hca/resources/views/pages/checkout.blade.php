@@ -741,7 +741,7 @@
                                 
                                 <div class="alert alert-info small mb-0 p-2">
                                     <i class="bi bi-info-circle me-2"></i>
-                                    Need help? <a href="#" class="fw-bold">Contact Support</a>
+                                    Need help? <a href="{{ route('chatbot') }}" class="fw-bold">Contact Support</a>
                                 </div>
                             </div>
                             
@@ -765,14 +765,14 @@
                         </div>
                         <div class="card-body">
                             <div class="payment-options">
-                                <div class="payment-option selected" onclick="selectPayment('GCash')">
+                                <!-- <div class="payment-option selected" onclick="selectPayment('GCash')">
                                     <div class="icon">
                                         <i class="bi bi-phone"></i>
                                     </div>
                                     <h6>GCash</h6>
                                     <p>Pay via GCash transfer</p>
                                     <input type="radio" name="payment_method" value="GCash" id="paymentGCash" class="d-none" checked form="checkoutForm">
-                                </div>
+                                </div> -->
                                 <div class="payment-option" onclick="selectPayment('COD')">
                                     <div class="icon">
                                         <i class="bi bi-cash"></i>
