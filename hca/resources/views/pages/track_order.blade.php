@@ -8,6 +8,9 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="{{ asset('asset/stylesnav.css') }}">
+    
+    <!-- Add CSRF Token Meta Tag -->
+    <meta name="csrf-token" content="{{ csrf_token() }}">
 </head>
 <body>
    <!-- Navbar -->
@@ -212,11 +215,14 @@
                                     <div class="order-footer">
                                         <div class="d-flex gap-2 justify-content-end">
                                             @if($order->delivery_status === 'Pending')
-                                                <form method="POST" action="{{ route('orders.cancel', $order->id) }}" class="d-inline">
+                                                <!-- SIMPLIFIED CANCEL FORM - Using traditional form submission -->
+                                                <form method="POST" action="{{ route('orders.cancel', ['order' => $order->id]) }}" 
+                                                      id="cancelForm{{ $order->id }}" class="d-inline"
+                                                      onsubmit="return confirmCancel('{{ $order->id }}')">
                                                     @csrf
                                                     @method('PATCH')
                                                     <button type="submit" class="btn btn-outline-danger btn-action" 
-                                                            onclick="return confirm('Are you sure you want to cancel this order?');">
+                                                            id="cancelBtn{{ $order->id }}">
                                                         <i class="fas fa-times me-1"></i> Cancel Order
                                                     </button>
                                                 </form>
@@ -1124,8 +1130,8 @@
     </style>
     
     <script>
-    // Auto-hide toast notifications after 5 seconds
     document.addEventListener('DOMContentLoaded', function() {
+        // Auto-hide toast notifications after 5 seconds
         const toasts = document.querySelectorAll('.toast-notification');
         
         toasts.forEach(toast => {
@@ -1136,10 +1142,8 @@
                     toast.remove();
                 }, 300);
             }, 5000);
-        });
-        
-        // Add click to dismiss functionality
-        toasts.forEach(toast => {
+            
+            // Add click to dismiss functionality
             toast.addEventListener('click', function() {
                 this.style.opacity = '0';
                 this.style.transform = 'translateX(400px)';
@@ -1164,6 +1168,27 @@
             });
         });
     });
+    
+    // Simple confirmation and loading state for cancel order
+    function confirmCancel(orderId) {
+        if (!confirm('Are you sure you want to cancel this order?\n\nThis action cannot be undone.')) {
+            return false;
+        }
+        
+        // Show loading state
+        const button = document.getElementById('cancelBtn' + orderId);
+        const originalText = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
+        button.disabled = true;
+        
+        // Re-enable button after 10 seconds in case submission fails
+        setTimeout(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        }, 10000);
+        
+        return true;
+    }
     </script>
 </body>
 </html>

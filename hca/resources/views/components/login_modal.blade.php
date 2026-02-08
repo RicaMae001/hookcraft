@@ -404,7 +404,7 @@
     top: 20px;
     right: 20px;
     z-index: 100;
-    background: white;
+    
     border-radius: 50%;
     opacity: 0.8;
     transition: all 0.3s ease;
@@ -484,7 +484,7 @@
 <div class="modal fade hookcraft-modal" id="loginModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"> <i class="fas fa-times"></i></button>
       <div class="modal-body">
         <div class="hookcraft-login-container">
           <!-- Brand Section with Decorative Elements -->

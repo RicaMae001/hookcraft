@@ -743,50 +743,8 @@
     </style>
 </head>
 <body>
-    <!-- Modern Navbar -->
-    <nav class="modern-navbar">
-        <div class="navbar-start">
-            <button class="btn btn-link d-md-none" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-        
-        <div class="navbar-actions">
-            <!-- Theme Toggle -->
-            <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                <div class="theme-toggle-slider">
-                    <i class="fas fa-sun theme-toggle-icon sun"></i>
-                    <i class="fas fa-moon theme-toggle-icon moon"></i>
-                </div>
-            </div>
-
-            <!-- Status Badge -->
-            <div class="status-badge">
-                <span class="pulse"></span>
-                Online
-            </div>
-
-            <!-- User Profile -->
-            <div class="user-profile dropdown">
-                <div data-bs-toggle="dropdown">
-                    <div class="d-flex align-items-center gap-3">
-                        <div class="user-avatar">{{ strtoupper(substr(session('coordinator_name', 'D'), 0, 1)) }}</div>
-                        <div class="d-none d-md-block">
-                            <div style="font-size: 0.875rem; font-weight: 600;">{{ session('coordinator_name') ?? 'Delivery Coordinator' }}</div>
-                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Delivery Staff</div>
-                        </div>
-                    </div>
-                </div>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
-                            <i class="fas fa-sign-out-alt me-2"></i>Logout
-                        </a>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+     @include('admin.delivery.layouts.navbar')
+  
 
     <!-- Modern Sidebar -->
     <aside class="modern-sidebar" id="sidebar">

@@ -788,7 +788,7 @@ class AdminController extends Controller
             // 1. First update order status to Cancelled
             DB::table('orders')->where('id', $id)->update([
                 'delivery_status' => 'Cancelled',
-                'payment_status' => 'Cancelled'
+                'payment_status' => 'Unsuccessful',
             ]);
             
             // 2. Send cancellation notifications BEFORE deletion - FIXED: Changed delivery_coordinator_id to coordinator_id
@@ -1268,6 +1268,7 @@ class AdminController extends Controller
         ]);
 
         $customization = ProductCustomization::findOrFail($id);
+        $oldStatus = $customization->status;
 
         $updateData = [
             'status' => $request->status,
@@ -1283,6 +1284,33 @@ class AdminController extends Controller
         }
 
         $customization->update($updateData);
+
+        // ===== NOTIFY USER OF CUSTOMIZATION STATUS CHANGE =====
+        try {
+            if ($oldStatus !== $request->status) {
+                NotificationHelper::customizationStatusChanged(
+                    $customization->id,
+                    $customization->product->name ?? 'Product',
+                    $oldStatus,
+                    $request->status,
+                    $customization->user_id,
+                    $request->admin_price ?? null,
+                    $request->admin_notes
+                );
+                
+                Log::info('Customization status change notification sent', [
+                    'customization_id' => $customization->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $request->status,
+                    'user_id' => $customization->user_id
+                ]);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to send customization status notification', [
+                'customization_id' => $customization->id,
+                'error' => $e->getMessage()
+            ]);
+        }
 
         return redirect()->route('admin.customizations.index')
             ->with('success', 'Customization updated successfully');
@@ -1400,6 +1428,20 @@ class AdminController extends Controller
             })->sum('quantity');
             
             session(['cart_count' => $cartCount]);
+
+            // ===== NOTIFY USER THAT CUSTOMIZATION ADDED TO CART =====
+            try {
+                NotificationHelper::customizationAddedToCart(
+                    $customization->id,
+                    $customization->product->name ?? 'Product',
+                    Auth::id()
+                );
+            } catch (\Exception $e) {
+                Log::error('Failed to send customization cart notification', [
+                    'customization_id' => $customization->id,
+                    'error' => $e->getMessage()
+                ]);
+            }
 
             DB::commit();
 

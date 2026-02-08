@@ -225,16 +225,11 @@ class NotificationService
             'recipient_type' => 'admin',
             'type' => 'order_created',
             'title' => 'New Order Received',
-            'message' => "New order from {$customerName} (₱" . number_format($total, 2) . ")",
+            'message' => "New order from {$customerName} (Order #{$orderId}) - ₱" . number_format($total, 2),
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
             'priority' => 'high',
-            'metadata' => [
-                'order_id' => $orderId,
-                'customer_name' => $customerName,
-                'total' => $total
-            ]
         ]);
     }
 
@@ -247,21 +242,17 @@ class NotificationService
             'recipient_type' => 'admin',
             'type' => 'payment_received',
             'title' => 'Payment Received',
-            'message' => "Payment verified for order {$orderNumber} (₱" . number_format($amount, 2) . ")",
+            'message' => "Payment received for order {$orderNumber} (₱" . number_format($amount, 2) . ")",
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
-            'priority' => 'high',
-            'metadata' => [
-                'order_id' => $orderId,
-                'order_number' => $orderNumber,
-                'amount' => $amount
-            ]
+            'priority' => 'normal',
         ]);
     }
 
     /**
      * Notify when delivery status changes
+     * Enhanced to notify ALL parties appropriately
      */
     public function notifyDeliveryStatusChanged($orderId, $orderNumber, $newStatus, $userId = null)
     {
@@ -270,7 +261,7 @@ class NotificationService
             'recipient_type' => 'admin',
             'type' => 'delivery_status_changed',
             'title' => 'Delivery Status Updated',
-            'message' => "Order {$orderNumber} status changed to: {$newStatus}",
+            'message' => "Order {$orderNumber} delivery status changed to: {$newStatus}",
             'entity_type' => 'order',
             'entity_id' => $orderId,
             'action_url' => "/admin/orders/{$orderId}",
@@ -281,10 +272,12 @@ class NotificationService
         if ($userId) {
             $statusMessages = [
                 'Pending' => 'Your order is being prepared.',
-                'Out for Delivery' => 'Your order is out for delivery!',
-                'Delivered' => 'Your order has been delivered. Thank you for your purchase!',
+                'Out for Delivery' => 'Your order is out for delivery! 🚚',
+                'Delivered' => 'Your order has been delivered. Thank you for your purchase! ✓',
                 'Cancelled' => 'Your order delivery has been cancelled.',
             ];
+
+            $priority = in_array($newStatus, ['Out for Delivery', 'Delivered', 'Cancelled']) ? 'high' : 'normal';
 
             $this->create([
                 'recipient_type' => 'user',
@@ -295,7 +288,7 @@ class NotificationService
                 'entity_type' => 'order',
                 'entity_id' => $orderId,
                 'action_url' => "/user/orders/{$orderId}",
-                'priority' => 'normal',
+                'priority' => $priority,
             ]);
         }
     }
@@ -458,7 +451,6 @@ class NotificationService
 
     /**
      * Notify when product is created
-     * Price parameter is optional for backward compatibility
      */
     public function productCreated($productId, $productName, $adminName, $price = null)
     {

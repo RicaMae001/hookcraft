@@ -504,6 +504,8 @@
 @include('components.signup_modal')
 @include('components.navbar')
 
+
+
 <div class="container">
     <!-- Page Header -->
     <div class="page-header">
@@ -615,7 +617,7 @@
                     <div class="card-body">
                         <div class="location-info">
                             <i class="bi bi-info-circle"></i>
-                            <strong>Service Area:</strong> We currently deliver within Lapu-Lapu City only
+                            <strong>Service Area:</strong> We currently deliver within Cebu City,Talisay City, Mandaue City, & Lapu-lapu City only
                         </div>
                         
                         <div class="row">
@@ -648,7 +650,7 @@
                                 Location Map
                             </label>
                             <div id="map"></div>
-                            <small class="text-muted">Click on the map or select barangay to mark your location (Lapu-Lapu City only)</small>
+                            <small class="text-muted">Click on the map or select barangay to mark your location (Cebu City,Talisay City, Mandaue City, & Lapu-lapu City only)</small>
                         </div>
                         
                         <!-- Location Display -->
