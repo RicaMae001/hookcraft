@@ -254,11 +254,8 @@ async function markAsRead(notificationId) {
         
         if (response.ok) {
             location.reload();
-        } else {
-            console.error('Failed to mark notification as read');
-        }
+        } 
     } catch (error) {
-        console.error('Error marking notification as read:', error);
     }
 }
 
@@ -274,11 +271,8 @@ async function markAllAsRead() {
         
         if (response.ok) {
             location.reload();
-        } else {
-            console.error('Failed to mark all notifications as read');
-        }
+        } 
     } catch (error) {
-        console.error('Error marking all as read:', error);
     }
 }
 
@@ -298,11 +292,8 @@ async function deleteNotification(notificationId) {
         
         if (response.ok) {
             location.reload();
-        } else {
-            console.error('Failed to delete notification');
-        }
+        } 
     } catch (error) {
-        console.error('Error deleting notification:', error);
     }
 }
 

@@ -902,7 +902,7 @@
                     }
                 },
                 function(error) {
-                    console.log('Geolocation error:', error);
+                    // Removed: console.log('Geolocation error:', error);
                     // Load all cities if location detection fails
                     loadAllCities();
                 }

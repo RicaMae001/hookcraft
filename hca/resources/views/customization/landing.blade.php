@@ -337,7 +337,7 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Category-based customization landing page loaded');
+            // console.log('Category-based customization landing page loaded');
         });
     </script>
 </body>

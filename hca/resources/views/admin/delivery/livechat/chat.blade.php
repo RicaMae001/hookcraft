@@ -475,7 +475,6 @@ if (chatForm) {
                 alert(data.message || 'Failed to send message');
             }
         } catch (error) {
-            console.error('Error sending message:', error);
             alert('Network error. Please try again.');
         } finally {
             // Re-enable form
@@ -536,7 +535,7 @@ function startPolling() {
                 }
             }
         } catch (error) {
-            console.error('Polling error:', error);
+            // console.error('Polling error:', error); // Removed
         }
     }, 3000);
 }
@@ -563,7 +562,6 @@ async function endChat() {
             alert('Failed to end chat');
         }
     } catch (error) {
-        console.error('Error ending chat:', error);
         alert('Failed to end chat');
     }
 }

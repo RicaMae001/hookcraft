@@ -607,7 +607,6 @@ async function fetchNotifications() {
         });
         
         if (!response.ok) {
-            console.error('Failed to fetch notifications:', response.status);
             hideLoading();
             showEmpty();
             return;
@@ -623,7 +622,6 @@ async function fetchNotifications() {
             showEmpty();
         }
     } catch (error) {
-        console.error('Error fetching notifications:', error);
         hideLoading();
         showEmpty();
     }
@@ -731,7 +729,7 @@ async function handleNotificationClick(notificationId, actionUrl) {
             window.location.href = actionUrl;
         }
     } catch (error) {
-        console.error('Error handling notification click:', error);
+        // console.error('Error handling notification click:', error); // Removed
     }
 }
 
@@ -752,7 +750,7 @@ async function markAllAsRead() {
             await fetchNotifications();
         }
     } catch (error) {
-        console.error('Error marking all as read:', error);
+        // console.error('Error marking all as read:', error); // Removed
     }
 }
 

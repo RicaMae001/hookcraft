@@ -886,8 +886,7 @@
     let modalInstance = null;
 
     function openProductModal(productElement) {
-        console.log('Opening modal for product:', productElement);
-        
+        // console.log('Opening modal for product:', productElement); // Removed
         currentProduct = {
             id: productElement.dataset.productId,
             name: productElement.dataset.productName,
@@ -905,7 +904,7 @@
                 const addonsData = JSON.parse(productElement.dataset.productAddons);
                 currentProduct.addons = addonsData.addons || [];
             } catch (e) {
-                console.error('Error parsing add-ons:', e);
+                // console.error('Error parsing add-ons:', e); // Removed
                 currentProduct.addons = [];
             }
         }
@@ -1064,7 +1063,7 @@
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            // console.error('Error:', error); // Removed
             showToast("Error adding to cart", true);
         })
         .finally(() => {
@@ -1126,7 +1125,7 @@
             }
         })
         .catch(error => {
-            console.error('Error:', error);
+            // console.error('Error:', error); // Removed
             showToast(error.message || "Error processing order", true);
             button.disabled = false;
             button.classList.remove('loading');

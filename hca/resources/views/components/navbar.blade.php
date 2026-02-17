@@ -1005,7 +1005,7 @@ function getCsrfToken() {
 // Fetch and display notifications
 async function fetchNotifications() {
     try {
-        // console.log('✅ Fetching user notifications from API...');
+        // Removed: console.log('✅ Fetching user notifications from API...');
         
         const csrfToken = getCsrfToken();
         const headers = {
@@ -1021,11 +1021,11 @@ async function fetchNotifications() {
             headers: headers
         });
         
-        // console.log('📊 Response status:', response.status);
+        // Removed: console.log('📊 Response status:', response.status);
         
         // Handle non-OK responses gracefully
         if (!response.ok) {
-            // console.warn('⚠️ Failed to fetch notifications:', response.status);
+            // Removed: console.warn('⚠️ Failed to fetch notifications:', response.status);
             hideLoading();
             showEmpty();
             updateNotificationBadge(0);
@@ -1033,11 +1033,11 @@ async function fetchNotifications() {
         }
         
         const data = await response.json();
-        // console.log('📦 API Response:', data);
+        // Removed: console.log('📦 API Response:', data);
         
         // Check if user is a guest
         if (data.guest === true) {
-            // console.log('👤 User is guest - hiding notifications');
+            // Removed: console.log('👤 User is guest - hiding notifications');
             hideLoading();
             showEmpty();
             updateNotificationBadge(0);
@@ -1052,7 +1052,7 @@ async function fetchNotifications() {
             notifications = data;
         }
         
-        // console.log(`📬 Processing ${notifications.length} notifications`);
+        // Removed: console.log(`📬 Processing ${notifications.length} notifications`);
         
         // Filter out delivery rider notifications (client-side safety check)
         notifications = notifications.filter(notif => {
@@ -1069,20 +1069,20 @@ async function fetchNotifications() {
             return !isDeliveryAssignment;
         });
         
-        // console.log(`✅ After filtering: ${notifications.length} user notifications`);
+        // Removed: console.log(`✅ After filtering: ${notifications.length} user notifications`);
         
         // Get unread count
         const unreadCount = data.unread_count !== undefined ? 
             data.unread_count : 
             notifications.filter(n => !n.is_read).length;
         
-        // console.log(`🔔 Unread count: ${unreadCount}`);
+        // Removed: console.log(`🔔 Unread count: ${unreadCount}`);
         
         updateNotificationBadge(unreadCount);
         displayNotifications(notifications);
         
     } catch (error) {
-        // console.error('❌ Error fetching notifications:', error);
+        // Removed: console.error('❌ Error fetching notifications:', error);
         hideLoading();
         showEmpty();
         updateNotificationBadge(0);
@@ -1111,7 +1111,7 @@ function updateNotificationBadge(count) {
     const badge = document.getElementById('notificationCount');
     const markAllBtn = document.getElementById('markAllReadBtn');
     
-    // console.log('🎯 Updating badge with count:', count);
+    // Removed: console.log('🎯 Updating badge with count:', count);
     
     if (badge) {
         if (count > 0) {
@@ -1130,17 +1130,17 @@ function displayNotifications(notifications) {
     hideLoading();
     
     if (!container) {
-        // console.warn('⚠️ Notification container not found');
+        // Removed: console.warn('⚠️ Notification container not found');
         return;
     }
     
     if (!notifications || !Array.isArray(notifications) || notifications.length === 0) {
-        // console.log('📭 No notifications to display');
+        // Removed: console.log('📭 No notifications to display');
         showEmpty();
         return;
     }
     
-    // console.log(`📋 Displaying ${notifications.length} notifications`);
+    // Removed: console.log(`📋 Displaying ${notifications.length} notifications`);
     
     const html = notifications.map(notification => {
         if (!notification || typeof notification !== 'object') return '';
@@ -1290,7 +1290,7 @@ async function handleNotificationClick(notificationId, actionUrl) {
             window.location.href = actionUrl;
         }
     } catch (error) {
-        console.error('Error handling notification click:', error);
+        // Removed: console.error('Error handling notification click:', error);
     }
 }
 
@@ -1317,7 +1317,7 @@ async function markAllAsRead() {
             await fetchNotifications();
         }
     } catch (error) {
-        console.error('Error marking all as read:', error);
+        // Removed: console.error('Error marking all as read:', error);
     }
 }
 
@@ -1352,7 +1352,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // console.log('🚀 Initializing user notifications...');
+    // Removed: console.log('🚀 Initializing user notifications...');
     fetchNotifications();
     
     // Poll for new notifications every 30 seconds
@@ -1403,11 +1403,10 @@ if (window.location.pathname !== '/chatbot') {
                 }
             }
         } catch (error) {
-            console.error('Error checking messages:', error);
+            // Removed: console.error('Error checking messages:', error);
         }
     }, 30000);
 }
-
 if ("Notification" in window && Notification.permission === "default") {
     Notification.requestPermission();
 }

@@ -832,7 +832,7 @@
         })
         .catch(error => {
             document.getElementById('loadingOverlay').style.display = 'none';
-            console.error('Error:', error);
+            // console.error('Error:', error); // Removed console.log
             alert('Error updating quantity. Please try again.');
             window.location.reload();
         });
@@ -881,7 +881,7 @@
         })
         .catch(error => {
             document.getElementById('loadingOverlay').style.display = 'none';
-            console.error('Error:', error);
+            // console.error('Error:', error); // Removed console.log
             alert('Error updating quantity. Please try again.');
             window.location.reload();
         });
@@ -930,7 +930,7 @@
         })
         .catch(error => {
             document.getElementById('loadingOverlay').style.display = 'none';
-            console.error('Error:', error);
+            // console.error('Error:', error); // Removed console.log
             alert('Error updating quantity. Please try again.');
             window.location.reload();
         });
@@ -970,7 +970,7 @@
             })
             .catch(error => {
                 document.getElementById('loadingOverlay').style.display = 'none';
-                console.error('Error:', error);
+                // console.error('Error:', error); // Removed console.log
                 alert('Error removing item. Please try again.');
                 window.location.reload();
             });

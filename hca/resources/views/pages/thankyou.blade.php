@@ -863,7 +863,7 @@
 <script>
     // Image Modal Functions
     function openModal(imgSrc, title, description) {
-        console.log('Opening modal with:', { imgSrc, title, description });
+        // console.log('Opening modal with:', { imgSrc, title, description });
         
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImage');
@@ -883,7 +883,7 @@
     }
     
     function closeModal() {
-        console.log('Closing modal');
+        // console.log('Closing modal');
         const modal = document.getElementById('imageModal');
         modal.classList.remove('active');
         document.body.style.overflow = 'auto';
@@ -891,7 +891,7 @@
     
     // Initialize modal events when DOM is loaded
     document.addEventListener('DOMContentLoaded', function() {
-        console.log('Setting up modal events');
+        // console.log('Setting up modal events');
         
         const modal = document.getElementById('imageModal');
         const closeBtn = document.querySelector('.modal-close');
@@ -927,7 +927,7 @@
             }
         });
         
-        console.log('Modal events setup complete');
+        // console.log('Modal events setup complete');
     });
     
     async function exportReceipt() {

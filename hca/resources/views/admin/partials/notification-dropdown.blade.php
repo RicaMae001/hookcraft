@@ -209,7 +209,6 @@ async function fetchNotifications() {
         });
         
         if (!response.ok) {
-            console.error('Failed to fetch notifications:', response.status);
             return;
         }
         
@@ -220,7 +219,6 @@ async function fetchNotifications() {
             displayNotifications(data.notifications);
         }
     } catch (error) {
-        console.error('Error fetching notifications:', error);
         // Hide loading, show empty state on error
         document.getElementById('notificationsLoading')?.classList.add('d-none');
         document.getElementById('notificationsEmpty')?.classList.remove('d-none');
@@ -319,7 +317,7 @@ async function handleNotificationClick(notificationId, actionUrl) {
             window.location.href = actionUrl;
         }
     } catch (error) {
-        console.error('Error handling notification click:', error);
+        // console.error('Error handling notification click:', error); // Removed
     }
 }
 
@@ -339,7 +337,7 @@ async function markAllAsRead() {
             await fetchNotifications();
         }
     } catch (error) {
-        console.error('Error marking all as read:', error);
+        // console.error('Error marking all as read:', error); // Removed
     }
 }
 
