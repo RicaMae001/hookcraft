@@ -67,20 +67,265 @@
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--light-bg);
             color: var(--text-primary);
-            margin-top: 20px;
+            margin-top: 76px;
             line-height: 1.6;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
 
         /* Modern Navbar */
-    
+        .modern-navbar {
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            position: fixed;
+            top: 0;
+            right: 0;
+            left: var(--sidebar-width);
+            z-index: 999;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
 
-    
-      
+        .navbar-brand {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .navbar-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Theme Toggle Switch */
+        .theme-toggle {
+            position: relative;
+            width: 70px;
+            height: 36px;
+            border-radius: 18px;
+            background: var(--border-color);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            padding: 3px;
+        }
+
+        .theme-toggle:hover {
+            background: var(--text-secondary);
+        }
+
+        .theme-toggle-slider {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: white;
+            position: absolute;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            left: 3px;
+        }
+
+        [data-theme="dark"] .theme-toggle-slider {
+            left: calc(100% - 33px);
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+        }
+
+        .theme-toggle-icon {
+            font-size: 14px;
+            transition: all 0.3s ease;
+            position: absolute;
+        }
+
+        .theme-toggle-icon.sun {
+            color: #F6AD55;
+            opacity: 1;
+        }
+
+        .theme-toggle-icon.moon {
+            color: white;
+            opacity: 0;
+        }
+
+        [data-theme="dark"] .theme-toggle-icon.sun {
+            opacity: 0;
+            transform: rotate(180deg);
+        }
+
+        [data-theme="dark"] .theme-toggle-icon.moon {
+            opacity: 1;
+            transform: rotate(0deg);
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            background: rgba(72, 187, 120, 0.15);
+            color: var(--success);
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+
+        .pulse {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.95);
+                box-shadow: 0 0 0 0 rgba(72, 187, 120, 0.7);
+            }
+            70% {
+                transform: scale(1);
+                box-shadow: 0 0 0 10px rgba(72, 187, 120, 0);
+            }
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            background: var(--light-bg);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .user-profile:hover {
+            background: var(--hover-bg);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+            font-size: 14px;
+        }
+
         /* Modern Sidebar */
-    
+        .modern-sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: var(--sidebar-width);
+            height: 100vh;
+            background: var(--card-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 2rem 0;
+            overflow-y: auto;
+            z-index: 1000;
+            transition: all 0.3s ease;
+        }
 
-      
+        .sidebar-logo {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-logo h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+        }
+
+        .sidebar-logo p {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            margin: 0.25rem 0 0 0;
+        }
+
+        .sidebar-section {
+            padding: 0 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .sidebar-section-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 0 1rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.875rem 1.25rem;
+            color: var(--text-primary);
+            text-decoration: none;
+            border-radius: 12px;
+            margin-bottom: 0.25rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            position: relative;
+        }
+
+        .sidebar-link i {
+            width: 20px;
+            text-align: center;
+            font-size: 1.125rem;
+        }
+
+        .sidebar-link:hover {
+            background: var(--hover-bg);
+            color: var(--primary-blue);
+            transform: translateX(4px);
+        }
+
+        .sidebar-link.active {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(118, 75, 162, 0.15));
+            color: var(--primary-blue);
+            font-weight: 600;
+        }
+
+        .sidebar-link.active::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 4px;
+            height: 60%;
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            border-radius: 0 4px 4px 0;
+        }
 
         /* Main Content */
         .main-content {
@@ -129,7 +374,6 @@
             border: 1px solid var(--border-color);
             transition: all 0.2s ease;
             height: 100%;
-            margin-left: 20px;
         }
 
         .stat-card:hover {
@@ -499,15 +743,63 @@
     </style>
 </head>
 <body>
-    <!-- Modern Navbar -->
-   @include('admin.delivery.layouts.navbar')
-
-    <!-- Modern Sidebar -->
+     @include('admin.delivery.layouts.navbar')
   
 
-   @include('admin.delivery.layouts.sidebar')
+    <!-- Modern Sidebar -->
+    <aside class="modern-sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <h2><i class="fas fa-truck-fast"></i> HCA Delivery</h2>
+            <p>Coordinator Dashboard</p>
+        </div>
 
-     
+        <!-- User Profile in Sidebar -->
+        <div class="sidebar-section">
+            <div class="text-center mb-3" style="padding: 0 1rem;">
+                <div class="user-avatar" style="width: 60px; height: 60px; margin: 0 auto 1rem; font-size: 1.5rem;">
+                    {{ strtoupper(substr(session('coordinator_name', 'D'), 0, 1)) }}
+                </div>
+                <h6 style="color: var(--text-primary); font-weight: 600; margin-bottom: 0.25rem;">
+                    {{ session('coordinator_name') ?? 'Delivery Coordinator' }}
+                </h6>
+                <small style="color: var(--text-secondary);">Delivery Coordinator</small>
+            </div>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Main Menu</div>
+            
+            <a href="{{ route('delivery.dashboard') }}" class="sidebar-link {{ request()->routeIs('delivery.dashboard') ? 'active' : '' }}">
+                <i class="fas fa-tachometer-alt"></i>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="{{ route('delivery.deliveries') }}" class="sidebar-link {{ request()->routeIs('delivery.deliveries') ? 'active' : '' }}">
+                <i class="fas fa-box"></i>
+                <span>My Deliveries</span>
+            </a>
+
+            <a href="{{ route('delivery.livechat.index') }}" class="sidebar-link {{ request()->routeIs('delivery.livechat.*') ? 'active' : '' }}">
+                <i class="fas fa-comments"></i>
+                <span>Live Chat Support</span>
+            </a>
+
+            <a href="{{ route('delivery.history') }}" class="sidebar-link {{ request()->routeIs('delivery.history') ? 'active' : '' }}">
+                <i class="fas fa-history"></i>
+                <span>Delivery History</span>
+            </a>
+        </div>
+
+        <div class="sidebar-section">
+            <div class="sidebar-section-title">Account</div>
+
+            <a href="#" class="sidebar-link text-danger" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                <i class="fas fa-sign-out-alt"></i>
+                <span>Logout</span>
+            </a>
+        </div>
+    </aside>
+
     <!-- Main Content -->
     <main class="main-content">
         <!-- Page Header -->
@@ -521,17 +813,30 @@
             </div>
             <div class="date-badge">
                 <i class="fas fa-calendar"></i>
-                <span id="currentDate"></span>
+                {{ date('F d, Y') }}
             </div>
         </div>
 
-        <!-- Alerts -->
-        <div class="alert-modern alert-success animate-fade-in">
-            <i class="fas fa-check-circle fa-2x"></i>
-            <div>
-                <strong>System Status:</strong> All delivery systems are operational
+        <!-- Session Alerts -->
+        @if(session('success'))
+            <div class="alert-modern alert-success animate-fade-in">
+                <i class="fas fa-check-circle fa-2x"></i>
+                <div>
+                    <strong>Success:</strong> {{ session('success') }}
+                </div>
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
             </div>
-        </div>
+        @endif
+
+        @if(session('error'))
+            <div class="alert-modern alert-danger animate-fade-in">
+                <i class="fas fa-exclamation-circle fa-2x"></i>
+                <div>
+                    <strong>Error:</strong> {{ session('error') }}
+                </div>
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()"></button>
+            </div>
+        @endif
 
         <!-- Stats Cards -->
         <div class="row mb-4 g-4">
@@ -540,7 +845,7 @@
                     <div class="stat-card-icon primary">
                         <i class="fas fa-boxes"></i>
                     </div>
-                    <div class="stat-card-value">45</div>
+                    <div class="stat-card-value">{{ $totalDeliveries }}</div>
                     <div class="stat-card-label">Total Deliveries</div>
                 </div>
             </div>
@@ -550,7 +855,7 @@
                     <div class="stat-card-icon warning">
                         <i class="fas fa-clock"></i>
                     </div>
-                    <div class="stat-card-value">12</div>
+                    <div class="stat-card-value">{{ $pendingDeliveries }}</div>
                     <div class="stat-card-label">Pending</div>
                 </div>
             </div>
@@ -560,7 +865,7 @@
                     <div class="stat-card-icon info">
                         <i class="fas fa-shipping-fast"></i>
                     </div>
-                    <div class="stat-card-value">8</div>
+                    <div class="stat-card-value">{{ $outForDelivery }}</div>
                     <div class="stat-card-label">Out for Delivery</div>
                 </div>
             </div>
@@ -570,7 +875,7 @@
                     <div class="stat-card-icon success">
                         <i class="fas fa-check-circle"></i>
                     </div>
-                    <div class="stat-card-value">25</div>
+                    <div class="stat-card-value">{{ $completedDeliveries }}</div>
                     <div class="stat-card-label">Completed</div>
                 </div>
             </div>
@@ -592,6 +897,7 @@
         </div>
 
         <!-- Quick Status Updates -->
+        @if($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled')->count() > 0)
         <div class="content-card animate-fade-in">
             <div class="content-card-header">
                 <h5 class="content-card-title">
@@ -601,54 +907,51 @@
             </div>
             <div class="content-card-body">
                 <div class="row g-4">
-                    <!-- Sample Order Card 1 -->
-                    <div class="col-md-6">
-                        <div class="order-card">
-                            <div class="order-header">
-                                <span class="order-id">#1234</span>
-                                <span class="badge-modern badge-warning">Pending</span>
-                            </div>
-                            <h6 class="customer-name">John Doe</h6>
-                            <div class="order-address">
-                                <i class="fas fa-map-marker-alt text-danger"></i>
-                                <span>123 Main Street, Cebu City</span>
-                            </div>
-                            <div class="d-flex flex-column gap-2">
-                                <button class="btn-modern btn-modern-info" onclick="updateStatus(1234, 'Out for Delivery')">
-                                    <i class="fas fa-shipping-fast"></i>
-                                    Out for Delivery
-                                </button>
-                                <button class="btn-modern btn-modern-danger" onclick="updateStatus(1234, 'Cancelled')">
-                                    <i class="fas fa-times-circle"></i>
-                                    Cancel Order
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                    @foreach($deliveries->where('delivery_status', '!=', 'Delivered')->where('delivery_status', '!=', 'Cancelled') as $delivery)
+                        <div class="col-md-6">
+                            <div class="order-card">
+                                <div class="order-header">
+                                    <span class="order-id">#{{ $delivery->id }}</span>
+                                    @if($delivery->delivery_status == 'Out for Delivery')
+                                        <span class="badge-modern badge-info">Out for Delivery</span>
+                                    @else
+                                        <span class="badge-modern badge-warning">Pending</span>
+                                    @endif
+                                </div>
+                                <h6 class="customer-name">{{ $delivery->customer_name }}</h6>
+                                <div class="order-address">
+                                    <i class="fas fa-map-marker-alt text-danger"></i>
+                                    <span>{{ Str::limit($delivery->address, 50) }}</span>
+                                </div>
+                                <div class="d-flex flex-column gap-2">
+                                    @if($delivery->delivery_status === 'Pending')
+                                        <button class="btn-modern btn-modern-info" 
+                                            onclick="confirmStatus('{{ $delivery->id }}', '{{ $delivery->customer_name }}', 'Out for Delivery')">
+                                            <i class="fas fa-shipping-fast"></i>
+                                            Out for Delivery
+                                        </button>
+                                        <button class="btn-modern btn-modern-danger"
+                                            onclick="confirmStatus('{{ $delivery->id }}', '{{ $delivery->customer_name }}', 'Cancelled')">
+                                            <i class="fas fa-times-circle"></i>
+                                            Cancel Order
+                                        </button>
+                                    @endif
 
-                    <!-- Sample Order Card 2 -->
-                    <div class="col-md-6">
-                        <div class="order-card">
-                            <div class="order-header">
-                                <span class="order-id">#1235</span>
-                                <span class="badge-modern badge-info">Out for Delivery</span>
-                            </div>
-                            <h6 class="customer-name">Jane Smith</h6>
-                            <div class="order-address">
-                                <i class="fas fa-map-marker-alt text-danger"></i>
-                                <span>456 Oak Avenue, Mandaue City</span>
-                            </div>
-                            <div class="d-flex flex-column gap-2">
-                                <button class="btn-modern btn-modern-success" onclick="updateStatus(1235, 'Delivered')">
-                                    <i class="fas fa-check-circle"></i>
-                                    Mark as Delivered
-                                </button>
+                                    @if($delivery->delivery_status === 'Out for Delivery')
+                                        <button class="btn-modern btn-modern-success"
+                                            onclick="confirmStatus('{{ $delivery->id }}', '{{ $delivery->customer_name }}', 'Delivered')">
+                                            <i class="fas fa-check-circle"></i>
+                                            Mark as Delivered
+                                        </button>
+                                    @endif
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    @endforeach
                 </div>
             </div>
         </div>
+        @endif
 
         <!-- Recent Deliveries Table -->
         <div class="content-card animate-fade-in">
@@ -672,57 +975,81 @@
                             </tr>
                         </thead>
                         <tbody>
-                            <tr>
-                                <td><span class="order-id">#1234</span></td>
-                                <td><strong>John Doe</strong></td>
-                                <td>
-                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                                    123 Main Street, Cebu City
-                                </td>
-                                <td><span class="badge-modern badge-warning">Pending</span></td>
-                                <td>Jan 22, 2026</td>
-                                <td>
-                                    <button class="btn btn-sm btn-modern-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><span class="order-id">#1235</span></td>
-                                <td><strong>Jane Smith</strong></td>
-                                <td>
-                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                                    456 Oak Avenue, Mandaue City
-                                </td>
-                                <td><span class="badge-modern badge-info">Out for Delivery</span></td>
-                                <td>Jan 22, 2026</td>
-                                <td>
-                                    <button class="btn btn-sm btn-modern-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                </td>
-                            </tr>
-                            <tr>
-                                <td><span class="order-id">#1236</span></td>
-                                <td><strong>Bob Johnson</strong></td>
-                                <td>
-                                    <i class="fas fa-map-marker-alt text-danger me-2"></i>
-                                    789 Pine Road, Lapu-Lapu City
-                                </td>
-                                <td><span class="badge-modern badge-success">Delivered</span></td>
-                                <td>Jan 21, 2026</td>
-                                <td>
-                                    <button class="btn btn-sm btn-modern-primary">
-                                        <i class="fas fa-eye"></i> View
-                                    </button>
-                                </td>
-                            </tr>
+                            @forelse($recentDeliveries as $delivery)
+                                <tr>
+                                    <td><span class="order-id">#{{ $delivery->id }}</span></td>
+                                    <td><strong>{{ $delivery->customer_name }}</strong></td>
+                                    <td>
+                                        <i class="fas fa-map-marker-alt text-danger me-2"></i>
+                                        {{ Str::limit($delivery->address, 40) }}
+                                    </td>
+                                    <td>
+                                        @if($delivery->delivery_status == 'Delivered')
+                                            <span class="badge-modern badge-success">Delivered</span>
+                                        @elseif($delivery->delivery_status == 'Out for Delivery')
+                                            <span class="badge-modern badge-info">Out for Delivery</span>
+                                        @elseif($delivery->delivery_status == 'Cancelled')
+                                            <span class="badge-modern badge-danger">Cancelled</span>
+                                        @else
+                                            <span class="badge-modern badge-warning">Pending</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ \Carbon\Carbon::parse($delivery->created_at)->format('M d, Y') }}</td>
+                                    <td>
+                                        <a href="{{ route('delivery.deliveries') }}" class="btn btn-sm btn-modern-primary">
+                                            <i class="fas fa-eye"></i> View
+                                        </a>
+                                    </td>
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="6" class="text-center py-4 text-muted">
+                                        <i class="fas fa-box-open fa-3x mb-3"></i>
+                                        <p>No deliveries assigned yet</p>
+                                    </td>
+                                </tr>
+                            @endforelse
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
     </main>
+
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title"><i class="fas fa-exclamation-circle me-2"></i>Confirm Status Update</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form id="confirmStatusForm" method="POST">
+                    @csrf
+                    @method('PUT')
+
+                    <div class="modal-body">
+                        <p class="fw-bold mb-1">Order ID:</p>
+                        <p id="confirmOrderId"></p>
+
+                        <p class="fw-bold mb-1">Customer:</p>
+                        <p id="confirmCustomerName"></p>
+
+                        <p class="fw-bold mb-1">Change status to:</p>
+                        <p class="text-primary fw-bold" id="confirmNewStatus"></p>
+
+                        <input type="hidden" name="delivery_status" id="hiddenStatusValue">
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="btn-modern btn-modern-primary">Update Status</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <!-- Logout Modal -->
     <div class="modal fade" id="logoutModal" tabindex="-1">
@@ -765,7 +1092,9 @@
             localStorage.setItem('delivery-theme', newTheme);
             
             // Update chart colors when theme changes
-            updateChartColors(newTheme);
+            if (deliveryChart) {
+                updateChartColors(newTheme);
+            }
         }
 
         // Sidebar Toggle for Mobile
@@ -773,29 +1102,28 @@
             document.getElementById('sidebar').classList.toggle('show');
         });
 
-        // Update Current Date
-        function updateCurrentDate() {
-            const options = { month: 'short', day: 'numeric', year: 'numeric' };
-            const dateString = new Date().toLocaleDateString('en-US', options);
-            document.getElementById('currentDate').textContent = dateString;
-        }
-        updateCurrentDate();
+        // Status Update Confirmation
+        function confirmStatus(orderId, customerName, newStatus) {
+            document.getElementById('confirmOrderId').innerText = '#' + orderId;
+            document.getElementById('confirmCustomerName').innerText = customerName;
+            document.getElementById('confirmNewStatus').innerText = newStatus;
+            document.getElementById('hiddenStatusValue').value = newStatus;
 
-        // Update Status Function
-        function updateStatus(orderId, status) {
-            alert(`Updating Order #${orderId} to: ${status}`);
-            // Add your AJAX call here
-        }
+            document.getElementById('confirmStatusForm').action =
+                '/delivery/deliveries/' + orderId + '/status';
 
+            new bootstrap.Modal(document.getElementById('confirmModal')).show();
+        }
+        
         // Delivery Chart
         const ctx = document.getElementById('deliveryChart').getContext('2d');
         let deliveryChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Jan 16', 'Jan 17', 'Jan 18', 'Jan 19', 'Jan 20', 'Jan 21', 'Jan 22'],
+                labels: {!! json_encode($dailyDeliveries->pluck('date')) !!},
                 datasets: [{
                     label: 'Deliveries',
-                    data: [3, 5, 7, 4, 8, 6, 9],
+                    data: {!! json_encode($dailyDeliveries->pluck('count')) !!},
                     borderColor: '#667eea',
                     backgroundColor: 'rgba(102, 126, 234, 0.1)',
                     tension: 0.4,
@@ -826,7 +1154,7 @@
                     y: {
                         beginAtZero: true,
                         ticks: {
-                            stepSize: 2,
+                            stepSize: 1,
                             color: getComputedStyle(document.documentElement)
                                 .getPropertyValue('--text-secondary').trim()
                         },
@@ -860,6 +1188,18 @@
             deliveryChart.options.scales.x.ticks.color = textColor;
             deliveryChart.update();
         }
+
+        // Auto-close alerts after 5 seconds
+        document.addEventListener('DOMContentLoaded', function() {
+            setTimeout(() => {
+                const alerts = document.querySelectorAll('.alert-modern');
+                alerts.forEach(alert => {
+                    alert.style.opacity = '0';
+                    alert.style.transition = 'opacity 0.5s ease';
+                    setTimeout(() => alert.remove(), 500);
+                });
+            }, 5000);
+        });
     </script>
 </body>
 </html>

@@ -58,7 +58,7 @@
                        href="{{ route('chatbot') }}" 
                        title="{{ $hasActiveChat ? 'Active Live Chat - Click to continue' : 'AI Assistant' }}"
                        id="chatbotNavLink">
-                        <i class="bi bi-robot fs-5"></i>
+                        <i class="bi bi-chat fs-5"></i>
                         
                         @if($hasActiveChat)
                             <span class="position-absolute top-0 start-100 translate-middle">

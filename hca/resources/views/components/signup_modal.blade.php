@@ -265,7 +265,7 @@
 <div class="modal fade hookcraft-modal" id="signupModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"> <i class="fas fa-times"></i></button>
       <div class="modal-body">
         <div class="hookcraft-signup-container">
           <div class="hookcraft-brand-section">

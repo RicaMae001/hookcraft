@@ -530,7 +530,7 @@
 <!-- Chatbot Button -->
 <div class="chatbot-float">
     <a href="{{ route('chatbot') }}" class="chatbot-btn" title="Chat with AI Assistant">
-        <i class="bi bi-robot"></i>
+        <i class="bi bi-chat"></i>
     </a>
 </div>
 

@@ -112,6 +112,8 @@
     </div>
 </div>
 
+
+
 <style>
 :root {
     --pink-primary: #ec4899;
@@ -1006,9 +1008,29 @@
         document.getElementById('modalTotalPrice').textContent = `₱${total.toFixed(2)}`;
     }
 
+    function showLoginModal() {
+        // Close product modal first
+        if (modalInstance) {
+            modalInstance.hide();
+        }
+        
+        // Show the existing HookCraft login modal
+        const loginModalElement = document.getElementById('loginModal');
+        if (loginModalElement) {
+            const loginModal = new bootstrap.Modal(loginModalElement);
+            loginModal.show();
+        }
+    }
+
     function modalAddToCart() {
         if (!currentProduct) {
             showToast("No product selected", true);
+            return;
+        }
+
+        const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
+        if (!isLoggedIn) {
+            showLoginModal();
             return;
         }
 
@@ -1057,15 +1079,14 @@
             return;
         }
 
-        const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
-        const button = document.getElementById('modalBuyNow');
-        
         const isLoggedIn = {{ Auth::check() ? 'true' : 'false' }};
         if (!isLoggedIn) {
-            showToast("Please login to continue", true);
-            setTimeout(() => window.location.href = "{{ route('login') }}", 1500);
+            showLoginModal();
             return;
         }
+
+        const qty = parseInt(document.getElementById('modalQuantity').value) || 1;
+        const button = document.getElementById('modalBuyNow');
         
         button.disabled = true;
         button.classList.add('loading');
