@@ -544,13 +544,14 @@
         updateTime(); // Initial call
         
         // Debug: Log CSRF token on page load
-        console.log('=== DELIVERY LAYOUT LOADED ===');
-        const csrfToken = document.querySelector('meta[name="csrf-token"]');
-        if (csrfToken) {
-            console.log('✓ CSRF Token found:', csrfToken.content.substring(0, 20) + '...');
-        } else {
-            console.error('✗ CSRF Token NOT FOUND!');
-        }
+        // REMOVE or comment out these lines to stop console output:
+        // console.log('=== DELIVERY LAYOUT LOADED ===');
+        // const csrfToken = document.querySelector('meta[name="csrf-token"]');
+        // if (csrfToken) {
+        //     console.log('✓ CSRF Token found:', csrfToken.content.substring(0, 20) + '...');
+        // } else {
+        //     console.error('✗ CSRF Token NOT FOUND!');
+        // }
     </script>
     
     @stack('scripts')

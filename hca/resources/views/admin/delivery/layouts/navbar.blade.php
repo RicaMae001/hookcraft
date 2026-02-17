@@ -586,7 +586,6 @@ let notificationUpdateInterval;
 // Fetch and display notifications
 async function fetchNotifications() {
     try {
-        console.log('Fetching notifications from API...');
         // Use universal API endpoint (handles all user types automatically)
         const response = await fetch('/api/notifications?limit=10', {
             headers: {
@@ -595,33 +594,22 @@ async function fetchNotifications() {
             }
         });
         
-        console.log('Response status:', response.status);
-        
         if (!response.ok) {
-            console.error('Failed to fetch notifications:', response.status, response.statusText);
             hideLoading();
             showEmpty();
             return;
         }
         
         const data = await response.json();
-        console.log('Full API Response:', JSON.stringify(data, null, 2));
-        console.log('Unread count:', data.unread_count);
-        console.log('Notifications array:', data.notifications);
-        console.log('Recipient type:', data.recipient_type);
-        console.log('Recipient ID:', data.recipient_id);
         
         if (data.success) {
             updateNotificationBadge(data.unread_count || 0);
             displayNotifications(data.notifications || []);
         } else {
-            console.warn('API returned success: false');
             hideLoading();
             showEmpty();
         }
     } catch (error) {
-        console.error('Error fetching notifications:', error);
-        console.error('Error details:', error.message, error.stack);
         hideLoading();
         showEmpty();
     }
@@ -649,8 +637,6 @@ function updateNotificationBadge(count) {
     const badge = document.getElementById('notificationCount');
     const markAllBtn = document.getElementById('markAllReadBtn');
     
-    console.log('Updating badge with count:', count);
-    
     if (badge) {
         if (count > 0) {
             badge.textContent = count > 99 ? '99+' : count;
@@ -670,17 +656,12 @@ function displayNotifications(notifications) {
     
     if (!container) return;
     
-    console.log('Displaying notifications:', notifications);
-    console.log('Raw notification data:', JSON.stringify(notifications, null, 2));
-    
     if (!notifications || notifications.length === 0) {
         showEmpty();
         return;
     }
     
     const html = notifications.map(notification => {
-        console.log('Processing notification:', notification);
-        
         // Determine icon and color based on notification type
         let icon = 'fa-bell';
         let colorClass = 'primary';
@@ -898,7 +879,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Initial fetch
-    console.log('Initializing notifications...');
     fetchNotifications();
     
     // Auto-refresh every 30 seconds
