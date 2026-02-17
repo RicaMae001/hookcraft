@@ -22,26 +22,30 @@
             box-sizing: border-box;
         }
 
-        /* ✅ FIXED BODY */
+        html, body {
+            overflow-x: hidden;
+        }
+
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             background: var(--background);
             min-height: 100vh;
             margin: 0;
             padding: 0;
-            
+        }
+
         nav {
             position: sticky;
             top: 0;
             width: 100%;
             z-index: 9999;
         }
+
         .main-container {
             max-width: 1200px;
             margin: 40px auto;
             padding: 0 20px;
         }
-
 
         /* Header Section */
         .page-header {
@@ -745,15 +749,6 @@
                                 <i class="fas fa-paper-plane"></i>
                                 Submit Customization Request
                             </button>
-                            <!-- <a href="{{ route('customization.create') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-left"></i>
-                                Change Category
-                            </a>
-
-                             <a href="{{ route('customization.my-customizations') }}" class="btn btn-secondary">
-                                <i class="fas fa-arrow-right"></i>
-                                View My Customization
-                            </a> -->
                         </div>
                     </form>
                 @endif
