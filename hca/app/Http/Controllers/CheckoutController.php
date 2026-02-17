@@ -84,6 +84,11 @@ class CheckoutController extends Controller
             'barangay_id' => 'required|integer|exists:barangays,id',
             'street'      => 'required|string|max:255',
             'phone'       => 'required|string|max:20',
+            'latitude'    => 'nullable|numeric',
+            'longitude'   => 'nullable|numeric',
+            'delivery_fee' => 'nullable|numeric|min:0',
+            'delivery_distance_km' => 'nullable|numeric|min:0',
+            'grand_total' => 'nullable|numeric|min:0',
             'payment_method' => 'required|string|in:GCash,COD',
         ]);
 
@@ -113,13 +118,25 @@ class CheckoutController extends Controller
             }
         }
 
-        // Calculate total
-        $total = $cartItems->sum(function($item) {
+        // Calculate subtotal (without delivery fee)
+        $subtotal = $cartItems->sum(function($item) {
             if ($item->is_customization && $item->customization) {
                 return $item->quantity * $item->customization->admin_price;
             }
             return $item->quantity * $item->product->price;
         });
+
+        // Get delivery fee from request or default to 0
+        $deliveryFee = $request->has('delivery_fee') && is_numeric($request->delivery_fee) 
+            ? (float) $request->delivery_fee 
+            : 0;
+        
+        $deliveryDistanceKm = $request->has('delivery_distance_km') && is_numeric($request->delivery_distance_km) 
+            ? (float) $request->delivery_distance_km 
+            : 0;
+        
+        // Calculate grand total
+        $grandTotal = $subtotal + $deliveryFee;
 
         // Get location details
         $region = DB::table('regions')->where('id', $request->region_id)->value('region_name');
@@ -139,7 +156,7 @@ class CheckoutController extends Controller
         DB::beginTransaction();
 
         try {
-            // Create order
+            // Create order WITH ALL FIELDS including delivery fee and grand total
             $order = Order::create([
                 'user_id'        => Auth::id(),
                 'customer_name'  => $request->name,
@@ -150,8 +167,11 @@ class CheckoutController extends Controller
                 'barangay_id'    => $request->barangay_id,
                 'latitude'       => $request->latitude,
                 'longitude'      => $request->longitude,
-                'total'          => $total,
-                'payment_status' => 'Pending',
+                'total'          => $subtotal,  // This is subtotal without delivery
+                'delivery_fee'   => $deliveryFee, // FIXED: Added delivery fee
+                'delivery_distance_km' => $deliveryDistanceKm, // FIXED: Added distance
+                'grand_total'    => $grandTotal, // FIXED: Added grand total
+                'payment_status' => 'Pending', // Make sure it's "Pending" not "Bending"
                 'payment_method' => $request->payment_method,
                 'delivery_status'=> 'Pending',
             ]);
@@ -235,6 +255,14 @@ class CheckoutController extends Controller
 
             DB::commit();
 
+            // Log the successful order with delivery details
+            Log::info('Order completed with delivery', [
+                'order_id' => $order->id,
+                'delivery_fee' => $deliveryFee,
+                'distance_km' => $deliveryDistanceKm,
+                'grand_total' => $grandTotal
+            ]);
+
             // Redirect based on payment method
             if ($request->payment_method === 'GCash') {
                 return redirect()->route('checkout.gcash', $order->id)
@@ -253,7 +281,7 @@ class CheckoutController extends Controller
                 'trace' => $e->getTraceAsString()
             ]);
             
-            return redirect()->back()->with('error', 'Failed to process order. Please try again.');
+            return redirect()->back()->with('error', 'Failed to process order: ' . $e->getMessage());
         }
     }
 

@@ -657,7 +657,7 @@
 
             <a href="{{ route('admin.users') }}" class="sidebar-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
                 <i class="fas fa-users"></i>
-                <span>Customers</span>
+                <span>Customers/User</span>
             </a>
 
             <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">

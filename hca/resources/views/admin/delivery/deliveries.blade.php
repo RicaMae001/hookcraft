@@ -767,7 +767,7 @@
                                 <h5 class="mb-0">
                                     <i class="fas fa-receipt me-2"></i>Total Amount
                                 </h5>
-                                <h4 class="mb-0">₱{{ number_format($delivery->total, 2) }}</h4>
+                                <h4 class="mb-0">₱{{ number_format($delivery->grand_total, 2) }}</h4>
                             </div>
                         </div>
 

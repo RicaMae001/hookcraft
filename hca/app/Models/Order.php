@@ -32,16 +32,24 @@ class Order extends Model
     protected $fillable = [
         'user_id',
         'customer_name',
+        'email',
         'address',
         'phone',
+        'city_id',
+        'barangay_id',
+        'latitude',
+        'longitude',
         'total',
+        'delivery_fee',          
+        'delivery_distance_km',   
+        'grand_total',            
         'payment_proof',
         'payment_method',
         'payment_status',
         'delivery_status',
         'coordinator_id',
         'admin_id',
-        'created_at', // Add this since we're managing it manually
+        'created_at',
     ];
 
     /**
@@ -52,6 +60,11 @@ class Order extends Model
     protected $casts = [
         'created_at' => 'datetime',
         'total' => 'decimal:2',
+        'delivery_fee'         => 'decimal:2',   
+        'delivery_distance_km' => 'decimal:2',  
+        'grand_total'          => 'decimal:2',
+        'latitude' => 'decimal:8',
+        'longitude' => 'decimal:8',
     ];
 
     /**
@@ -146,7 +159,23 @@ class Order extends Model
      */
     public function getFormattedTotalAttribute()
     {
-        return 'â‚±' . number_format($this->total, 2);
+        return '₱' . number_format($this->total, 2);
+    }
+
+    /**
+     * Get the formatted grand total.
+     */
+    public function getFormattedGrandTotalAttribute()
+    {
+        return '₱' . number_format($this->grand_total, 2);
+    }
+
+    /**
+     * Get the formatted delivery fee.
+     */
+    public function getFormattedDeliveryFeeAttribute()
+    {
+        return '₱' . number_format($this->delivery_fee, 2);
     }
 
     /**

@@ -513,7 +513,7 @@ class CustomizationController extends Controller
             return redirect()->route('staff.login')->with('error', 'Session expired. Please login again.');
         }
 
-        if ($admin->role !== 'Admin') {
+       if (!in_array($admin->role, ['Admin', 'SuperAdmin'])) {
             return redirect()->route('admin.dashboard')
                 ->with('error', 'Access denied. Admin role required.');
         }

@@ -118,7 +118,9 @@
                             <th>Order ID</th>
                             <th>Customer</th>
                             <th>Phone</th>
-                            <th>Total</th>
+                            <th>Subtotal</th>
+                            <th>Delivery Fee</th>
+                            <th>Grand Total</th>
                             <th>Payment</th>
                             <th>Method</th>
                             <th>Proof</th>
@@ -143,7 +145,13 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <span style="font-weight: 700; color: var(--success);">₱{{ number_format($order->total, 2) }}</span>
+                                    <span style="font-weight: 600; color: var(--text-secondary);">₱{{ number_format($order->total, 2) }}</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 600; color: var(--warning);">₱{{ number_format($order->delivery_fee, 2) }}</span>
+                                </td>
+                                <td>
+                                    <span style="font-weight: 700; color: var(--success); font-size: 1.1rem;">₱{{ number_format($order->grand_total, 2) }}</span>
                                 </td>
                                 <td>
                                     @if($order->payment_status == 'Paid')
@@ -258,7 +266,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="11" class="text-center py-5">
+                                <td colspan="13" class="text-center py-5">
                                     <i class="fas fa-inbox fa-3x mb-3" style="color: var(--text-secondary); opacity: 0.5;"></i>
                                     <p style="color: var(--text-secondary);">No orders found</p>
                                 </td>
@@ -312,10 +320,35 @@
                             <i class="fas fa-phone me-2" style="color: var(--primary-pink); width: 20px;"></i>
                             <span style="font-size: 0.875rem;">{{ $order->phone }}</span>
                         </div>
+                        
+                        <!-- Price Breakdown - Mobile -->
+                        <div class="mb-2 p-2" style="background: var(--light-bg); border-radius: 8px;">
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">Subtotal:</span>
+                                <span style="font-size: 0.8rem;">₱{{ number_format($order->total, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center mb-1">
+                                <span style="font-size: 0.8rem; color: var(--text-secondary);">Delivery Fee:</span>
+                                <span style="font-size: 0.8rem; color: var(--warning);">₱{{ number_format($order->delivery_fee, 2) }}</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span style="font-weight: 700; color: var(--success);">GRAND TOTAL:</span>
+                                <span style="font-weight: 800; color: var(--success); font-size: 1rem;">₱{{ number_format($order->grand_total, 2) }}</span>
+                            </div>
+                        </div>
+                        
                         <div class="d-flex align-items-center justify-content-between mb-2">
                             <div class="d-flex align-items-center">
-                                <i class="fas fa-wallet me-2" style="color: var(--primary-pink); width: 20px;"></i>
-                                <span style="font-weight: 700; color: var(--success);">₱{{ number_format($order->total, 2) }}</span>
+                                <i class="fas fa-credit-card me-2" style="color: var(--primary-pink); width: 20px;"></i>
+                                @if($order->payment_status == 'Paid')
+                                    <span class="badge-modern badge-success" style="font-size: 0.75rem;">
+                                        <i class="fas fa-check-circle"></i> Paid
+                                    </span>
+                                @else
+                                    <span class="badge-modern badge-warning" style="font-size: 0.75rem;">
+                                        <i class="fas fa-clock"></i> {{ $order->payment_status }}
+                                    </span>
+                                @endif
                             </div>
                             <div>
                                 @if($order->payment_method === 'COD')
@@ -329,18 +362,13 @@
                                 @endif
                             </div>
                         </div>
+                        
+                        @if($order->delivery_distance_km > 0)
                         <div class="d-flex align-items-center">
-                            <i class="fas fa-credit-card me-2" style="color: var(--primary-pink); width: 20px;"></i>
-                            @if($order->payment_status == 'Paid')
-                                <span class="badge-modern badge-success" style="font-size: 0.75rem;">
-                                    <i class="fas fa-check-circle"></i> Paid
-                                </span>
-                            @else
-                                <span class="badge-modern badge-warning" style="font-size: 0.75rem;">
-                                    <i class="fas fa-clock"></i> {{ $order->payment_status }}
-                                </span>
-                            @endif
+                            <i class="fas fa-road me-2" style="color: var(--primary-pink); width: 20px;"></i>
+                            <span style="font-size: 0.75rem; color: var(--text-secondary);">{{ number_format($order->delivery_distance_km, 1) }} km from store</span>
                         </div>
+                        @endif
                     </div>
 
                     @if($order->payment_proof)
@@ -582,9 +610,24 @@
                             </tbody>
                             <tfoot>
                                 <tr style="background: var(--light-bg);">
-                                    <th colspan="3" class="text-end" style="padding: 1rem;">Total:</th>
-                                    <th class="text-end" style="color: var(--success); padding: 1rem;">₱{{ number_format($order->total, 2) }}</th>
+                                    <th colspan="3" class="text-end" style="padding: 1rem;">Subtotal:</th>
+                                    <th class="text-end" style="color: var(--text-secondary); padding: 1rem;">₱{{ number_format($order->total, 2) }}</th>
                                 </tr>
+                                <tr style="background: var(--light-bg);">
+                                    <th colspan="3" class="text-end" style="padding: 1rem;">Delivery Fee:</th>
+                                    <th class="text-end" style="color: var(--warning); padding: 1rem;">₱{{ number_format($order->delivery_fee, 2) }}</th>
+                                </tr>
+                                <tr style="background: var(--light-bg); border-top: 2px solid var(--success);">
+                                    <th colspan="3" class="text-end" style="padding: 1rem; font-size: 1.1rem;">GRAND TOTAL:</th>
+                                    <th class="text-end" style="color: var(--success); font-size: 1.2rem; padding: 1rem;">₱{{ number_format($order->grand_total, 2) }}</th>
+                                </tr>
+                                @if($order->delivery_distance_km > 0)
+                                <tr>
+                                    <td colspan="4" class="text-center text-muted">
+                                        <small><i class="fas fa-road me-1"></i>Distance: {{ number_format($order->delivery_distance_km, 1) }} km from store</small>
+                                    </td>
+                                </tr>
+                                @endif
                             </tfoot>
                         </table>
                     </div>
@@ -625,7 +668,7 @@
                     <div class="modal-body p-4">
                         <div class="alert" style="background: rgba(102, 126, 234, 0.1); border-left: 4px solid var(--secondary); border-radius: 8px;">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Order #{{ $order->id }}</strong> - {{ $order->customer_name }}
+                            <strong>Order #{{ $order->id }}</strong> - {{ $order->customer_name }} | Total: ₱{{ number_format($order->grand_total, 2) }}
                         </div>
 
                         <div class="mb-3">
@@ -652,11 +695,11 @@
         </div>
     </div>
 
-    <!-- Edit Order Status Modal -->
+    <!-- Edit Order Status Modal with Automatic Payment -->
     <div class="modal fade" id="editModal{{ $order->id }}" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content" style="border-radius: 16px; border: none;">
-                <form method="POST" action="{{ route('admin.orders.update', $order->id) }}">
+                <form method="POST" action="{{ route('admin.orders.update', $order->id) }}" id="editForm{{ $order->id }}">
                     @csrf
                     @method('PUT')
                     <div class="modal-header" style="background: linear-gradient(135deg, var(--warning), #F6C176); color: white; border-radius: 16px 16px 0 0;">
@@ -666,12 +709,12 @@
                     <div class="modal-body p-4">
                         <div class="alert" style="background: rgba(246, 173, 85, 0.1); border-left: 4px solid var(--warning); border-radius: 8px;">
                             <i class="fas fa-info-circle me-2"></i>
-                            <strong>Order #{{ $order->id }}</strong> - {{ $order->customer_name }}
+                            <strong>Order #{{ $order->id }}</strong> - {{ $order->customer_name }} | Total: ₱{{ number_format($order->grand_total, 2) }}
                         </div>
 
                         <div class="mb-3">
                             <label class="form-label" style="font-weight: 600;"><i class="fas fa-money-bill-wave me-2"></i>Payment Status</label>
-                            <select name="payment_status" class="form-select" style="border-radius: 12px; border: 1px solid var(--border-color);" required>
+                            <select name="payment_status" class="form-select" id="paymentStatus{{ $order->id }}" style="border-radius: 12px; border: 1px solid var(--border-color);" required>
                                 <option value="Pending" {{ $order->payment_status == 'Pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="Paid" {{ $order->payment_status == 'Paid' ? 'selected' : '' }}>Paid</option>
                                 <option value="Unsuccessful" {{ $order->payment_status == 'Unsuccessful' ? 'selected' : '' }}>Unsuccessful</option>
@@ -681,12 +724,18 @@
 
                         <div class="mb-3">
                             <label class="form-label" style="font-weight: 600;"><i class="fas fa-truck me-2"></i>Delivery Status</label>
-                            <select name="delivery_status" class="form-select" style="border-radius: 12px; border: 1px solid var(--border-color);" required>
+                            <select name="delivery_status" class="form-select" id="deliveryStatus{{ $order->id }}" style="border-radius: 12px; border: 1px solid var(--border-color);" required onchange="autoUpdatePayment({{ $order->id }})">
                                 <option value="Pending" {{ $order->delivery_status == 'Pending' ? 'selected' : '' }}>Pending</option>
                                 <option value="Out for Delivery" {{ $order->delivery_status == 'Out for Delivery' ? 'selected' : '' }}>Out for Delivery</option>
                                 <option value="Delivered" {{ $order->delivery_status == 'Delivered' ? 'selected' : '' }}>Delivered</option>
                                 <option value="Cancelled" {{ $order->delivery_status == 'Cancelled' ? 'selected' : '' }}>Cancelled</option>
                             </select>
+                        </div>
+                        
+                        <!-- Auto-payment notification -->
+                        <div class="alert alert-info" id="autoPaymentInfo{{ $order->id }}" style="display: none; border-radius: 8px; margin-top: 10px;">
+                            <i class="fas fa-info-circle me-2"></i>
+                            <span id="autoPaymentMessage{{ $order->id }}"></span>
                         </div>
                     </div>
                     <div class="modal-footer" style="border: none;">
@@ -1169,5 +1218,60 @@
             }
         });
     }
+
+    // Auto-update payment status when delivery is set to "Delivered"
+    function autoUpdatePayment(orderId) {
+        const deliverySelect = document.getElementById('deliveryStatus' + orderId);
+        const paymentSelect = document.getElementById('paymentStatus' + orderId);
+        const autoPaymentInfo = document.getElementById('autoPaymentInfo' + orderId);
+        const autoPaymentMessage = document.getElementById('autoPaymentMessage' + orderId);
+        
+        if (deliverySelect.value === 'Delivered') {
+            // Check if payment is not already paid
+            if (paymentSelect.value !== 'Paid') {
+                // Store the previous value
+                const previousValue = paymentSelect.value;
+                
+                // Set payment to Paid
+                paymentSelect.value = 'Paid';
+                
+                // Show notification
+                autoPaymentInfo.style.display = 'block';
+                autoPaymentMessage.innerHTML = 'Payment status automatically set to <strong>Paid</strong> because order is delivered.';
+                
+                // Highlight the payment select
+                paymentSelect.style.borderColor = '#10b981';
+                paymentSelect.style.boxShadow = '0 0 0 3px rgba(16, 185, 129, 0.25)';
+            }
+        } else {
+            // Hide notification if delivery is not "Delivered"
+            autoPaymentInfo.style.display = 'none';
+            paymentSelect.style.borderColor = '';
+            paymentSelect.style.boxShadow = '';
+        }
+    }
+    
+    // Initialize auto-payment check when modals are opened
+    document.addEventListener('DOMContentLoaded', function() {
+        // For each edit modal, check if delivery is already "Delivered" on open
+        @foreach($orders as $order)
+            const editModal{{ $order->id }} = document.getElementById('editModal{{ $order->id }}');
+            if (editModal{{ $order->id }}) {
+                editModal{{ $order->id }}.addEventListener('shown.bs.modal', function() {
+                    // Check if delivery status is already "Delivered"
+                    const deliverySelect = document.getElementById('deliveryStatus{{ $order->id }}');
+                    const paymentSelect = document.getElementById('paymentStatus{{ $order->id }}');
+                    
+                    if (deliverySelect.value === 'Delivered' && paymentSelect.value !== 'Paid') {
+                        const autoPaymentInfo = document.getElementById('autoPaymentInfo{{ $order->id }}');
+                        const autoPaymentMessage = document.getElementById('autoPaymentMessage{{ $order->id }}');
+                        
+                        autoPaymentInfo.style.display = 'block';
+                        autoPaymentMessage.innerHTML = 'This order is already delivered. Consider setting payment to <strong>Paid</strong>.';
+                    }
+                });
+            }
+        @endforeach
+    });
 </script>
 @endpush

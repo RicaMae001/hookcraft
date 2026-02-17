@@ -18,7 +18,6 @@
             overflow: hidden;
         }
         
-        
         .receipt-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -60,7 +59,7 @@
             border-bottom: none;
         }
         
-         .payment-wrapper {
+        .payment-wrapper {
             max-width: 480px;
             margin: 0 auto;
             padding: 1rem;
@@ -160,6 +159,37 @@
         .info-value {
             color: #333;
             font-size: 1rem;
+        }
+        
+        /* Delivery Info Card */
+        .delivery-info-card {
+            background: linear-gradient(135deg, #f0f9ff, #e6f3ff);
+            border: 1px solid #b8daff;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        
+        .delivery-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .delivery-info-row:last-child {
+            margin-bottom: 0;
+        }
+        
+        .delivery-info-label {
+            color: #0369a1;
+            font-weight: 600;
+        }
+        
+        .delivery-info-value {
+            color: #0c4a6e;
+            font-weight: 700;
         }
         
         .receipt-items table {
@@ -365,6 +395,13 @@
             font-weight: bold;
         }
         
+        .grand-total-row {
+            background: linear-gradient(135deg, #e8f0fe, #d9e6ff);
+            font-weight: 800;
+            font-size: 1.1rem;
+            border-top: 2px solid #667eea;
+        }
+        
         .receipt-footer {
             background: #f8f9fa;
             padding: 20px;
@@ -510,7 +547,8 @@
             <div class="step-label">Complete</div>
         </div>
     </div>
-    </div>
+</div>
+
 <!-- Image Modal -->
 <div id="imageModal" class="image-modal">
     <span class="modal-close">&times;</span>
@@ -534,35 +572,19 @@
 
 <section class="thankyou py-5">
     <div class="container">
-            <!-- Success Message -->
-    <!-- ================= SUCCESS POPUP MODAL ================= -->
-<div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content text-center p-4 border-0 shadow-lg" style="border-radius:15px;">
-            
-            <div class="modal-body">
-                <i class="bi bi-check-circle-fill text-success" 
-                   style="font-size: 4rem;"></i>
-
-                <h3 class="mt-3 fw-bold text-success">
-                    Order Placed Successfully!
-                </h3>
-
-                <p class="text-muted mb-2">
-                    Thank you for your purchase. Your order has been confirmed.
-                </p>
-
-                <p class="small text-muted mb-0">
-                    This message will close automatically in 
-                    <span id="countdown">3</span> seconds.
-                </p>
+        <!-- Success Message -->
+        <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content text-center p-4 border-0 shadow-lg" style="border-radius:15px;">
+                    <div class="modal-body">
+                        <i class="bi bi-check-circle-fill text-success" style="font-size: 4rem;"></i>
+                        <h3 class="mt-3 fw-bold text-success">Order Placed Successfully!</h3>
+                        <p class="text-muted mb-2">Thank you for your purchase. Your order has been confirmed.</p>
+                        <p class="small text-muted mb-0">This message will close automatically in <span id="countdown">3</span> seconds.</p>
+                    </div>
+                </div>
             </div>
-
         </div>
-    </div>
-</div>
-<!-- ======================================================= -->
-
 
         <!-- Receipt Container -->
         <div class="receipt-container" id="receiptContainer">
@@ -635,14 +657,32 @@
                     </div>
                 </div>
 
-                <!-- Delivery Address -->
+                <!-- Delivery Address & Fee Information -->
                 <div class="receipt-section">
                     <h3 class="section-title">
-                        <i class="bi bi-geo-alt"></i> Delivery Address
+                        <i class="bi bi-geo-alt"></i> Delivery Information
                     </h3>
-                    <div class="info-item">
+                    <div class="info-item mb-3">
                         <div class="info-label">Full Address</div>
                         <div class="info-value">{{ $order->address }}</div>
+                    </div>
+                    
+                    <!-- Delivery Fee Card - NEW SECTION -->
+                    <div class="delivery-info-card">
+                        <div class="delivery-info-row">
+                            <span class="delivery-info-label"><i class="bi bi-truck"></i> Delivery Fee:</span>
+                            <span class="delivery-info-value">₱{{ number_format($order->delivery_fee, 2) }}</span>
+                        </div>
+                        <div class="delivery-info-row">
+                            <span class="delivery-info-label"><i class="bi bi-signpost"></i> Delivery Distance:</span>
+                            <span class="delivery-info-value">{{ number_format($order->delivery_distance_km, 1) }} km</span>
+                        </div>
+                        @if($order->latitude && $order->longitude)
+                        <div class="delivery-info-row">
+                            <span class="delivery-info-label"><i class="bi bi-geo"></i> Map Coordinates:</span>
+                            <span class="delivery-info-value">{{ number_format($order->latitude, 6) }}, {{ number_format($order->longitude, 6) }}</span>
+                        </div>
+                        @endif
                     </div>
                 </div>
 
@@ -667,7 +707,6 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if($item->is_customization && $item->customization && $item->customization->custom_image)
-                                                <!-- Customized product image -->
                                                 <img src="{{ asset('uploads/customizations/' . $item->customization->custom_image) }}" 
                                                      alt="{{ $item->customization->customization_name }}" 
                                                      class="item-image customization-image me-3"
@@ -676,7 +715,6 @@
                                                      title="Click to view customization"
                                                      crossorigin="anonymous">
                                             @elseif($item->product && $item->product->image)
-                                                <!-- Regular product image -->
                                                 <img src="{{ asset('asset/images/' . $item->product->image) }}" 
                                                      alt="{{ $item->product->name }}" 
                                                      class="item-image me-3"
@@ -785,10 +823,10 @@
                     </div>
                 </div>
 
-                <!-- Order Summary -->
+                <!-- Order Summary with Grand Total -->
                 <div class="receipt-section">
                     <h3 class="section-title">
-                        <i class="bi bi-calculator"></i> Order Summary
+                        <i class="bi bi-calculator"></i> Payment Summary
                     </h3>
                     <div class="row">
                         <div class="col-md-6 offset-md-6">
@@ -798,17 +836,24 @@
                                     <td class="text-end">₱{{ number_format($subtotal, 2) }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="text-end"><strong>Shipping Fee:</strong></td>
-                                    <td class="text-end">₱{{ number_format($shipping_fee, 2) }}</td>
+                                    <td class="text-end"><strong>Delivery Fee:</strong></td>
+                                    <td class="text-end">₱{{ number_format($order->delivery_fee, 2) }}</td>
                                 </tr>
-                                <tr class="total-row">
-                                    <td class="text-end"><strong>Total Amount:</strong></td>
-                                    <td class="text-end"><strong>₱{{ number_format($order->total, 2) }}</strong></td>
+                                <tr class="total-row grand-total-row">
+                                    <td class="text-end"><strong>GRAND TOTAL:</strong></td>
+                                    <td class="text-end"><strong>₱{{ number_format($order->grand_total, 2) }}</strong></td>
                                 </tr>
                                 @if($order->payment_method === 'COD')
                                 <tr>
                                     <td colspan="2" class="text-center text-muted">
-                                        <small><i class="bi bi-info-circle me-1"></i>Cash on Delivery</small>
+                                        <small><i class="bi bi-info-circle me-1"></i>Cash on Delivery - Please prepare exact amount</small>
+                                    </td>
+                                </tr>
+                                @endif
+                                @if($order->delivery_distance_km > 0)
+                                <tr>
+                                    <td colspan="2" class="text-center text-muted">
+                                        <small><i class="bi bi-geo-alt me-1"></i>Distance: {{ number_format($order->delivery_distance_km, 1) }} km from our store</small>
                                     </td>
                                 </tr>
                                 @endif
@@ -863,42 +908,31 @@
 <script>
     // Image Modal Functions
     function openModal(imgSrc, title, description) {
-        // console.log('Opening modal with:', { imgSrc, title, description });
-        
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImage');
         const modalTitle = document.getElementById('modalTitle');
         const modalDescription = document.getElementById('modalDescription');
         
-        // Set the image source and details
         modalImg.src = imgSrc;
         modalTitle.textContent = title;
         modalDescription.textContent = description;
         
-        // Show the modal
         modal.classList.add('active');
-        
-        // Prevent body scroll when modal is open
         document.body.style.overflow = 'hidden';
     }
     
     function closeModal() {
-        // console.log('Closing modal');
         const modal = document.getElementById('imageModal');
         modal.classList.remove('active');
         document.body.style.overflow = 'auto';
     }
     
-    // Initialize modal events when DOM is loaded
+    // Initialize modal events
     document.addEventListener('DOMContentLoaded', function() {
-        // console.log('Setting up modal events');
-        
         const modal = document.getElementById('imageModal');
         const closeBtn = document.querySelector('.modal-close');
         
-        // Event delegation for all product images
         document.addEventListener('click', function(event) {
-            // Check if clicked element is an item-image
             if (event.target.classList.contains('item-image')) {
                 const title = event.target.dataset.title || event.target.alt || 'Product Image';
                 const description = event.target.dataset.description || 'No description available';
@@ -908,26 +942,21 @@
             }
         });
         
-        // Close modal when clicking the close button
         if (closeBtn) {
             closeBtn.addEventListener('click', closeModal);
         }
         
-        // Close modal when clicking outside the image
         modal.addEventListener('click', function(event) {
             if (event.target === modal) {
                 closeModal();
             }
         });
         
-        // Close modal with Escape key
         document.addEventListener('keydown', function(event) {
             if (event.key === 'Escape' && modal.classList.contains('active')) {
                 closeModal();
             }
         });
-        
-        // console.log('Modal events setup complete');
     });
     
     async function exportReceipt() {
@@ -936,8 +965,6 @@
         
         try {
             overlay.classList.add('active');
-            
-            // Wait a bit for any animations to complete
             await new Promise(resolve => setTimeout(resolve, 300));
             
             const canvas = await html2canvas(receiptContainer, {
@@ -1003,34 +1030,28 @@
         }, 3000);
     }
 
-    // ================= SUCCESS MODAL AUTO SHOW + AUTO CLOSE =================
-document.addEventListener('DOMContentLoaded', function () {
+    // Success Modal Auto Close
+    document.addEventListener('DOMContentLoaded', function () {
+        const modalElement = document.getElementById('successModal');
+        if (modalElement) {
+            const successModal = new bootstrap.Modal(modalElement, {
+                backdrop: 'static',
+                keyboard: false
+            });
+            successModal.show();
 
-    const modalElement = document.getElementById('successModal');
-    const successModal = new bootstrap.Modal(modalElement, {
-        backdrop: 'static',
-        keyboard: false
-    });
-
-    // Show modal automatically
-    successModal.show();
-
-    let seconds = 3;
-    const countdownElement = document.getElementById('countdown');
-
-    const countdownInterval = setInterval(() => {
-        seconds--;
-        countdownElement.textContent = seconds;
-
-        if (seconds <= 0) {
-            clearInterval(countdownInterval);
-            successModal.hide();
+            let seconds = 3;
+            const countdownElement = document.getElementById('countdown');
+            const countdownInterval = setInterval(() => {
+                seconds--;
+                if (countdownElement) countdownElement.textContent = seconds;
+                if (seconds <= 0) {
+                    clearInterval(countdownInterval);
+                    successModal.hide();
+                }
+            }, 1000);
         }
-    }, 1000);
-
-});
-// ========================================================================
-
+    });
 </script>
 </body>
 </html>
