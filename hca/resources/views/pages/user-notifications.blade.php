@@ -277,8 +277,6 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
-    console.log('🚀 User Notifications Page Loaded');
-
     // Prevent navbar from fetching while on this page
     window.userNotificationsPageActive = true;
 
@@ -289,8 +287,6 @@
 
     // LOAD NOTIFICATIONS FROM API
     async function loadNotifications() {
-        console.log('📡 Fetching notifications from API...');
-        
         try {
             const response = await fetch('/api/notifications?limit=100', {
                 headers: {
@@ -300,14 +296,11 @@
                 }
             });
 
-            console.log('📊 Response status:', response.status);
-
             if (!response.ok) {
                 throw new Error('Failed to fetch notifications');
             }
 
             const data = await response.json();
-            console.log('📦 API Response:', data);
 
             // Hide loading
             document.getElementById('loadingState').style.display = 'none';
@@ -319,8 +312,6 @@
 
             const notifications = data.notifications;
             const unreadCount = data.unread_count || 0;
-
-            console.log(`✅ Loaded ${notifications.length} notifications, ${unreadCount} unread`);
 
             // Update stats
             updateStats(notifications, unreadCount);
@@ -336,7 +327,6 @@
             }
 
         } catch (error) {
-            console.error('❌ Error loading notifications:', error);
             document.getElementById('loadingState').innerHTML = `
                 <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
                 <p class="mt-3 text-danger">Failed to load notifications</p>
@@ -541,17 +531,13 @@
                 navbarBadge.style.display = 'none';
             }
         }
-        console.log('🔄 Synced navbar badge:', unreadCount);
     }
     
     // OVERRIDE NAVBAR FETCH TO PREVENT CONFLICTS
     setTimeout(function() {
-        console.log('🔧 Overriding navbar fetch function...');
-        
         // Stop navbar's auto-update interval
         if (window.notificationUpdateInterval) {
             clearInterval(window.notificationUpdateInterval);
-            console.log('✅ Stopped navbar auto-refresh');
         }
         
         // Hide navbar loading spinner
@@ -562,8 +548,6 @@
         
         // Replace navbar's fetchNotifications with our own
         window.fetchNotifications = function() {
-            console.log('📡 Navbar fetch blocked - showing page message');
-            
             const navbarList = document.getElementById('notificationsList');
             if (navbarList) {
                 navbarList.innerHTML = `
@@ -592,8 +576,6 @@
         
         // Call it immediately to fix the navbar
         window.fetchNotifications();
-        
-        console.log('✅ Navbar override complete');
     }, 100);
     </script>
 </body>

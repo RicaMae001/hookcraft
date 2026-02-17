@@ -51,11 +51,11 @@ class AdminController extends Controller
     }
 
     /**
-     * Check if admin is Admin (full access)
+     * Check if admin is SuperAdmin (full access)
      */
     private function isAdmin()
     {
-        return session('admin_role') === 'Admin';
+        return session('admin_role') === 'SuperAdmin';
     }
 
     /**
@@ -67,7 +67,7 @@ class AdminController extends Controller
     }
 
     /**
-     * Require Admin role - Block Staff from accessing
+     * Require SuperAdmin role - Block Staff from accessing
      */
     private function requireAdmin()
     {
@@ -75,7 +75,7 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         if (!$this->isAdmin()) {
-            Log::warning('Staff attempted to access Admin-only resource', [
+            Log::warning('Staff attempted to access SuperAdmin-only resource', [
                 'admin_id' => session('admin_id'),
                 'role' => session('admin_role'),
                 'url' => request()->url()
@@ -86,14 +86,14 @@ class AdminController extends Controller
                 return response()->json([
                     'error' => true,
                     'title' => 'Access Denied',
-                    'message' => 'Only Admin can access this section.'
+                    'message' => 'Only SuperAdmin can access this section.'
                 ], 403);
             }
             
             return redirect()->route('admin.dashboard')
                 ->with('error_modal', [
                     'title' => 'Access Denied',
-                    'message' => 'Only Admin can access this section.'
+                    'message' => 'Only SuperAdmin can access this section.'
                 ]);
         }
 
@@ -875,12 +875,12 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // STAFF MANAGEMENT - ADMIN ONLY
+    // STAFF MANAGEMENT - SUPERADMIN ONLY
     // ============================================
     
     public function staffAdmins()
     {
-        // Only Admin can access staff management
+        // Only SuperAdmin can access staff management
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -890,7 +890,7 @@ class AdminController extends Controller
 
     public function storeAdmin(Request $request)
     {
-        // Only Admin can create admin accounts
+        // Only SuperAdmin can create admin accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -898,7 +898,7 @@ class AdminController extends Controller
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin,email',
             'password' => 'required|min:6',
-            'role' => 'required|in:Admin,Staff',
+            'role' => 'required|in:SuperAdmin,Staff',
         ]);
 
         DB::table('admin')->insert([
@@ -919,14 +919,14 @@ class AdminController extends Controller
 
     public function updateAdmin(Request $request, $id)
     {
-        // Only Admin can update admin accounts
+        // Only SuperAdmin can update admin accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'email' => 'required|email|unique:admin,email,' . $id,
-            'role' => 'required|in:Admin,Staff',
+            'role' => 'required|in:SuperAdmin,Staff',
             'password' => 'nullable|min:6',
         ]);
 
@@ -952,7 +952,7 @@ class AdminController extends Controller
 
     public function deleteAdmin($id)
     {
-        // Only Admin can delete admin accounts
+        // Only SuperAdmin can delete admin accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -971,12 +971,12 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // DELIVERY COORDINATOR MANAGEMENT - ADMIN ONLY
+    // DELIVERY COORDINATOR MANAGEMENT - SUPERADMIN ONLY
     // ============================================
     
     public function staffDelivery()
     {
-        // Only Admin can access delivery coordinator management
+        // Only SuperAdmin can access delivery coordinator management
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -986,7 +986,7 @@ class AdminController extends Controller
 
     public function storeDelivery(Request $request)
     {
-        // Only Admin can create delivery accounts
+        // Only SuperAdmin can create delivery accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -1018,7 +1018,7 @@ class AdminController extends Controller
 
     public function updateDelivery(Request $request, $id)
     {
-        // Only Admin can update delivery accounts
+        // Only SuperAdmin can update delivery accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -1053,7 +1053,7 @@ class AdminController extends Controller
 
     public function deleteDelivery($id)
     {
-        // Only Admin can delete delivery accounts
+        // Only SuperAdmin can delete delivery accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -1229,7 +1229,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // CUSTOMIZATION MANAGEMENT - ADMIN ONLY
+    // CUSTOMIZATION MANAGEMENT - SUPERADMIN ONLY
     // ============================================
 
     public function customizations()
