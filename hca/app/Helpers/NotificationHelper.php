@@ -26,21 +26,24 @@ class NotificationHelper
     /**
      * When a new order is created
      * Notifies admin and the customer
+     * $grandTotal = subtotal + delivery fee (pass from controller)
      */
-    public static function orderCreated($orderId, $customerName, $total, $userId = null)
+    public static function orderCreated($orderId, $customerName, $total, $userId = null, $grandTotal = null)
     {
         try {
-            // Notify admins
-            self::getService()->notifyOrderCreated($orderId, $customerName, $total);
+            // FIXED: Pass grandTotal to admin notification so it shows the correct amount (subtotal + delivery fee)
+            $displayTotal = $grandTotal ?? $total;
+            self::getService()->notifyOrderCreated($orderId, $customerName, $displayTotal);
             
             // Notify the customer if userId is provided
             if ($userId) {
+                $displayTotal = $grandTotal ?? $total; // fallback to subtotal if grandTotal not passed
                 self::getService()->create([
                     'recipient_type' => 'user',
                     'recipient_id' => $userId,
                     'type' => 'order_created',
                     'title' => 'Order Confirmed ✓',
-                    'message' => "Your order #{$orderId} has been received and is being processed. Total: ₱" . number_format($total, 2) . ". Thank you for your purchase!",
+                    'message' => "Your order #{$orderId} has been received and is being processed. Total: ₱" . number_format($displayTotal, 2) . ". Thank you for your purchase!",
                     'entity_type' => 'order',
                     'entity_id' => $orderId,
                     'action_url' => "/user/orders/{$orderId}",
@@ -48,14 +51,16 @@ class NotificationHelper
                     'metadata' => [
                         'order_id' => $orderId,
                         'customer_name' => $customerName,
-                        'total' => $total,
+                        'subtotal' => $total,
+                        'grand_total' => $displayTotal,
                         'action' => 'order_created'
                     ]
                 ]);
                 
                 Log::info('Order created notification sent', [
                     'order_id' => $orderId,
-                    'user_id' => $userId
+                    'user_id' => $userId,
+                    'grand_total' => $displayTotal
                 ]);
             }
         } catch (\Exception $e) {

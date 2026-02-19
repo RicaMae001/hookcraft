@@ -76,8 +76,17 @@
                                                     </div>
                                                 </div>
                                             </div>
+                                            {{-- FIXED: Show grand_total (subtotal + delivery fee) instead of total --}}
                                             <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                                                <h5 class="mb-0 text-success fw-bold">₱{{ number_format($order->total, 2) }}</h5>
+                                                <h5 class="mb-0 text-success fw-bold">
+                                                    ₱{{ number_format($order->grand_total ?? $order->total, 2) }}
+                                                </h5>
+                                                @if(!empty($order->delivery_fee) && $order->delivery_fee > 0)
+                                                    <small class="text-muted">
+                                                        Subtotal ₱{{ number_format($order->total, 2) }}
+                                                        + Delivery ₱{{ number_format($order->delivery_fee, 2) }}
+                                                    </small>
+                                                @endif
                                             </div>
                                         </div>
                                     </div>
@@ -317,6 +326,7 @@
                                                     </div>
                                                 </div>
 
+                                                {{-- FIXED: Delivery info card now shows full price breakdown --}}
                                                 <div class="delivery-info-card mt-4">
                                                     <h6 class="fw-bold mb-3">
                                                         <i class="fas fa-map-marker-alt me-2"></i>Delivery Information
@@ -344,6 +354,48 @@
                                                             </div>
                                                         </div>
                                                     </div>
+
+                                                    {{-- ADDED: Price breakdown inside modal --}}
+                                                    <div class="price-breakdown mt-3">
+                                                        <h6 class="fw-bold mb-2">
+                                                            <i class="fas fa-receipt me-2"></i>Order Summary
+                                                        </h6>
+                                                        <div class="price-row">
+                                                            <span class="price-label">Subtotal</span>
+                                                            <span class="price-value">₱{{ number_format($order->total, 2) }}</span>
+                                                        </div>
+                                                        <div class="price-row">
+                                                            <span class="price-label">
+                                                                <i class="fas fa-truck me-1 text-muted" style="font-size:0.75rem;"></i>
+                                                                Delivery Fee
+                                                                @if(!empty($order->delivery_distance_km) && $order->delivery_distance_km > 0)
+                                                                    <small class="text-muted">(~{{ number_format($order->delivery_distance_km, 1) }} km)</small>
+                                                                @endif
+                                                            </span>
+                                                            <span class="price-value">
+                                                                @if(!empty($order->delivery_fee) && $order->delivery_fee > 0)
+                                                                    ₱{{ number_format($order->delivery_fee, 2) }}
+                                                                @else
+                                                                    <span class="text-muted">—</span>
+                                                                @endif
+                                                            </span>
+                                                        </div>
+                                                        <div class="price-row price-row-total">
+                                                            <span class="price-label fw-bold">Grand Total</span>
+                                                            <span class="price-value fw-bold text-success" style="font-size:1.05rem;">
+                                                                ₱{{ number_format($order->grand_total ?? $order->total, 2) }}
+                                                            </span>
+                                                        </div>
+                                                        <div class="price-row" style="margin-top:0.4rem;">
+                                                            <span class="price-label text-muted" style="font-size:0.8rem;">
+                                                                <i class="fas fa-credit-card me-1"></i>Payment Method
+                                                            </span>
+                                                            <span class="price-value text-muted" style="font-size:0.8rem;">
+                                                                {{ $order->payment_method ?? 'COD' }}
+                                                            </span>
+                                                        </div>
+                                                    </div>
+
                                                 </div>
                                             </div>
                                             <div class="modal-footer border-0 bg-light">
@@ -822,6 +874,37 @@
         border: 2px solid #f0f0f0;
     }
 
+    /* Price Breakdown - NEW */
+    .price-breakdown {
+        background: white;
+        border-radius: 10px;
+        border: 1px solid #f0f0f0;
+        padding: 1rem 1.25rem;
+    }
+
+    .price-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.35rem 0;
+        border-bottom: 1px dashed #f0f0f0;
+        font-size: 0.9rem;
+    }
+
+    .price-row:last-child {
+        border-bottom: none;
+    }
+
+    .price-row-total {
+        border-top: 2px solid #e5e7eb;
+        border-bottom: none;
+        margin-top: 0.35rem;
+        padding-top: 0.65rem;
+    }
+
+    .price-label { color: #6b7280; }
+    .price-value { color: #111827; }
+
     /* Empty State */
     .empty-state {
         text-align: center;
@@ -906,13 +989,11 @@
     
     /* Mobile Responsive Enhancements */
     @media (max-width: 768px) {
-        /* Container adjustments */
         .container {
             padding-left: 15px;
             padding-right: 15px;
         }
         
-        /* Profile sidebar mobile optimization */
         .profile-card {
             max-width: 100%;
             margin-bottom: 1.5rem;
@@ -928,7 +1009,6 @@
             font-size: 0.9rem;
         }
         
-        /* Order card mobile optimization */
         .order-card {
             margin-bottom: 1rem;
         }
@@ -939,7 +1019,6 @@
             padding: 1rem;
         }
         
-        /* Better mobile grid for order info */
         .info-grid {
             grid-template-columns: 1fr;
             gap: 0.75rem;
@@ -952,7 +1031,6 @@
             border: 1px solid #f0f0f0;
         }
         
-        /* Progress milestones mobile */
         .progress-milestones {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
@@ -974,7 +1052,6 @@
             white-space: nowrap;
         }
         
-        /* Buttons mobile optimization */
         .order-footer .d-flex {
             flex-direction: column;
             width: 100%;
@@ -986,7 +1063,6 @@
             font-size: 0.9rem;
         }
         
-        /* Modal mobile optimization */
         .modal-dialog {
             margin: 10px;
         }
@@ -995,7 +1071,6 @@
             padding: 1rem;
         }
         
-        /* Timeline mobile adjustments */
         .timeline-item-modern {
             padding-left: 50px;
             padding-bottom: 1.5rem;
@@ -1018,22 +1093,19 @@
             font-size: 14px;
         }
         
-        /* Status badges mobile */
         .status-badge {
             padding: 0.4rem 0.75rem;
             font-size: 0.8rem;
         }
     }
 
-    /* Ultra Mobile Optimization for screens below 480px */
+    /* Ultra Mobile */
     @media (max-width: 480px) {
-        /* Container adjustments */
         .container {
             padding-left: 10px;
             padding-right: 10px;
         }
         
-        /* Profile card adjustments */
         .profile-card .card-body {
             padding: 1.5rem 1rem;
         }
@@ -1043,7 +1115,6 @@
             height: 70px;
         }
         
-        /* Order header mobile optimization */
         .order-header .row {
             flex-direction: column;
             align-items: flex-start !important;
@@ -1054,7 +1125,6 @@
             align-self: flex-start;
         }
         
-        /* Progress section mobile */
         .progress-section {
             padding: 1rem;
         }
@@ -1068,7 +1138,6 @@
             font-size: 0.75rem;
         }
         
-        /* Progress milestones ultra mobile */
         .progress-milestones {
             grid-template-columns: repeat(2, 1fr);
             row-gap: 1rem;
@@ -1079,7 +1148,6 @@
             margin-top: 0.5rem;
         }
         
-        /* Modal adjustments */
         .modal-content {
             margin: 5px;
         }
@@ -1088,7 +1156,6 @@
             padding: 0.75rem;
         }
         
-        /* Timeline ultra mobile */
         .timeline-item-modern {
             padding-left: 40px;
             padding-bottom: 1rem;
@@ -1107,7 +1174,6 @@
             font-size: 0.8rem;
         }
         
-        /* Toast notification mobile */
         .toast-notification {
             left: 10px;
             right: 10px;
@@ -1143,7 +1209,6 @@
                 }, 300);
             }, 5000);
             
-            // Add click to dismiss functionality
             toast.addEventListener('click', function() {
                 this.style.opacity = '0';
                 this.style.transform = 'translateX(400px)';
@@ -1157,7 +1222,6 @@
         const modals = document.querySelectorAll('.modal');
         modals.forEach(modal => {
             modal.addEventListener('shown.bs.modal', function() {
-                // Animate timeline items when modal opens
                 const timelineItems = this.querySelectorAll('.timeline-item-modern');
                 timelineItems.forEach((item, index) => {
                     setTimeout(() => {
@@ -1169,19 +1233,16 @@
         });
     });
     
-    // Simple confirmation and loading state for cancel order
     function confirmCancel(orderId) {
         if (!confirm('Are you sure you want to cancel this order?\n\nThis action cannot be undone.')) {
             return false;
         }
         
-        // Show loading state
         const button = document.getElementById('cancelBtn' + orderId);
         const originalText = button.innerHTML;
         button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i> Cancelling...';
         button.disabled = true;
         
-        // Re-enable button after 10 seconds in case submission fails
         setTimeout(() => {
             button.innerHTML = originalText;
             button.disabled = false;

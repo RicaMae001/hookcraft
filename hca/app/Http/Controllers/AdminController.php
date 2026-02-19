@@ -31,9 +31,6 @@ class AdminController extends Controller
     // ROLE-BASED AUTHORIZATION HELPERS
     // ============================================
     
-    /**
-     * Check if user is logged in as admin
-     */
     private function checkAdminAuth()
     {
         if (!session('admin_id')) {
@@ -50,25 +47,16 @@ class AdminController extends Controller
         return null;
     }
 
-    /**
-     * Check if admin is SuperAdmin (full access)
-     */
     private function isAdmin()
     {
         return session('admin_role') === 'SuperAdmin';
     }
 
-    /**
-     * Check if admin is Staff (limited access)
-     */
     private function isStaff()
     {
         return session('admin_role') === 'Staff';
     }
 
-    /**
-     * Require SuperAdmin role - Block Staff from accessing
-     */
     private function requireAdmin()
     {
         $authCheck = $this->checkAdminAuth();
@@ -81,7 +69,6 @@ class AdminController extends Controller
                 'url' => request()->url()
             ]);
             
-            // Return JSON for AJAX requests
             if (request()->ajax()) {
                 return response()->json([
                     'error' => true,
@@ -101,40 +88,30 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // NOTIFICATION METHODS (Updated for database-based service)
+    // NOTIFICATION METHODS
     // ============================================
     
     private function getAllNotifications()
     {
-        // Using NotificationService with database storage
         $adminId = session('admin_id');
-        if (!$adminId) {
-            return collect(); // Return empty collection if not logged in
-        }
-        
+        if (!$adminId) return collect();
         return $this->notificationService->getNotifications('admin', $adminId, 50, false);
     }
 
     private function getUnreadCount()
     {
-        // Using NotificationService with database storage
         $adminId = session('admin_id');
-        if (!$adminId) {
-            return 0; // Return 0 if not logged in
-        }
-        
+        if (!$adminId) return 0;
         return $this->notificationService->getUnreadCount('admin', $adminId);
     }
 
     private function markAsRead($notificationId)
     {
-        // Using NotificationService with database storage
         $this->notificationService->markAsRead($notificationId);
     }
 
     private function markAllRead()
     {
-        // Using NotificationService with database storage
         $adminId = session('admin_id');
         if ($adminId) {
             $this->notificationService->markAllAsRead('admin', $adminId);
@@ -161,7 +138,6 @@ class AdminController extends Controller
 
                 $product->update(['stock' => $newStock]);
 
-                // Check for low stock notification
                 if ($newStock <= 5 && $newStock > 0) {
                     $this->notificationService->notifyLowStock(
                         $product->id, 
@@ -170,7 +146,6 @@ class AdminController extends Controller
                     );
                 }
                 
-                // Check for out of stock notification
                 if ($newStock <= 0) {
                     $this->notificationService->create([
                         'recipient_type' => 'admin',
@@ -231,7 +206,6 @@ class AdminController extends Controller
             'password' => 'required',
         ]);
 
-        // Try Admin Login First
         $admin = DB::table('admin')->where('email', $credentials['email'])->first();
 
         if ($admin && Hash::check($credentials['password'], $admin->password)) {
@@ -242,15 +216,11 @@ class AdminController extends Controller
                 'user_type' => 'admin'
             ]);
 
-            Log::info('Admin logged in', [
-                'admin_id' => $admin->id,
-                'role' => $admin->role
-            ]);
+            Log::info('Admin logged in', ['admin_id' => $admin->id, 'role' => $admin->role]);
 
             return redirect()->route('admin.dashboard')->with('success', 'Welcome back, ' . $admin->name);
         }
 
-        // Try Delivery Coordinator Login
         $coordinator = DB::table('delivery_coordinator')->where('email', $credentials['email'])->first();
 
         if ($coordinator && Hash::check($credentials['password'], $coordinator->password)) {
@@ -265,9 +235,7 @@ class AdminController extends Controller
                 'user_type' => 'delivery'
             ]);
 
-            Log::info('Delivery coordinator logged in', [
-                'coordinator_id' => $coordinator->coordinator_id
-            ]);
+            Log::info('Delivery coordinator logged in', ['coordinator_id' => $coordinator->coordinator_id]);
 
             return redirect()->route('delivery.dashboard')->with('success', 'Welcome back, ' . $coordinator->name);
         }
@@ -278,19 +246,14 @@ class AdminController extends Controller
 
     public function logout()
     {
-        Log::info('Admin logging out', [
-            'admin_id' => session('admin_id'),
-            'role' => session('admin_role')
-        ]);
-
+        Log::info('Admin logging out', ['admin_id' => session('admin_id'), 'role' => session('admin_role')]);
         session()->forget(['admin_id', 'admin_name', 'admin_role', 'user_type']);
         session()->regenerate();
-        
         return redirect()->route('staff.login')->with('success', 'Logged out successfully');
     }
 
     // ============================================
-    // DASHBOARD - ACCESSIBLE TO ALL
+    // DASHBOARD
     // ============================================
     
     public function dashboard()
@@ -301,29 +264,33 @@ class AdminController extends Controller
         $notifications = $this->getAllNotifications();
         $unreadCount = $this->getUnreadCount();
 
-        // Sales Analytics
-        $totalSales = DB::table('orders')->where('payment_status', 'Paid')->sum('total');
+        // FIXED: Sum grand_total instead of total so delivery fees are included in sales figure
+        $totalSales = DB::table('orders')
+            ->where('payment_status', 'Paid')
+            ->sum(DB::raw('COALESCE(grand_total, total)'));
+
         $totalOrders = DB::table('orders')->count();
         $pendingOrders = DB::table('orders')->where('delivery_status', 'Pending')->count();
         $totalProducts = Product::count();
         $totalUsers = User::count();
 
-        // Monthly Sales (last 6 months)
+        // Monthly Sales (last 6 months) - FIXED: use grand_total
         $monthlySales = DB::table('orders')
-            ->select(DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'), DB::raw('SUM(total) as total'))
+            ->select(
+                DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
+                DB::raw('SUM(COALESCE(grand_total, total)) as total')
+            )
             ->where('payment_status', 'Paid')
             ->where('created_at', '>=', now()->subMonths(6))
             ->groupBy('month')
             ->orderBy('month', 'asc')
             ->get();
 
-        // Recent Orders
         $recentOrders = DB::table('orders')
             ->orderBy('created_at', 'desc')
             ->limit(10)
             ->get();
 
-        // Top Selling Products
         $topProducts = DB::table('order_item')
             ->join('products', 'order_item.product_id', '=', 'products.id')
             ->select('products.name', DB::raw('SUM(order_item.quantity) as total_sold'))
@@ -343,7 +310,6 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        // Add role information for view
         $isAdmin = $this->isAdmin();
         $isStaff = $this->isStaff();
 
@@ -356,7 +322,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // NOTIFICATION ACTIONS (Updated for database)
+    // NOTIFICATION ACTIONS
     // ============================================
     
     public function markNotificationAsRead($notificationId)
@@ -381,7 +347,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // USER MANAGEMENT - ADMIN HAS FULL ACCESS
+    // USER MANAGEMENT
     // ============================================
     
     public function users()
@@ -404,11 +370,7 @@ class AdminController extends Controller
         $user = User::findOrFail($id);
         $user->delete();
 
-        Log::info('User deleted', [
-            'user_id' => $id,
-            'admin_id' => session('admin_id'),
-            'admin_role' => session('admin_role')
-        ]);
+        Log::info('User deleted', ['user_id' => $id, 'admin_id' => session('admin_id')]);
 
         return redirect()->back()->with('success', 'User deleted successfully');
     }
@@ -426,17 +388,13 @@ class AdminController extends Controller
         }
         $user->save();
 
-        Log::info('User updated', [
-            'user_id' => $id,
-            'admin_id' => session('admin_id'),
-            'admin_role' => session('admin_role')
-        ]);
+        Log::info('User updated', ['user_id' => $id, 'admin_id' => session('admin_id')]);
 
         return redirect()->route('admin.users')->with('success', 'User updated successfully.');
     }
 
     // ============================================
-    // PRODUCT MANAGEMENT - ADMIN HAS FULL ACCESS
+    // PRODUCT MANAGEMENT
     // ============================================
     
     public function products()
@@ -446,7 +404,6 @@ class AdminController extends Controller
 
         $products = Product::with('category')->orderBy('id', 'desc')->get();
         $categories = Category::orderBy('name')->get();
-        
         $isAdmin = $this->isAdmin();
         $isStaff = $this->isStaff();
         
@@ -480,18 +437,14 @@ class AdminController extends Controller
             'admin_id' => session('admin_id'),
         ]);
 
-        // FIXED: Send product created notification WITH PRICE (4th parameter)
         $this->notificationService->productCreated(
             $product->id,
             $validated['name'],
             session('admin_name'),
-            $validated['price']  // ← THIS IS THE FIX - Added the price parameter
+            $validated['price']
         );
 
-        Log::info('Product created', [
-            'product_name' => $validated['name'],
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Product created', ['product_name' => $validated['name'], 'admin_id' => session('admin_id')]);
 
         cache()->forget('products');
         cache()->forget('categories');
@@ -535,13 +488,8 @@ class AdminController extends Controller
 
         $product->update($updateData);
 
-        // Check stock levels for notifications
         if ($product->stock <= 5 && $product->stock > 0) {
-            $this->notificationService->notifyLowStock(
-                $product->id, 
-                $product->name, 
-                $product->stock
-            );
+            $this->notificationService->notifyLowStock($product->id, $product->name, $product->stock);
         } elseif ($product->stock <= 0) {
             $this->notificationService->create([
                 'recipient_type' => 'admin',
@@ -555,10 +503,7 @@ class AdminController extends Controller
             ]);
         }
 
-        Log::info('Product updated', [
-            'product_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Product updated', ['product_id' => $id, 'admin_id' => session('admin_id')]);
 
         cache()->forget('products');
         cache()->forget('categories');
@@ -579,10 +524,7 @@ class AdminController extends Controller
 
         $product->delete();
 
-        Log::info('Product deleted', [
-            'product_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Product deleted', ['product_id' => $id, 'admin_id' => session('admin_id')]);
 
         cache()->forget('products');
         cache()->forget('categories');
@@ -591,7 +533,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // CATEGORY MANAGEMENT - ADMIN HAS FULL ACCESS
+    // CATEGORY MANAGEMENT
     // ============================================
     
     public function storeCategory(Request $request)
@@ -608,10 +550,7 @@ class AdminController extends Controller
             'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
 
-        Log::info('Category created', [
-            'category_name' => $validated['name'],
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Category created', ['category_name' => $validated['name'], 'admin_id' => session('admin_id')]);
 
         cache()->forget('categories');
         cache()->forget('products');
@@ -629,16 +568,12 @@ class AdminController extends Controller
         ]);
 
         $category = Category::findOrFail($id);
-        
         $category->update([
             'name' => $validated['name'],
             'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
 
-        Log::info('Category updated', [
-            'category_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Category updated', ['category_id' => $id, 'admin_id' => session('admin_id')]);
 
         cache()->forget('categories');
         cache()->forget('products');
@@ -661,10 +596,7 @@ class AdminController extends Controller
         
         $category->delete();
 
-        Log::info('Category deleted', [
-            'category_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Category deleted', ['category_id' => $id, 'admin_id' => session('admin_id')]);
 
         cache()->forget('categories');
         cache()->forget('products');
@@ -673,7 +605,7 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // ORDER MANAGEMENT - ADMIN HAS FULL ACCESS
+    // ORDER MANAGEMENT
     // ============================================
     
     public function orders()
@@ -681,12 +613,7 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        // Paginated orders - 10 per page
-        $orders = DB::table('orders')
-            ->orderBy('created_at', 'desc')
-            ->paginate(10);
-        
-        // Get all orders for stats (not paginated)
+        $orders = DB::table('orders')->orderBy('created_at', 'desc')->paginate(10);
         $allOrders = DB::table('orders')->get();
         
         $coordinators = DB::table('delivery_coordinator')
@@ -723,12 +650,13 @@ class AdminController extends Controller
             if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
                 $this->deductStockFromOrder($id);
                 
-                // Send payment received notification
-                if ($currentOrder->customer_name && $currentOrder->total) {
+                // FIXED: Use grand_total (subtotal + delivery fee) for the payment notification
+                if ($currentOrder->customer_name) {
+                    $grandTotal = $currentOrder->grand_total ?? $currentOrder->total;
                     $this->notificationService->notifyPaymentReceived(
                         $id,
                         "#{$id}",
-                        $currentOrder->total
+                        $grandTotal  // ← FIXED: was $currentOrder->total
                     );
                 }
             }
@@ -737,7 +665,6 @@ class AdminController extends Controller
                 $this->restoreStockFromOrder($id);
             }
 
-            // Send order updated notification
             if ($currentOrder->customer_name) {
                 $this->notificationService->orderUpdated(
                     $id,
@@ -750,27 +677,17 @@ class AdminController extends Controller
 
             DB::commit();
 
-            Log::info('Order status updated', [
-                'order_id' => $id,
-                'admin_id' => session('admin_id')
-            ]);
+            Log::info('Order status updated', ['order_id' => $id, 'admin_id' => session('admin_id')]);
 
             return redirect()->back()->with('success', 'Order status updated successfully');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Order update failed', [
-                'order_id' => $id,
-                'error' => $e->getMessage()
-            ]);
+            Log::error('Order update failed', ['order_id' => $id, 'error' => $e->getMessage()]);
             return redirect()->back()->withErrors(['error' => 'Failed to update order status: ' . $e->getMessage()]);
         }
     }
 
-        /**
-     * Delete order from admin panel
-     * Enhanced to properly cancel order before deletion
-     */
     public function deleteOrder($id)
     {
         $authCheck = $this->checkAdminAuth();
@@ -785,13 +702,11 @@ class AdminController extends Controller
                 return redirect()->back()->with('error', 'Order not found');
             }
             
-            // 1. First update order status to Cancelled
             DB::table('orders')->where('id', $id)->update([
                 'delivery_status' => 'Cancelled',
                 'payment_status' => 'Unsuccessful',
             ]);
             
-            // 2. Send cancellation notifications BEFORE deletion - FIXED: Changed delivery_coordinator_id to coordinator_id
             NotificationHelper::orderCancelled(
                 $id,
                 $order->customer_name,
@@ -800,37 +715,27 @@ class AdminController extends Controller
                 $order->coordinator_id ?? null
             );
             
-            // 3. Restore stock if order was paid
             if ($order->payment_status === 'Paid') {
                 $this->restoreStockFromOrder($id);
             }
 
-            // 4. Log the cancellation
             Log::info('Order cancelled before deletion', [
                 'order_id' => $id,
                 'customer_name' => $order->customer_name,
                 'admin_id' => session('admin_id')
             ]);
 
-            // 5. Now delete the order
             DB::table('orders')->where('id', $id)->delete();
 
             DB::commit();
 
-            Log::info('Order deleted successfully', [
-                'order_id' => $id,
-                'admin_id' => session('admin_id')
-            ]);
+            Log::info('Order deleted successfully', ['order_id' => $id, 'admin_id' => session('admin_id')]);
 
             return redirect()->back()->with('success', 'Order cancelled and deleted successfully. All parties have been notified.');
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Order deletion failed', [
-                'order_id' => $id,
-                'error' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
-            ]);
+            Log::error('Order deletion failed', ['order_id' => $id, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
         }
     }
@@ -847,15 +752,11 @@ class AdminController extends Controller
         $order = DB::table('orders')->where('id', $id)->first();
         $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
 
-        // FIXED: Changed delivery_coordinator_id to coordinator_id
-        DB::table('orders')
-            ->where('id', $id)
-            ->update([
-                'coordinator_id' => $validated['coordinator_id'],
-                'admin_id' => session('admin_id')
-            ]);
+        DB::table('orders')->where('id', $id)->update([
+            'coordinator_id' => $validated['coordinator_id'],
+            'admin_id' => session('admin_id')
+        ]);
 
-        // Send delivery assignment notification
         if ($order && $coordinator) {
             $this->notificationService->deliveryAssigned(
                 $id,
@@ -880,7 +781,6 @@ class AdminController extends Controller
     
     public function staffAdmins()
     {
-        // Only SuperAdmin can access staff management
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -890,7 +790,6 @@ class AdminController extends Controller
 
     public function storeAdmin(Request $request)
     {
-        // Only SuperAdmin can create admin accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -919,7 +818,6 @@ class AdminController extends Controller
 
     public function updateAdmin(Request $request, $id)
     {
-        // Only SuperAdmin can update admin accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -942,17 +840,13 @@ class AdminController extends Controller
 
         DB::table('admin')->where('id', $id)->update($updateData);
 
-        Log::info('Admin account updated', [
-            'updated_admin_id' => $id,
-            'by_admin_id' => session('admin_id')
-        ]);
+        Log::info('Admin account updated', ['updated_admin_id' => $id, 'by_admin_id' => session('admin_id')]);
 
         return redirect()->back()->with('success', 'Admin account updated successfully');
     }
 
     public function deleteAdmin($id)
     {
-        // Only SuperAdmin can delete admin accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -962,10 +856,7 @@ class AdminController extends Controller
 
         DB::table('admin')->where('id', $id)->delete();
 
-        Log::info('Admin account deleted', [
-            'deleted_admin_id' => $id,
-            'by_admin_id' => session('admin_id')
-        ]);
+        Log::info('Admin account deleted', ['deleted_admin_id' => $id, 'by_admin_id' => session('admin_id')]);
 
         return redirect()->back()->with('success', 'Admin account deleted successfully');
     }
@@ -976,7 +867,6 @@ class AdminController extends Controller
     
     public function staffDelivery()
     {
-        // Only SuperAdmin can access delivery coordinator management
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -986,7 +876,6 @@ class AdminController extends Controller
 
     public function storeDelivery(Request $request)
     {
-        // Only SuperAdmin can create delivery accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -1008,17 +897,13 @@ class AdminController extends Controller
             'created_at' => now(),
         ]);
 
-        Log::info('Delivery coordinator created', [
-            'created_email' => $validated['email'],
-            'by_admin_id' => session('admin_id')
-        ]);
+        Log::info('Delivery coordinator created', ['created_email' => $validated['email'], 'by_admin_id' => session('admin_id')]);
 
         return redirect()->back()->with('success', 'Delivery coordinator created successfully');
     }
 
     public function updateDelivery(Request $request, $id)
     {
-        // Only SuperAdmin can update delivery accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
@@ -1043,32 +928,25 @@ class AdminController extends Controller
 
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->update($updateData);
 
-        Log::info('Delivery coordinator updated', [
-            'updated_coordinator_id' => $id,
-            'by_admin_id' => session('admin_id')
-        ]);
+        Log::info('Delivery coordinator updated', ['updated_coordinator_id' => $id, 'by_admin_id' => session('admin_id')]);
 
         return redirect()->back()->with('success', 'Delivery coordinator updated successfully');
     }
 
     public function deleteDelivery($id)
     {
-        // Only SuperAdmin can delete delivery accounts
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         DB::table('delivery_coordinator')->where('coordinator_id', $id)->delete();
 
-        Log::info('Delivery coordinator deleted', [
-            'deleted_coordinator_id' => $id,
-            'by_admin_id' => session('admin_id')
-        ]);
+        Log::info('Delivery coordinator deleted', ['deleted_coordinator_id' => $id, 'by_admin_id' => session('admin_id')]);
 
         return redirect()->back()->with('success', 'Delivery coordinator deleted successfully');
     }
 
     // ============================================
-    // GALLERY MANAGEMENT - ADMIN HAS FULL ACCESS
+    // GALLERY MANAGEMENT
     // ============================================
     
     public function galleryIndex()
@@ -1077,7 +955,6 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         $galleries = GalleryImage::orderBy('display_order', 'asc')->paginate(12);
-        
         $isAdmin = $this->isAdmin();
         $isStaff = $this->isStaff();
         
@@ -1121,13 +998,9 @@ class AdminController extends Controller
                 'admin_id' => session('admin_id')
             ]);
 
-            Log::info('Gallery image created', [
-                'title' => $request->title,
-                'admin_id' => session('admin_id')
-            ]);
+            Log::info('Gallery image created', ['title' => $request->title, 'admin_id' => session('admin_id')]);
 
-            return redirect()->route('admin.gallery.index')
-                ->with('success', 'Gallery image added successfully!');
+            return redirect()->route('admin.gallery.index')->with('success', 'Gallery image added successfully!');
         }
 
         return back()->with('error', 'Failed to upload image.');
@@ -1164,7 +1037,6 @@ class AdminController extends Controller
             if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
                 unlink(public_path('asset/images/' . $gallery->image_path));
             }
-
             $image = $request->file('image');
             $imageName = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('asset/images'), $imageName);
@@ -1179,13 +1051,9 @@ class AdminController extends Controller
             'is_active' => $request->has('is_active') ? 1 : 0,
         ]);
 
-        Log::info('Gallery image updated', [
-            'gallery_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Gallery image updated', ['gallery_id' => $id, 'admin_id' => session('admin_id')]);
 
-        return redirect()->route('admin.gallery.index')
-            ->with('success', 'Gallery image updated successfully!');
+        return redirect()->route('admin.gallery.index')->with('success', 'Gallery image updated successfully!');
     }
 
     public function galleryDestroy($id)
@@ -1201,13 +1069,9 @@ class AdminController extends Controller
 
         $gallery->delete();
 
-        Log::info('Gallery image deleted', [
-            'gallery_id' => $id,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Gallery image deleted', ['gallery_id' => $id, 'admin_id' => session('admin_id')]);
 
-        return redirect()->route('admin.gallery.index')
-            ->with('success', 'Gallery image deleted successfully!');
+        return redirect()->route('admin.gallery.index')->with('success', 'Gallery image deleted successfully!');
     }
 
     public function galleryToggleStatus($id)
@@ -1219,11 +1083,7 @@ class AdminController extends Controller
         $gallery->is_active = !$gallery->is_active;
         $gallery->save();
 
-        Log::info('Gallery status toggled', [
-            'gallery_id' => $id,
-            'new_status' => $gallery->is_active,
-            'admin_id' => session('admin_id')
-        ]);
+        Log::info('Gallery status toggled', ['gallery_id' => $id, 'new_status' => $gallery->is_active, 'admin_id' => session('admin_id')]);
 
         return back()->with('success', 'Gallery status updated successfully!');
     }
@@ -1250,8 +1110,7 @@ class AdminController extends Controller
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
-        $customization = ProductCustomization::with(['user', 'product', 'options'])
-            ->findOrFail($id);
+        $customization = ProductCustomization::with(['user', 'product', 'options'])->findOrFail($id);
 
         return view('admin.customizations.show', compact('customization'));
     }
@@ -1285,7 +1144,6 @@ class AdminController extends Controller
 
         $customization->update($updateData);
 
-        // ===== NOTIFY USER OF CUSTOMIZATION STATUS CHANGE =====
         try {
             if ($oldStatus !== $request->status) {
                 NotificationHelper::customizationStatusChanged(
@@ -1312,8 +1170,7 @@ class AdminController extends Controller
             ]);
         }
 
-        return redirect()->route('admin.customizations.index')
-            ->with('success', 'Customization updated successfully');
+        return redirect()->route('admin.customizations.index')->with('success', 'Customization updated successfully');
     }
 
     public function customizationDestroy($id)
@@ -1332,30 +1189,22 @@ class AdminController extends Controller
 
         $customization->delete();
 
-        return redirect()->route('admin.customizations.index')
-            ->with('success', 'Customization deleted successfully');
+        return redirect()->route('admin.customizations.index')->with('success', 'Customization deleted successfully');
     }
 
-    /**
-     * Show checkout page for approved customization
-     */
     public function checkout($id)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
+        if (!Auth::check()) return redirect()->route('login');
 
         $customization = ProductCustomization::where('user_id', Auth::id())
             ->with('product')
             ->findOrFail($id);
 
-        // Check if customization is approved
         if (!$customization->isApproved() || !$customization->admin_price) {
             return redirect()->route('customization.my-customizations')
                 ->with('error', 'This customization is not yet approved or priced.');
         }
 
-        // Check if already has order
         if ($customization->order_id) {
             return redirect()->route('customization.my-customizations')
                 ->with('info', 'This customization has already been ordered.');
@@ -1364,20 +1213,14 @@ class AdminController extends Controller
         return view('customization.checkout', compact('customization'));
     }
 
-    /**
-     * Add approved customization to cart
-     */
     public function addToCart(Request $request, $id)
     {
-        if (!Auth::check()) {
-            return redirect()->route('login');
-        }
+        if (!Auth::check()) return redirect()->route('login');
 
         $customization = ProductCustomization::where('user_id', Auth::id())
             ->with('product')
             ->findOrFail($id);
 
-        // Validate customization can be added to cart
         if (!$customization->isApproved()) {
             return back()->with('error', 'Customization must be approved before adding to cart.');
         }
@@ -1393,12 +1236,8 @@ class AdminController extends Controller
         DB::beginTransaction();
         
         try {
-            // Get or create regular cart
-            $cart = Cart::firstOrCreate(
-                ['user_id' => Auth::id(), 'is_buy_now' => 0]
-            );
+            $cart = Cart::firstOrCreate(['user_id' => Auth::id(), 'is_buy_now' => 0]);
 
-            // Check if customization is already in cart
             $existingItem = CartItem::where('cart_id', $cart->id)
                 ->where('product_id', $customization->product_id)
                 ->where('is_customization', 1)
@@ -1409,7 +1248,6 @@ class AdminController extends Controller
                 return back()->with('info', 'This customization is already in your cart.');
             }
 
-            // Create cart item for customization
             CartItem::create([
                 'cart_id' => $cart->id,
                 'product_id' => $customization->product_id,
@@ -1421,15 +1259,12 @@ class AdminController extends Controller
                 'customization_id' => $customization->id,
             ]);
 
-            // Update session cart count
             $cartCount = CartItem::whereHas('cart', function($query) {
-                $query->where('user_id', Auth::id())
-                      ->where('is_buy_now', 0);
+                $query->where('user_id', Auth::id())->where('is_buy_now', 0);
             })->sum('quantity');
             
             session(['cart_count' => $cartCount]);
 
-            // ===== NOTIFY USER THAT CUSTOMIZATION ADDED TO CART =====
             try {
                 NotificationHelper::customizationAddedToCart(
                     $customization->id,
@@ -1445,8 +1280,7 @@ class AdminController extends Controller
 
             DB::commit();
 
-            return redirect()->route('cart.index')
-                ->with('success', 'Customization added to cart successfully!');
+            return redirect()->route('cart.index')->with('success', 'Customization added to cart successfully!');
 
         } catch (\Exception $e) {
             DB::rollBack();

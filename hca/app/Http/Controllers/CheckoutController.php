@@ -231,7 +231,7 @@ class CheckoutController extends Controller
 
             // ===== NOTIFY ADMIN OF NEW ORDER =====
             try {
-                NotificationHelper::orderCreated($order->id, $order->customer_name, $order->total, Auth::id());
+               NotificationHelper::orderCreated($order->id, $order->customer_name, $order->total, Auth::id(), $order->grand_total);
                 Log::info('Order created notification sent', ['order_id' => $order->id]);
             } catch (\Exception $e) {
                 Log::error('Failed to send order created notification', ['order_id' => $order->id, 'error' => $e->getMessage()]);
