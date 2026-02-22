@@ -66,7 +66,7 @@
             font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
             background: var(--light-bg);
             color: var(--text-primary);
-            margin-top: 76px;
+            margin-top: 30px;
             line-height: 1.6;
             transition: background-color 0.3s ease, color 0.3s ease;
         }
@@ -628,52 +628,7 @@
 </head>
 <body>
     <!-- Modern Navbar -->
-    <nav class="modern-navbar">
-        <div class="navbar-start">
-            <button class="btn btn-link d-md-none" id="sidebarToggle">
-                <i class="fas fa-bars"></i>
-            </button>
-        </div>
-        
-        <div class="navbar-actions">
-            <!-- Theme Toggle -->
-            <div class="theme-toggle" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
-                <div class="theme-toggle-slider">
-                    <i class="fas fa-sun theme-toggle-icon sun"></i>
-                    <i class="fas fa-moon theme-toggle-icon moon"></i>
-                </div>
-            </div>
-
-            <!-- Notifications -->
-            <div class="notification-bell" onclick="toggleNotifications()">
-                <i class="fas fa-bell"></i>
-                @if(isset($unreadCount) && $unreadCount > 0)
-                <span class="notification-badge">{{ $unreadCount }}</span>
-                @endif
-            </div>
-
-            <!-- Admin Profile -->
-            <div class="admin-profile dropdown">
-                <div data-bs-toggle="dropdown">
-                    <div class="admin-avatar">{{ strtoupper(substr(session('admin_name', 'A'), 0, 1)) }}</div>
-                    <div class="d-none d-md-block">
-                        <div style="font-size: 0.875rem; font-weight: 600;">{{ session('admin_name', 'Admin') }}</div>
-                        <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ session('admin_role', 'Staff') }}</div>
-                    </div>
-                </div>
-                <ul class="dropdown-menu dropdown-menu-end">
-                    <li>
-                        <form action="{{ route('admin.logout') }}" method="POST">
-                            @csrf
-                            <button type="submit" class="dropdown-item">
-                                <i class="fas fa-sign-out-alt me-2"></i>Logout
-                            </button>
-                        </form>
-                    </li>
-                </ul>
-            </div>
-        </div>
-    </nav>
+    @include('admin.layouts.navbar')
 
     <!-- Modern Sidebar -->
     <aside class="modern-sidebar" id="sidebar">
@@ -702,12 +657,12 @@
 
             <a href="{{ route('admin.users') }}" class="sidebar-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
                 <i class="fas fa-users"></i>
-                <span>Customers</span>
+                <span>Customers/User</span>
             </a>
 
-            <a href="{{ route('admin.gallery.index') }}" class="sidebar-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}">
+            <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
                 <i class="fas fa-images"></i>
-                <span>Gallery</span>
+                <span>Customize</span>
             </a>
 
             <a href="{{ route('admin.livechat.index') }}" class="sidebar-link {{ request()->routeIs('admin.livechat.*') ? 'active' : '' }}">

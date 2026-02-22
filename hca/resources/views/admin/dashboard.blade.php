@@ -147,8 +147,16 @@
                             <td>
                                 <div style="font-weight: 600;">{{ $order->customer_name }}</div>
                             </td>
+                            {{-- FIXED: Show grand_total (subtotal + delivery fee), fallback to total for old orders --}}
                             <td>
-                                <span style="font-weight: 700; color: var(--success);">₱{{ number_format($order->total, 2) }}</span>
+                                <span style="font-weight: 700; color: var(--success);">
+                                    ₱{{ number_format($order->grand_total ?? $order->total, 2) }}
+                                </span>
+                                @if(!empty($order->delivery_fee) && $order->delivery_fee > 0)
+                                    <br><small style="color: var(--text-secondary); font-size: 0.75rem;">
+                                        incl. ₱{{ number_format($order->delivery_fee, 2) }} delivery
+                                    </small>
+                                @endif
                             </td>
                             <td>
                                 @if($order->payment_status == 'Paid')
@@ -281,18 +289,21 @@
     // Export Functions
     function exportOrdersCSV() {
         const orders = {!! json_encode($recentOrders) !!};
-        let csv = 'Order ID,Customer Name,Total,Payment Status,Delivery Status,Date\n';
+        // FIXED: Use grand_total if available, fallback to total for old orders
+        let csv = 'Order ID,Customer Name,Subtotal,Delivery Fee,Grand Total,Payment Status,Delivery Status,Date\n';
         orders.forEach(order => {
-            const total = parseFloat(order.total).toFixed(2);
-            const date = new Date(order.created_at).toLocaleDateString();
-            csv += `#${order.id},"${order.customer_name}",${total},${order.payment_status},${order.delivery_status},"${date}"\n`;
+            const subtotal    = parseFloat(order.total || 0).toFixed(2);
+            const deliveryFee = parseFloat(order.delivery_fee || 0).toFixed(2);
+            const grandTotal  = parseFloat(order.grand_total || order.total || 0).toFixed(2);
+            const date        = new Date(order.created_at).toLocaleDateString();
+            csv += `#${order.id},"${order.customer_name}",${subtotal},${deliveryFee},${grandTotal},${order.payment_status},${order.delivery_status},"${date}"\n`;
         });
         downloadCSV(csv, `orders_report_${new Date().toISOString().split('T')[0]}.csv`);
     }
 
     function exportSalesCSV() {
         const salesData = {!! json_encode($monthlySales) !!};
-        let csv = 'Month,Total Sales\n';
+        let csv = 'Month,Total Sales (incl. delivery)\n';
         salesData.forEach(item => {
             const total = parseFloat(item.total).toFixed(2);
             csv += `"${item.month}",${total}\n`;

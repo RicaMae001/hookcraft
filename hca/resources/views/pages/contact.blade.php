@@ -13,15 +13,16 @@
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap');
 
         :root {
-            --pastel-pink: #ffc0d3;
-            --pastel-rose: #ffb3c6;
-            --pastel-light: #ffe4ec;
-            --pastel-bg: #fff5f8;
+            --pastel-pink: #ff7aa8;
+            --pastel-rose: #ff6b9d;
+            --pastel-light: #ffd9e4;
+            --pastel-bg: #fff0f5;
             --pastel-white: #ffffff;
-            --text-primary: #4a4a4a;
-            --text-secondary: #7a7a7a;
-            --shadow-soft: 0 10px 40px rgba(255, 192, 211, 0.15);
-            --shadow-medium: 0 15px 50px rgba(255, 192, 211, 0.2);
+            --text-primary: #3a3a3a;
+            --text-secondary: #666666;
+            --text-light: #888888;
+            --shadow-soft: 0 10px 40px rgba(255, 122, 168, 0.15);
+            --shadow-medium: 0 15px 50px rgba(255, 107, 157, 0.2);
         }
 
         * {
@@ -37,10 +38,10 @@
             line-height: 1.7;
         }
 
-        /* Hero Section - Completely New Design */
+        /* Hero Section */
         .contact-hero {
             background: linear-gradient(170deg, var(--pastel-light) 0%, var(--pastel-pink) 100%);
-            padding: 1.8rem0px 0 60px;
+            padding: 180px 0 80px;
             margin-top: 10px;
             position: relative;
             clip-path: ellipse(100% 100% at 50% 0%);
@@ -54,7 +55,7 @@
 
         .hero-badge {
             display: inline-block;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             color: var(--pastel-rose);
             padding: 0.6rem 1.5rem;
             border-radius: 50px;
@@ -63,7 +64,8 @@
             letter-spacing: 1px;
             text-transform: uppercase;
             margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(255, 179, 198, 0.2);
+            box-shadow: 0 4px 15px rgba(255, 107, 157, 0.2);
+            border: 1px solid var(--pastel-light);
         }
 
         .contact-hero h1 {
@@ -73,16 +75,17 @@
             font-weight: 700;
             margin-bottom: 1.5rem;
             line-height: 1.2;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         }
 
         .contact-hero p {
             color: var(--text-secondary);
             font-size: 1.2rem;
             line-height: 1.9;
-            font-weight: 300;
+            font-weight: 400;
         }
 
-        /* New Card Layout - Side by Side with Icons */
+        /* Contact Grid */
         .contact-section {
             padding: 80px 0;
             background: var(--pastel-white);
@@ -103,29 +106,13 @@
             transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: center;
             position: relative;
-        }
-
-        .contact-item::before {
-            content: '';
-            position: absolute;
-            inset: -2px;
-            border-radius: 30px;
-            padding: 2px;
-            background: linear-gradient(135deg, var(--pastel-pink), var(--pastel-rose));
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .contact-item:hover::before {
-            opacity: 1;
+            box-shadow: var(--shadow-soft);
         }
 
         .contact-item:hover {
             transform: translateY(-10px);
             box-shadow: var(--shadow-medium);
+            border-color: var(--pastel-rose);
         }
 
         .contact-item-icon {
@@ -139,7 +126,7 @@
             margin: 0 auto 1.5rem;
             font-size: 2.5rem;
             color: white;
-            box-shadow: 0 8px 25px rgba(255, 192, 211, 0.3);
+            box-shadow: 0 8px 25px rgba(255, 122, 168, 0.3);
         }
 
         .contact-item h3 {
@@ -167,9 +154,10 @@
 
         .contact-item a:hover {
             color: var(--pastel-pink);
+            text-decoration: underline;
         }
 
-        /* Split Layout for Map and Form */
+        /* Split Layout */
         .split-section {
             padding: 80px 0;
             background: var(--pastel-bg);
@@ -197,10 +185,11 @@
             height: 500px;
             border-radius: 25px;
             border: none;
-            box-shadow: 0 5px 20px rgba(255, 192, 211, 0.15);
+            box-shadow: 0 5px 20px rgba(255, 122, 168, 0.15);
+            border: 2px solid var(--pastel-light);
         }
 
-        /* Social Media - New Horizontal Layout */
+        /* Social Media */
         .social-container {
             display: flex;
             gap: 1.5rem;
@@ -218,12 +207,14 @@
             text-decoration: none;
             transition: all 0.3s ease;
             border: 2px solid transparent;
+            color: var(--text-primary);
         }
 
         .social-item:hover {
             transform: translateY(-5px);
             box-shadow: var(--shadow-medium);
             border-color: var(--pastel-rose);
+            color: var(--text-primary);
         }
 
         .social-item i {
@@ -231,6 +222,7 @@
             color: white;
             display: block;
             margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .social-item span {
@@ -239,7 +231,7 @@
             font-size: 0.95rem;
         }
 
-        /* Info Cards - New Grid Layout */
+        /* Info Cards */
         .info-section {
             padding: 80px 0;
             background: var(--pastel-white);
@@ -257,6 +249,7 @@
             border-radius: 30px;
             border-left: 5px solid var(--pastel-rose);
             transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 122, 168, 0.1);
         }
 
         .info-box:hover {
@@ -275,6 +268,7 @@
             margin-bottom: 1.5rem;
             color: white;
             font-size: 1.8rem;
+            box-shadow: 0 4px 10px rgba(255, 122, 168, 0.2);
         }
 
         .info-box h4 {
@@ -291,7 +285,7 @@
             line-height: 1.7;
         }
 
-        /* Facebook Embed - New Styling */
+        /* Facebook Embed */
         .facebook-wrapper {
             background: var(--pastel-white);
             border-radius: 40px;
@@ -313,6 +307,7 @@
             color: var(--text-secondary);
             font-size: 1.1rem;
             margin-bottom: 3rem;
+            font-weight: 400;
         }
 
         .fb-frame {
@@ -320,9 +315,10 @@
             border-radius: 25px;
             overflow: hidden;
             box-shadow: var(--shadow-soft);
+            border: 2px solid var(--pastel-light);
         }
 
-        /* Chatbot Button - New Position and Style */
+        /* Chatbot Button */
         .chatbot-float {
             position: fixed;
             bottom: 40px;
@@ -341,13 +337,14 @@
             color: white;
             font-size: 2rem;
             text-decoration: none;
-            box-shadow: 0 8px 30px rgba(255, 192, 211, 0.4);
+            box-shadow: 0 8px 30px rgba(255, 122, 168, 0.4);
             transition: all 0.3s ease;
+            border: 2px solid white;
         }
 
         .chatbot-btn:hover {
             transform: scale(1.1) rotate(10deg);
-            box-shadow: 0 10px 40px rgba(255, 192, 211, 0.5);
+            box-shadow: 0 10px 40px rgba(255, 122, 168, 0.5);
             color: white;
         }
 
@@ -365,6 +362,9 @@
             letter-spacing: 2px;
             text-transform: uppercase;
             margin-bottom: 1rem;
+            background: rgba(255, 122, 168, 0.1);
+            padding: 0.5rem 1.5rem;
+            border-radius: 50px;
         }
 
         .section-title {
@@ -373,6 +373,7 @@
             color: var(--text-primary);
             margin-bottom: 1rem;
             font-weight: 600;
+            line-height: 1.2;
         }
 
         .section-subtitle {
@@ -380,6 +381,32 @@
             font-size: 1.15rem;
             max-width: 700px;
             margin: 0 auto;
+            font-weight: 400;
+        }
+
+        /* Footer Contact Info */
+        .footer-contact {
+            background: var(--pastel-white);
+            border-top: 2px solid var(--pastel-light);
+            padding: 3rem 0;
+            text-align: center;
+        }
+
+        .footer-contact p {
+            color: var(--text-secondary);
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        .footer-contact a {
+            color: var(--pastel-rose);
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer-contact a:hover {
+            color: var(--pastel-pink);
+            text-decoration: underline;
         }
 
         /* Responsive */
@@ -403,7 +430,7 @@
 
         @media (max-width: 768px) {
             .contact-hero {
-                padding: 100px 0 40px;
+                padding: 140px 0 60px;
             }
 
             .contact-hero h1 {
@@ -428,6 +455,40 @@
                 height: 60px;
                 font-size: 1.7rem;
             }
+
+            .content-box {
+                padding: 2rem;
+            }
+
+            .facebook-wrapper {
+                padding: 2rem;
+            }
+
+            .section-title {
+                font-size: 2rem;
+            }
+        }
+
+        @media (max-width: 576px) {
+            .contact-hero h1 {
+                font-size: 2rem;
+            }
+
+            .section-title {
+                font-size: 1.75rem;
+            }
+
+            .social-container {
+                flex-direction: column;
+            }
+
+            .social-item {
+                min-width: 100%;
+            }
+
+            .contact-item {
+                padding: 2rem;
+            }
         }
     </style>
 </head>
@@ -440,7 +501,7 @@
 <!-- Chatbot Button -->
 <div class="chatbot-float">
     <a href="{{ route('chatbot') }}" class="chatbot-btn" title="Chat with AI Assistant">
-        <i class="bi bi-robot"></i>
+        <i class="bi bi-chat"></i>
     </a>
 </div>
 
@@ -519,7 +580,7 @@
             <div class="col-lg-4">
                 <div class="content-box">
                     <h3 class="box-title">Connect With Us</h3>
-                    <p style="color: var(--text-secondary); margin-bottom: 2rem;">Follow us on social media for updates, inspiration, and special offers</p>
+                    <p style="color: var(--text-secondary); margin-bottom: 2rem; font-weight: 400;">Follow us on social media for updates, inspiration, and special offers</p>
                     
                     <div class="social-container" style="flex-direction: column;">
                         <a href="https://www.instagram.com/hookcraft_avenue?utm_medium=copy_link" target="_blank" class="social-item">
@@ -603,6 +664,15 @@
         </div>
     </div>
 </section>
+
+<!-- Footer Contact -->
+<div class="footer-contact">
+    <div class="container">
+        <p>📞 <a href="tel:09055569763">0905 556 9763</a> | 📍 Saint Jude Hipodromo, Cebu City, Philippines</p>
+        <p>📧 <a href="mailto:hookcraftavenue@gmail.com">hookcraftavenue@gmail.com</a> | ⏰ Open 24/7</p>
+        <p style="color: var(--text-light); font-size: 0.9rem; margin-top: 1rem;">© 2024 Hookcraft Avenue. All rights reserved.</p>
+    </div>
+</div>
 
 @include('components.footer')
 

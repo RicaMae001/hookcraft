@@ -63,56 +63,74 @@
             font-size: 1.1em;
         }
 
-        .products-grid {
+        .categories-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
             gap: 25px;
             margin-top: 30px;
         }
 
-        .product-card {
+        .category-card {
             background: #f8f9fa;
             border-radius: 15px;
             overflow: hidden;
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            cursor: pointer;
         }
 
-        .product-card:hover {
+        .category-card:hover {
             transform: translateY(-10px);
             box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
         }
 
-        .product-image {
+        .category-image {
             width: 100%;
             height: 200px;
             object-fit: cover;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 4em;
+            color: white;
         }
 
-        .product-info {
+        .category-info {
             padding: 20px;
         }
 
-        .product-name {
-            font-size: 1.2em;
+        .category-name {
+            font-size: 1.3em;
             color: #333;
             margin-bottom: 10px;
             font-weight: 600;
         }
 
-        .product-price {
-            color: #FF6B9D;
-            font-size: 1.3em;
-            font-weight: bold;
-            margin-bottom: 15px;
+        .limited-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            letter-spacing: 0.5px;
         }
 
-        .product-description {
+        .category-description {
             color: #666;
             font-size: 0.9em;
-            margin-bottom: 20px;
+            margin-bottom: 15px;
             line-height: 1.5;
-            min-height: 60px;
+        }
+
+        .product-count {
+            color: #999;
+            font-size: 0.85em;
+            margin-bottom: 15px;
         }
 
         .btn {
@@ -210,7 +228,7 @@
         }
 
         @media (max-width: 768px) {
-            .products-grid {
+            .categories-grid {
                 grid-template-columns: 1fr;
             }
             
@@ -232,7 +250,7 @@
     <div class="container">
         <div class="header">
             <h1>✨ Design Your Custom Product ✨</h1>
-            <p>Create something unique and personal</p>
+            <p>Choose a category and create something unique</p>
         </div>
 
         <div class="content">
@@ -246,38 +264,51 @@
 
             <div class="intro">
                 <h2>Start Your Custom Design Journey</h2>
-                <p>Transform any product into a personalized masterpiece. Add text, stickers, images, and more to create something truly unique!</p>
+                <p>Select a category below to begin customizing. We'll automatically use a reference product from that category for your design!</p>
                 
                 <div class="alert alert-info">
-                    💡 <strong>Tip:</strong> All products can be customized! Base customization fee is ₱50.00 plus any additional options.
+                    💡 <strong>How it works:</strong> Pick a category → We'll select the first product as reference → You customize it your way!
                 </div>
             </div>
 
-            <h2 class="section-title">🎁 Choose a Product to Customize</h2>
+            <h2 class="section-title">🎨 Choose a Category to Customize</h2>
             
-            @if($products->count() > 0)
-                <div class="products-grid">
-                    @foreach($products as $product)
-                        <div class="product-card">
-                            <img src="{{ asset('uploads/' . $product->image) }}" 
-                                 alt="{{ $product->name }}"
-                                 class="product-image"
-                                 onerror="this.src='{{ asset('images/placeholder.jpg') }}'">
+            @if($categories->count() > 0)
+                <div class="categories-grid">
+                    @foreach($categories as $category)
+                        <div class="category-card" onclick="window.location='{{ route('customization.create', ['category_id' => $category->id]) }}'">
+                            <div class="category-image">
+                                @if($category->products->first() && $category->products->first()->image)
+                                    <img src="{{ asset('uploads/' . $category->products->first()->image) }}" 
+                                         alt="{{ $category->name }}"
+                                         style="width: 100%; height: 100%; object-fit: cover;"
+                                         onerror="this.style.display='none'; this.parentElement.innerHTML='🎨'">
+                                @else
+                                    🎨
+                                @endif
+                            </div>
                             
-                            <div class="product-info">
-                                <div class="product-name">{{ $product->name }}</div>
-                                <div class="product-price">₱{{ number_format($product->price, 2) }}</div>
-                                <div class="product-description">
-                                    @if($product->description)
-                                        {{ \Illuminate\Support\Str::limit($product->description, 100) }}
-                                    @else
-                                        <span style="color: #999; font-style: italic;">No description available</span>
-                                    @endif
+                            <div class="category-info">
+                                <div class="category-name">{{ $category->name }}</div>
+                                
+                                @if($category->limited_edition)
+                                    <span class="limited-badge">⭐ Limited Edition</span>
+                                @endif
+                                
+                                <div class="product-count">
+                                    📦 {{ $category->products->count() }} product{{ $category->products->count() != 1 ? 's' : '' }} available
                                 </div>
                                 
-                                <a href="{{ route('customization.create', ['product_id' => $product->id]) }}" 
-                                   class="btn btn-primary">
-                                    🎨 Customize This
+                                @if($category->products->first())
+                                    <div class="category-description">
+                                        Starting from ₱{{ number_format($category->products->first()->price, 2) }}
+                                    </div>
+                                @endif
+                                
+                                <a href="{{ route('customization.create', ['category_id' => $category->id]) }}" 
+                                   class="btn btn-primary"
+                                   onclick="event.stopPropagation()">
+                                    🎨 Customize This Category
                                 </a>
                             </div>
                         </div>
@@ -285,29 +316,28 @@
                 </div>
             @else
                 <div style="text-align: center; padding: 40px; color: #666;">
-                    <h3>No products available for customization</h3>
+                    <h3>No categories available for customization</h3>
                     <p>Please check back later!</p>
                 </div>
             @endif
 
             <div class="custom-design-section">
                 <h3>🎨 Create a Completely Custom Design</h3>
-                <p>Don't see what you're looking for? Start from scratch and design something completely unique! Our design canvas lets you create exactly what you imagine.</p>
+                <p>Want to start from scratch without a category? Design something completely unique from the ground up! Our design canvas lets you create exactly what you imagine.</p>
                 <a href="{{ route('customization.create') }}" class="btn btn-secondary">
                     🚀 Start From Scratch
                 </a>
             </div>
 
             <div style="margin-top: 40px; text-align: center; color: #666;">
-                <p>💬 Need help? <a href="{{ route('livechat.request') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Chat with our design specialists</a></p>
+                <p>💬 Need help? <a href="{{ route('chatbot') }}" style="color: #667eea; text-decoration: none; font-weight: 600;">Chat with our design specialists</a></p>
             </div>
         </div>
     </div>
 
     <script>
-        // Add any interactive features here
         document.addEventListener('DOMContentLoaded', function() {
-            console.log('Customization landing page loaded');
+            // console.log('Category-based customization landing page loaded');
         });
     </script>
 </body>

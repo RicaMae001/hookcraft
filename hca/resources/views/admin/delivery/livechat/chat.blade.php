@@ -3,182 +3,220 @@
 @section('title', 'Live Chat - ' . $session->customer_name)
 
 @section('content')
-<div class="container-fluid">
-    <div class="row">
-        <!-- Back Button -->
-        <div class="col-12 mb-3">
-            <a href="{{ route('delivery.livechat.index') }}" class="btn btn-secondary btn-sm">
-                <i class="fas fa-arrow-left"></i> Back to Chat List
-            </a>
-        </div>
+<!-- Page Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="h3 mb-0">Live Chat</h1>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ route('delivery.dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ route('delivery.livechat.index') }}">Chats</a></li>
+                <li class="breadcrumb-item active" aria-current="page">{{ $session->customer_name }}</li>
+            </ol>
+        </nav>
+    </div>
+    <div>
+        <a href="{{ route('delivery.livechat.index') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1"></i> Back
+        </a>
+        @if($session->status === 'active')
+            <button type="button" class="btn btn-danger" onclick="endChat()">
+                <i class="bi bi-x-circle me-1"></i> End Chat
+            </button>
+        @endif
+    </div>
+</div>
 
-        <!-- Customer Orders Panel -->
-        <div class="col-lg-4 mb-3">
-            <div class="card shadow-sm">
-                <div class="card-header bg-info text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-box"></i> Customer's Ongoing Orders
-                    </h6>
-                </div>
-                <div class="card-body" id="ordersPanel" style="max-height: 500px; overflow-y: auto;">
-                    @if($ongoingOrders && $ongoingOrders->count() > 0)
-                        @foreach($ongoingOrders as $order)
-                            <div class="order-card mb-3 p-3 border rounded" data-order-id="{{ $order->id }}">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1 text-primary">
-                                            <i class="fas fa-receipt"></i> {{ $order->order_number }}
-                                        </h6>
-                                        <small class="text-muted">
-                                            {{ \Carbon\Carbon::parse($order->created_at)->format('M d, Y h:i A') }}
-                                        </small>
-                                    </div>
-                                    <span class="badge bg-{{ 
-                                        $order->delivery_status === 'Pending' ? 'warning' : 
-                                        ($order->delivery_status === 'Out for Delivery' ? 'success' : 'secondary') 
-                                    }}">
-                                        {{ $order->delivery_status }}
-                                    </span>
-                                </div>
-                                
-                                <div class="mb-2">
-                                    <small class="text-muted d-block">
-                                        <i class="fas fa-shopping-cart"></i> {{ $order->items_count }} item(s)
-                                    </small>
-                                    <small class="text-muted d-block">
-                                        <i class="fas fa-peso-sign"></i> ₱{{ number_format($order->total, 2) }}
-                                    </small>
-                                    @if($order->address)
-                                        <small class="text-muted d-block">
-                                            <i class="fas fa-map-marker-alt"></i> {{ Str::limit($order->address, 50) }}
-                                        </small>
-                                    @endif
-                                </div>
-                                
-                                <button type="button" class="btn btn-sm btn-outline-primary w-100" 
-                                        onclick="insertOrderReference('{{ $order->order_number }}')">
-                                    <i class="fas fa-comment-dots"></i> Reference in Chat
-                                </button>
-                            </div>
-                        @endforeach
-                    @else
-                        <div class="text-center py-4">
-                            <i class="fas fa-box-open fa-3x text-muted mb-2"></i>
-                            <p class="text-muted mb-0">No ongoing orders</p>
-                            <small class="text-muted">Customer has no active orders</small>
-                        </div>
-                    @endif
-                </div>
+<div class="row">
+    <!-- Left Sidebar - Customer Info & Orders -->
+    <div class="col-lg-4">
+        <!-- Customer Information Card -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-person me-2"></i>Customer Information</h6>
             </div>
-
-            <!-- Quick Actions -->
-            <div class="card shadow-sm mt-3">
-                <div class="card-header bg-secondary text-white">
-                    <h6 class="mb-0">
-                        <i class="fas fa-bolt"></i> Quick Actions
-                    </h6>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    <div class="avatar avatar-lg bg-light rounded-circle d-flex align-items-center justify-content-center me-3">
+                        <i class="bi bi-person fs-4 text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0">{{ $session->customer_name }}</h5>
+                        @if($session->customer_email)
+                            <p class="text-muted mb-0">{{ $session->customer_email }}</p>
+                        @endif
+                    </div>
                 </div>
-                <div class="card-body">
-                    <button class="btn btn-sm btn-outline-primary w-100 mb-2" onclick="sendQuickMessage('Can you provide your order number?')">
-                        <i class="fas fa-question-circle"></i> Ask for Order Number
-                    </button>
-                    <button class="btn btn-sm btn-outline-success w-100 mb-2" onclick="sendQuickMessage('Your order is on the way! Expected delivery today.')">
-                        <i class="fas fa-truck"></i> Delivery Update
-                    </button>
-                    <button class="btn btn-sm btn-outline-info w-100 mb-2" onclick="sendQuickMessage('Please provide your complete delivery address.')">
-                        <i class="fas fa-map-marker-alt"></i> Request Address
-                    </button>
-                    <button class="btn btn-sm btn-outline-warning w-100" onclick="sendQuickMessage('We apologize for the delay. Let me check the status for you.')">
-                        <i class="fas fa-exclamation-triangle"></i> Delay Notice
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Chat Interface -->
-        <div class="col-lg-8">
-            <div class="card shadow-lg" style="height: 80vh;">
-                <!-- Chat Header -->
-                <div class="card-header bg-gradient-success text-white py-3">
-                    <div class="row align-items-center">
-                        <div class="col-md-8">
-                            <div class="d-flex align-items-center">
-                                <div class="chat-avatar me-3">
-                                    <i class="fas fa-user-circle fa-3x"></i>
-                                </div>
-                                <div>
-                                    <h5 class="mb-0">{{ $session->customer_name }}</h5>
-                                    <small>
-                                        @if($session->customer_email)
-                                            <i class="fas fa-envelope"></i> {{ $session->customer_email }}
-                                        @endif
-                                        @if($session->status === 'active')
-                                            <span class="badge bg-light text-dark ms-2">
-                                                <i class="fas fa-circle pulse"></i> Active
-                                            </span>
-                                        @else
-                                            <span class="badge bg-secondary ms-2">
-                                                <i class="fas fa-times-circle"></i> Closed
-                                            </span>
-                                        @endif
-                                    </small>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="col-md-4 text-end">
+                <div class="row">
+                    <div class="col-6">
+                        <div class="border rounded p-3 text-center">
+                            <p class="text-muted mb-1">Status</p>
                             @if($session->status === 'active')
-                                <button type="button" class="btn btn-danger btn-sm" onclick="endChat()">
-                                    <i class="fas fa-times-circle"></i> End Chat
-                                </button>
+                                <span class="badge bg-success">
+                                    <i class="bi bi-circle-fill me-1"></i>Active
+                                </span>
+                            @else
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-circle me-1"></i>Closed
+                                </span>
                             @endif
                         </div>
                     </div>
+                    <div class="col-6">
+                        <div class="border rounded p-3 text-center">
+                            <p class="text-muted mb-1">Chat Started</p>
+                            <p class="mb-0 fw-semibold">
+                                {{ \Carbon\Carbon::parse($session->created_at)->format('M d, Y') }}
+                            </p>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
 
-                <!-- Chat Messages -->
-                <div class="card-body p-4" id="chatMessages" style="height: calc(80vh - 200px); overflow-y: auto; background: #f8f9fc;">
+        <!-- Ongoing Orders Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="bi bi-box-seam me-2"></i>Ongoing Orders</h6>
+                <span class="badge bg-primary">{{ $ongoingOrders->count() }}</span>
+            </div>
+            <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                @forelse($ongoingOrders as $order)
+                    <div class="order-item border-bottom pb-3 mb-3">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ $order->order_number }}</h6>
+                                <small class="text-muted">
+                                    {{ \Carbon\Carbon::parse($order->created_at)->format('M d, h:i A') }}
+                                </small>
+                            </div>
+                            <span class="badge bg-{{ 
+                                $order->delivery_status === 'Pending' ? 'warning' : 
+                                ($order->delivery_status === 'Out for Delivery' ? 'success' : 'secondary') 
+                            }}">
+                                {{ $order->delivery_status }}
+                            </span>
+                        </div>
+                        <div class="mb-2">
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Items:</small>
+                                <small class="fw-semibold">{{ $order->items_count }} item(s)</small>
+                            </div>
+                            <div class="d-flex justify-content-between mb-1">
+                                <small class="text-muted">Total:</small>
+                                <small class="fw-semibold">₱{{ number_format($order->total, 2) }}</small>
+                            </div>
+                            @if($order->address)
+                                <div class="mb-1">
+                                    <small class="text-muted d-block mb-1">Address:</small>
+                                    <small class="text-muted">{{ Str::limit($order->address, 50) }}</small>
+                                </div>
+                            @endif
+                        </div>
+                        <button type="button" class="btn btn-sm btn-outline-primary w-100" 
+                                onclick="insertOrderReference('{{ $order->order_number }}')">
+                            <i class="bi bi-chat-left-text me-1"></i>Reference in Chat
+                        </button>
+                    </div>
+                @empty
+                    <div class="text-center py-4">
+                        <i class="bi bi-box-seam display-6 text-muted mb-3"></i>
+                        <p class="text-muted mb-0">No ongoing orders</p>
+                    </div>
+                @endforelse
+            </div>
+        </div>
+
+        <!-- Quick Actions Card -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="bi bi-lightning me-2"></i>Quick Messages</h6>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button type="button" class="btn btn-outline-secondary text-start" 
+                            onclick="sendQuickMessage('Can you provide your order number?')">
+                        <i class="bi bi-question-circle me-2"></i>Ask for Order Number
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary text-start"
+                            onclick="sendQuickMessage('Your order is on the way! Expected delivery today.')">
+                        <i class="bi bi-truck me-2"></i>Delivery Update
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary text-start"
+                            onclick="sendQuickMessage('Please provide your complete delivery address.')">
+                        <i class="bi bi-geo-alt me-2"></i>Request Address
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary text-start"
+                            onclick="sendQuickMessage('We apologize for the delay. Let me check the status for you.')">
+                        <i class="bi bi-exclamation-triangle me-2"></i>Delay Notice
+                    </button>
+                    <button type="button" class="btn btn-outline-secondary text-start"
+                            onclick="sendQuickMessage('Your order has been delivered successfully!')">
+                        <i class="bi bi-check-circle me-2"></i>Delivery Confirmation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Chat Interface -->
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-body p-0 d-flex flex-column">
+                <!-- Chat Messages Area -->
+                <div class="flex-grow-1 p-4" id="chatMessages" 
+                     style="overflow-y: auto; height: calc(100vh - 400px);">
+                    
                     @forelse($messages as $message)
                         @if($message->sender_type === 'system')
-                            <div class="text-center my-3">
-                                <span class="badge bg-info px-3 py-2">
-                                    <i class="fas fa-info-circle"></i> {{ $message->message }}
-                                </span>
-                                <div class="small text-muted mt-1">
+                            <div class="text-center my-4">
+                                <div class="badge bg-info px-3 py-2">
+                                    <i class="bi bi-info-circle me-1"></i> {{ $message->message }}
+                                </div>
+                                <div class="text-muted small mt-1">
                                     {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
                                 </div>
                             </div>
                         @elseif($message->sender_type === 'customer')
-                            <div class="message-wrapper mb-3">
-                                <div class="d-flex justify-content-start">
-                                    <div class="message customer-message">
-                                        <div class="message-avatar">
-                                            <i class="fas fa-user"></i>
+                            <div class="message mb-4">
+                                <div class="d-flex">
+                                    <div class="flex-shrink-0">
+                                        <div class="avatar bg-light-primary rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px;">
+                                            <i class="bi bi-person text-primary"></i>
                                         </div>
-                                        <div class="message-content">
-                                            <div class="message-bubble bg-light">
-                                                {{ $message->message }}
+                                    </div>
+                                    <div class="flex-grow-1 ms-3">
+                                        <div class="bg-light rounded p-3">
+                                            <div class="mb-1">
+                                                <span class="fw-semibold">{{ $session->customer_name }}</span>
+                                                <span class="text-muted small ms-2">
+                                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                                </span>
                                             </div>
-                                            <div class="message-time">
-                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
-                                            </div>
+                                            <p class="mb-0">{{ $message->message }}</p>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         @else
-                            <div class="message-wrapper mb-3">
+                            <div class="message mb-4">
                                 <div class="d-flex justify-content-end">
-                                    <div class="message delivery-message">
-                                        <div class="message-content">
-                                            <div class="message-bubble bg-success text-white">
-                                                {{ $message->message }}
+                                    <div class="flex-grow-1 me-3">
+                                        <div class="bg-primary text-white rounded p-3">
+                                            <div class="mb-1">
+                                                <span class="fw-semibold">You</span>
+                                                <span class="opacity-75 small ms-2">
+                                                    {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
+                                                </span>
                                             </div>
-                                            <div class="message-time text-end">
-                                                {{ \Carbon\Carbon::parse($message->created_at)->format('h:i A') }}
-                                            </div>
+                                            <p class="mb-0">{{ $message->message }}</p>
                                         </div>
-                                        <div class="message-avatar">
-                                            <i class="fas fa-truck"></i>
+                                    </div>
+                                    <div class="flex-shrink-0">
+                                        <div class="avatar bg-light-success rounded-circle d-flex align-items-center justify-content-center" 
+                                             style="width: 40px; height: 40px;">
+                                            <i class="bi bi-truck text-success"></i>
                                         </div>
                                     </div>
                                 </div>
@@ -186,31 +224,45 @@
                         @endif
                     @empty
                         <div class="text-center py-5">
-                            <i class="fas fa-comments-slash fa-3x text-muted mb-3"></i>
-                            <p class="text-muted">No messages yet</p>
+                            <div class="avatar avatar-xl bg-light rounded-circle d-inline-flex align-items-center justify-content-center mb-3">
+                                <i class="bi bi-chat-left-text display-6 text-muted"></i>
+                            </div>
+                            <h5 class="text-muted">No messages yet</h5>
+                            <p class="text-muted">Start the conversation by sending a message</p>
                         </div>
                     @endforelse
                 </div>
 
-                <!-- Chat Input -->
-                <div class="card-footer bg-white border-top">
+                <!-- Chat Input Area -->
+                <div class="border-top p-4">
                     @if($session->status === 'active')
-                        <form id="chatForm" class="d-flex align-items-center gap-2">
-                            <input 
-                                type="text" 
-                                class="form-control" 
-                                id="messageInput" 
-                                placeholder="Type your message..."
-                                autocomplete="off"
-                                required
-                            >
-                            <button type="submit" class="btn btn-success" id="sendBtn">
-                                <i class="fas fa-paper-plane"></i> Send
+                        <form id="chatForm" class="d-flex gap-2">
+                            <div class="flex-grow-1">
+                                <input 
+                                    type="text" 
+                                    class="form-control form-control-lg" 
+                                    id="messageInput" 
+                                    placeholder="Type your message..."
+                                    autocomplete="off"
+                                    required
+                                >
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-lg px-4" id="sendBtn">
+                                <i class="bi bi-send me-1"></i> Send
                             </button>
                         </form>
+                        <div class="mt-2 text-muted small">
+                            Press Enter to send • Press Shift+Enter for new line
+                        </div>
                     @else
                         <div class="alert alert-secondary mb-0">
-                            <i class="fas fa-info-circle"></i> This chat session has been closed.
+                            <div class="d-flex align-items-center">
+                                <i class="bi bi-chat-square-text fs-4 me-3"></i>
+                                <div>
+                                    <h6 class="mb-1">Chat Session Closed</h6>
+                                    <p class="mb-0">This chat session has ended. You can no longer send messages.</p>
+                                </div>
+                            </div>
                         </div>
                     @endif
                 </div>
@@ -220,149 +272,79 @@
 </div>
 
 <style>
-.bg-gradient-success {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-}
-
-.chat-avatar {
-    color: rgba(255, 255, 255, 0.9);
-}
-
 .message {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
+    animation: fadeIn 0.3s ease;
 }
 
-.message-avatar {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.avatar {
     display: flex;
     align-items: center;
     justify-content: center;
-    flex-shrink: 0;
-    font-size: 18px;
 }
 
-.customer-message .message-avatar {
-    background: linear-gradient(135deg, #FFB6C1 0%, #FF69B4 100%);
-    color: white;
-}
-
-.delivery-message .message-avatar {
-    background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
-    color: white;
-}
-
-.message-content {
-    max-width: 70%;
-}
-
-.message-bubble {
-    padding: 12px 16px;
-    border-radius: 18px;
-    word-wrap: break-word;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    animation: slideIn 0.3s ease;
-}
-
-@keyframes slideIn {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
-.customer-message .message-bubble {
-    border-bottom-left-radius: 4px;
-}
-
-.delivery-message .message-bubble {
-    border-bottom-right-radius: 4px;
-}
-
-.message-time {
-    font-size: 11px;
-    color: #6c757d;
-    margin-top: 4px;
-}
-
-.pulse {
-    animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-    0%, 100% {
-        opacity: 1;
-    }
-    50% {
-        opacity: 0.5;
-    }
-}
-
-#chatMessages {
-    scroll-behavior: smooth;
-}
-
-#messageInput:focus {
-    border-color: #4CAF50;
-    box-shadow: 0 0 0 0.2rem rgba(76, 175, 80, 0.25);
-}
-
-.card {
-    border-radius: 15px;
-    overflow: hidden;
-}
-
-.order-card {
-    background: #fff;
-    transition: all 0.3s ease;
-}
-
-.order-card:hover {
-    background: #f8f9fa;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
-
-#ordersPanel::-webkit-scrollbar {
+#chatMessages::-webkit-scrollbar {
     width: 6px;
 }
 
-#ordersPanel::-webkit-scrollbar-thumb {
-    background: #888;
+#chatMessages::-webkit-scrollbar-track {
+    background: #f1f1f1;
     border-radius: 3px;
 }
 
-#ordersPanel::-webkit-scrollbar-thumb:hover {
-    background: #555;
+#chatMessages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+#chatMessages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.order-item:last-child {
+    border-bottom: none !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+.card {
+    border-color: #e0e0e0;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom-color: #e0e0e0;
 }
 </style>
 
 <script>
+// Constants
 const sessionId = {{ $session->id }};
 const sessionStatus = '{{ $session->status }}';
+let pollingInterval = null;
+let customerWarningShown = false;
+
+// DOM Elements
 const chatMessages = document.getElementById('chatMessages');
 const chatForm = document.getElementById('chatForm');
 const messageInput = document.getElementById('messageInput');
 const sendBtn = document.getElementById('sendBtn');
-let pollingInterval = null;
-let customerWarningShown = false;
 
+// Utility Functions
 function scrollToBottom() {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-function formatTimeToLocal(dateString) {
+function formatTime(dateString) {
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
-        hour12: true
+        hour12: true 
     });
 }
 
@@ -377,96 +359,65 @@ function sendQuickMessage(message) {
     messageInput.focus();
 }
 
-function showCustomerStatus(status) {
-    const existingNotification = document.getElementById('customerStatusNotification');
-    if (existingNotification) {
-        existingNotification.remove();
-    }
-    
-    const notification = document.createElement('div');
-    notification.id = 'customerStatusNotification';
-    notification.className = 'alert alert-warning alert-dismissible fade show position-fixed';
-    notification.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    
-    if (status === 'away') {
-        notification.innerHTML = `
-            <i class="fas fa-exclamation-triangle"></i>
-            <strong>Customer Away</strong><br>
-            Customer has left the chat page. Chat will auto-end in 15 minutes.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-    } else if (status === 'back') {
-        notification.className = 'alert alert-success alert-dismissible fade show position-fixed';
-        notification.innerHTML = `
-            <i class="fas fa-check-circle"></i>
-            <strong>Customer Back</strong><br>
-            Customer has returned to the chat.
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        setTimeout(() => {
-            if (notification.parentNode) {
-                notification.remove();
-            }
-        }, 5000);
-    }
-    
-    document.body.appendChild(notification);
-}
-
+// Message Handling
 function addSystemMessage(message) {
+    const now = new Date();
+    const time = formatTime(now);
+    
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'text-center my-3';
+    messageDiv.className = 'text-center my-4';
     messageDiv.innerHTML = `
-        <span class="badge bg-warning px-3 py-2">
-            <i class="fas fa-info-circle"></i> ${message}
-        </span>
-        <div class="small text-muted mt-1">
-            ${formatTimeToLocal(new Date().toISOString())}
+        <div class="badge bg-info px-3 py-2">
+            <i class="bi bi-info-circle me-1"></i> ${escapeHtml(message)}
         </div>
+        <div class="text-muted small mt-1">${time}</div>
     `;
+    
     chatMessages.appendChild(messageDiv);
     scrollToBottom();
 }
 
 function addMessage(message, type, timestamp) {
+    const time = formatTime(timestamp);
     const messageDiv = document.createElement('div');
-    messageDiv.className = 'message-wrapper mb-3';
-    
-    const formattedTime = formatTimeToLocal(timestamp);
+    messageDiv.className = 'message mb-4';
     
     if (type === 'customer') {
         messageDiv.innerHTML = `
-            <div class="d-flex justify-content-start">
-                <div class="message customer-message">
-                    <div class="message-avatar">
-                        <i class="fas fa-user"></i>
+            <div class="d-flex">
+                <div class="flex-shrink-0">
+                    <div class="avatar bg-light-primary rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px;">
+                        <i class="bi bi-person text-primary"></i>
                     </div>
-                    <div class="message-content">
-                        <div class="message-bubble bg-light">
-                            ${escapeHtml(message)}
+                </div>
+                <div class="flex-grow-1 ms-3">
+                    <div class="bg-light rounded p-3">
+                        <div class="mb-1">
+                            <span class="fw-semibold">{{ $session->customer_name }}</span>
+                            <span class="text-muted small ms-2">${time}</span>
                         </div>
-                        <div class="message-time">
-                            ${formattedTime}
-                        </div>
+                        <p class="mb-0">${escapeHtml(message)}</p>
                     </div>
                 </div>
             </div>
         `;
-    } else if (type === 'delivery') {
+    } else {
         messageDiv.innerHTML = `
             <div class="d-flex justify-content-end">
-                <div class="message delivery-message">
-                    <div class="message-content">
-                        <div class="message-bubble bg-success text-white">
-                            ${escapeHtml(message)}
+                <div class="flex-grow-1 me-3">
+                    <div class="bg-primary text-white rounded p-3">
+                        <div class="mb-1">
+                            <span class="fw-semibold">You</span>
+                            <span class="opacity-75 small ms-2">${time}</span>
                         </div>
-                        <div class="message-time text-end">
-                            ${formattedTime}
-                        </div>
+                        <p class="mb-0">${escapeHtml(message)}</p>
                     </div>
-                    <div class="message-avatar">
-                        <i class="fas fa-truck"></i>
+                </div>
+                <div class="flex-shrink-0">
+                    <div class="avatar bg-light-success rounded-circle d-flex align-items-center justify-content-center" 
+                         style="width: 40px; height: 40px;">
+                        <i class="bi bi-truck text-success"></i>
                     </div>
                 </div>
             </div>
@@ -483,29 +434,23 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
+// Form Submission
 if (chatForm) {
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         
         const message = messageInput.value.trim();
         if (!message) {
-            alert('Please enter a message');
+            messageInput.focus();
             return;
         }
         
+        // Disable form while sending
         sendBtn.disabled = true;
         messageInput.disabled = true;
         
         try {
             const csrfToken = document.querySelector('meta[name="csrf-token"]');
-            if (!csrfToken) {
-                throw new Error('CSRF token not found in page');
-            }
-            
-            const requestData = {
-                session_id: sessionId,
-                message: message
-            };
             
             const response = await fetch('{{ route("delivery.livechat.send") }}', {
                 method: 'POST',
@@ -514,38 +459,41 @@ if (chatForm) {
                     'Accept': 'application/json',
                     'X-CSRF-TOKEN': csrfToken.content,
                 },
-                body: JSON.stringify(requestData)
+                body: JSON.stringify({
+                    session_id: sessionId,
+                    message: message
+                })
             });
             
-            const contentType = response.headers.get('content-type');
-            
-            let data;
-            if (contentType && contentType.includes('application/json')) {
-                data = await response.json();
-            } else {
-                const text = await response.text();
-                console.error('Non-JSON response:', text);
-                throw new Error('Server returned non-JSON response.');
-            }
+            const data = await response.json();
             
             if (response.ok && data.success) {
+                // Add message to UI immediately
                 addMessage(message, 'delivery', new Date().toISOString());
                 messageInput.value = '';
             } else {
-                const errorMsg = data.message || 'Failed to send message';
-                alert('Error: ' + errorMsg);
+                alert(data.message || 'Failed to send message');
             }
         } catch (error) {
-            console.error('Exception:', error);
-            alert('Failed to send message: ' + error.message);
+            alert('Network error. Please try again.');
         } finally {
+            // Re-enable form
             sendBtn.disabled = false;
             messageInput.disabled = false;
             messageInput.focus();
         }
     });
+    
+    // Handle Enter key (send) and Shift+Enter (new line)
+    messageInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            chatForm.dispatchEvent(new Event('submit'));
+        }
+    });
 }
 
+// Polling for new messages
 function startPolling() {
     if (sessionStatus !== 'active') return;
     
@@ -560,50 +508,51 @@ function startPolling() {
                 });
             }
             
+            // Handle customer status changes
             if (data.customer_active !== undefined) {
                 if (data.customer_active === false && !customerWarningShown) {
                     customerWarningShown = true;
-                    showCustomerStatus('away');
-                    addSystemMessage('⚠️ Customer has left the chat page');
+                    addSystemMessage('Customer has left the chat page');
                 } else if (data.customer_active === true && customerWarningShown) {
                     customerWarningShown = false;
-                    showCustomerStatus('back');
-                    addSystemMessage('✓ Customer has returned to the chat');
+                    addSystemMessage('Customer has returned to the chat');
                 }
             }
             
+            // Handle auto-end warnings
             if (data.auto_end_warning) {
-                addSystemMessage('⏰ Chat will auto-end soon due to customer inactivity');
+                addSystemMessage('Chat will auto-end soon due to customer inactivity');
             }
             
+            // Handle session closure
             if (data.status === 'closed') {
                 clearInterval(pollingInterval);
                 if (data.reason === 'customer_inactive') {
-                    addSystemMessage('🔴 Chat ended: Customer was inactive for 15 minutes');
-                    setTimeout(() => {
-                        location.reload();
-                    }, 3000);
+                    addSystemMessage('Chat ended: Customer was inactive for 15 minutes');
+                    setTimeout(() => location.reload(), 3000);
                 } else {
                     location.reload();
                 }
             }
         } catch (error) {
-            console.error('Polling error:', error);
+            // console.error('Polling error:', error); // Removed
         }
     }, 3000);
 }
 
+// End chat function
 async function endChat() {
     if (!confirm('Are you sure you want to end this chat session?')) {
         return;
     }
     
     try {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]');
         const response = await fetch(`{{ url('delivery/livechat/end') }}/${sessionId}`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'X-CSRF-TOKEN': csrfToken.content,
             }
         });
         
@@ -613,19 +562,20 @@ async function endChat() {
             alert('Failed to end chat');
         }
     } catch (error) {
-        console.error('Error:', error);
         alert('Failed to end chat');
     }
 }
 
+// Initialize
 window.addEventListener('load', () => {
     scrollToBottom();
     if (sessionStatus === 'active') {
         startPolling();
-        messageInput.focus();
+        messageInput?.focus();
     }
 });
 
+// Cleanup on page unload
 window.addEventListener('beforeunload', () => {
     if (pollingInterval) {
         clearInterval(pollingInterval);

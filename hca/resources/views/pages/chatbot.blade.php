@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <title>AI Chatbot - {{ config('app.name') }}</title>
+    <title>Live Chat Support - {{ config('app.name') }}</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * {
@@ -24,8 +24,8 @@
         }
 
         .main-container {
-            width: 100%;
-            max-width: 1400px;
+            width: 110%;
+            max-width: 950px;
             display: flex;
             gap: 20px;
         }
@@ -216,49 +216,101 @@
             box-shadow: 0 6px 20px rgba(0,0,0,0.15);
         }
 
-        .live-chat-btn {
-            background: white;
-            color: #FF69B4;
+        .end-chat-btn {
+            background: #FF4444;
+            color: white;
             border: none;
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 20px;
             font-weight: 600;
             cursor: pointer;
-            display: flex;
+            display: none;
             align-items: center;
             gap: 8px;
             transition: all 0.3s;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 15px rgba(255, 68, 68, 0.3);
         }
 
-        .live-chat-btn:hover {
+        .end-chat-btn.active {
+            display: flex;
+        }
+
+        .end-chat-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+            box-shadow: 0 6px 20px rgba(255, 68, 68, 0.4);
         }
 
-        .live-chat-btn.waiting {
-            background: #FFA500;
-            color: white;
-            animation: pulse 2s infinite;
+        /* Support Type Selector (shown before chat starts) */
+        .support-type-selector {
+            display: none;
+            padding: 20px 25px;
+            background: white;
+            border-top: 2px solid #FFE4E8;
         }
 
-        .live-chat-btn.active {
-            background: #32CD32;
-            color: white;
+        .support-type-selector.active {
+            display: block;
         }
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
+        .support-type-label {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: 600;
         }
 
-        .queue-badge {
-            background: #FF4444;
-            color: white;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-size: 12px;
-            font-weight: bold;
+        .support-type-buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        .support-type-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #FFE4E8;
+            border-radius: 15px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .support-type-btn:hover {
+            border-color: #FF69B4;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(255, 105, 180, 0.2);
+        }
+
+        .support-type-btn.delivery:hover {
+            border-color: #2196F3;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.2);
+        }
+
+        .support-type-btn i {
+            font-size: 28px;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        .support-type-btn.staff i {
+            color: #FF69B4;
+        }
+
+        .support-type-btn.delivery i {
+            color: #2196F3;
+        }
+
+        .support-type-btn .btn-title {
+            font-weight: 600;
+            color: #333;
+            font-size: 14px;
+            margin-bottom: 4px;
+        }
+
+        .support-type-btn .btn-desc {
+            font-size: 11px;
+            color: #999;
         }
 
         .chat-messages {
@@ -308,13 +360,6 @@
             position: relative;
         }
 
-        .message.bot .message-content {
-            background: white;
-            color: #333;
-            border-bottom-left-radius: 4px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-
         .message.user .message-content {
             background: linear-gradient(135deg, #FF69B4 0%, #FF1493 100%);
             color: white;
@@ -345,11 +390,6 @@
             justify-content: center;
             margin: 0 10px;
             flex-shrink: 0;
-        }
-
-        .message.bot .message-avatar {
-            background: linear-gradient(135deg, #FF69B4 0%, #FFB6C1 100%);
-            color: white;
         }
 
         .message.user .message-avatar {
@@ -483,31 +523,6 @@
             cursor: not-allowed;
         }
 
-        .suggested-questions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            padding: 0 25px 15px;
-            background: #FAFAFA;
-        }
-
-        .suggested-btn {
-            padding: 8px 16px;
-            background: white;
-            border: 2px solid #FFE4E8;
-            border-radius: 20px;
-            color: #FF69B4;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.3s;
-        }
-
-        .suggested-btn:hover {
-            background: #FF69B4;
-            color: white;
-            border-color: #FF69B4;
-        }
-
         .timestamp {
             font-size: 11px;
             opacity: 0.6;
@@ -607,9 +622,10 @@
         }
 
         /* Responsive Design */
-        @media (max-width: 1024px) {
+        @media (max-width: 950px) {
             .main-container {
                 flex-direction: column;
+                width: 90%;
             }
             
             .orders-sidebar {
@@ -627,13 +643,14 @@
                 height: 100vh;
                 max-height: 100vh;
                 border-radius: 0;
+                width: 380px;
             }
 
             .message-content {
                 max-width: 85%;
             }
 
-            .live-chat-btn, .home-btn {
+            .home-btn {
                 padding: 8px 12px;
                 font-size: 13px;
             }
@@ -645,6 +662,10 @@
             .modal-content {
                 margin: 20% auto;
                 padding: 20px;
+            }
+
+            .support-type-buttons {
+                flex-direction: column;
             }
         }
     </style>
@@ -674,10 +695,10 @@
         <div class="chat-container">
             <div class="chat-header">
                 <div class="header-left">
-                    <div class="bot-avatar" id="headerAvatar">🤖</div>
+                    <div class="bot-avatar" id="headerAvatar">💬</div>
                     <div class="header-info">
-                        <h2 id="headerTitle">AI Assistant</h2>
-                        <p id="headerStatus">Online • Ready to help</p>
+                        <h2 id="headerTitle">Live Support</h2>
+                        <p id="headerStatus">Choose a support type to begin</p>
                     </div>
                 </div>
                 <div class="header-actions">
@@ -685,37 +706,14 @@
                         <span>🏠</span>
                         <span>Home</span>
                     </button>
-                    <button class="live-chat-btn" id="liveChatBtn" onclick="toggleLiveChat()">
-                        <span id="liveChatIcon">💬</span>
-                        <span id="liveChatText">Chat with Support</span>
+                    <button class="end-chat-btn" id="endChatBtn" onclick="showEndChatModal()">
+                        <span>✕</span>
+                        <span>End Chat</span>
                     </button>
                 </div>
             </div>
 
-            <div class="suggested-questions" id="suggestedQuestions">
-                <button class="suggested-btn" onclick="sendSuggested('What are your business hours?')">
-                    Business Hours?
-                </button>
-                <button class="suggested-btn" onclick="sendSuggested('Tell me about your products')">
-                    Products Info
-                </button>
-                <button class="suggested-btn" onclick="sendSuggested('How can I track my order?')">
-                    Track Order
-                </button>
-                <button class="suggested-btn" onclick="sendSuggested('What is your return policy?')">
-                    Return Policy
-                </button>
-            </div>
-
             <div class="chat-messages" id="chatMessages">
-                <div class="message bot">
-                    <div class="message-avatar">🤖</div>
-                    <div class="message-content">
-                        <div>Hello! 👋 I'm your AI assistant. How can I help you today?</div>
-                        <div class="timestamp">Just now</div>
-                    </div>
-                </div>
-
                 <div class="message bot" style="margin-left: 45px;">
                     <div class="typing-indicator" id="typingIndicator">
                         <span></span>
@@ -725,10 +723,28 @@
                 </div>
             </div>
 
-            <div class="chat-input-container">
+            <!-- Support Type Selector (Initial state) -->
+            <div class="support-type-selector active" id="supportTypeSelector">
+                <div class="support-type-label">Choose Support Type to Begin</div>
+                <div class="support-type-buttons">
+                    <button class="support-type-btn staff" onclick="startLiveChatWithType('staff')">
+                        <i class="fas fa-user-tie"></i>
+                        <div class="btn-title">Customer Support</div>
+                        <div class="btn-desc">General inquiries & help</div>
+                    </button>
+                    <button class="support-type-btn delivery" onclick="startLiveChatWithType('delivery')">
+                        <i class="fas fa-truck"></i>
+                        <div class="btn-title">Delivery Support</div>
+                        <div class="btn-desc">Track orders & delivery</div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Chat Input (Hidden until chat starts) -->
+            <div class="chat-input-container" id="chatInputContainer">
                 <div class="chat-mode-indicator" id="chatModeIndicator">
-                    <span>🤖</span>
-                    <span>Chatting with AI Assistant</span>
+                    <span>💬</span>
+                    <span>Start a live chat to send messages</span>
                 </div>
                 <form id="chatForm" class="chat-input-wrapper">
                     <input 
@@ -738,11 +754,12 @@
                         placeholder="Type your message here..."
                         autocomplete="off"
                         required
+                        disabled
                     >
-                    <button type="submit" class="send-btn" id="sendBtn">
-                        <svg viewBox="0 0 24 24" fill="currentColor">
-                            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
-                        </svg>
+                    <button type="submit" class="send-btn" id="sendBtn" disabled>
+                        <svg viewBox="0 0 24 24" width="20" height="20">
+  <path d="M2 21L23 12 2 3v7l15 2L2 14z" fill="white"/>
+</svg>
                     </button>
                 </form>
             </div>
@@ -752,28 +769,15 @@
     <div id="liveChatModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3>Choose Support Type</h3>
-                <p>How can we help you today?</p>
+                <h3>End Chat Session?</h3>
+                <p>Are you sure you want to end this live chat?</p>
             </div>
-            <div class="modal-buttons" style="flex-direction: column; gap: 15px;">
-                <button type="button" class="modal-btn primary" onclick="startLiveChatWithType('staff')" 
-                        style="width: 100%; padding: 15px; text-align: left; display: flex; align-items: center; gap: 15px;">
-                    <i class="fas fa-user-tie" style="font-size: 24px;"></i>
-                    <div>
-                        <div style="font-size: 16px; font-weight: bold;">Website Support</div>
-                        <div style="font-size: 12px; opacity: 0.9;">General inquiries, products, account help</div>
-                    </div>
-                </button>
-                <button type="button" class="modal-btn primary" onclick="startLiveChatWithType('delivery')" 
-                        style="width: 100%; padding: 15px; text-align: left; display: flex; align-items: center; gap: 15px; background: linear-gradient(135deg, #2196F3 0%, #1976D2 100%);">
-                    <i class="fas fa-truck" style="font-size: 24px;"></i>
-                    <div>
-                        <div style="font-size: 16px; font-weight: bold;">Order & Delivery Support</div>
-                        <div style="font-size: 12px; opacity: 0.9;">Track orders, delivery status, order issues</div>
-                    </div>
-                </button>
-                <button type="button" class="modal-btn secondary" onclick="closeLiveChatModal()" style="width: 100%;">
+            <div class="modal-buttons">
+                <button type="button" class="modal-btn secondary" onclick="closeEndChatModal()">
                     Cancel
+                </button>
+                <button type="button" class="modal-btn primary" onclick="confirmEndChat()" style="background: #FF4444;">
+                    End Chat
                 </button>
             </div>
         </div>
@@ -795,13 +799,14 @@
         const messageInput = document.getElementById('messageInput');
         const sendBtn = document.getElementById('sendBtn');
         const typingIndicator = document.getElementById('typingIndicator');
-        const suggestedQuestions = document.getElementById('suggestedQuestions');
-        const liveChatBtn = document.getElementById('liveChatBtn');
         const liveChatModal = document.getElementById('liveChatModal');
         const chatModeIndicator = document.getElementById('chatModeIndicator');
         const headerAvatar = document.getElementById('headerAvatar');
         const headerTitle = document.getElementById('headerTitle');
         const headerStatus = document.getElementById('headerStatus');
+        const supportTypeSelector = document.getElementById('supportTypeSelector');
+        const chatInputContainer = document.getElementById('chatInputContainer');
+        const endChatBtn = document.getElementById('endChatBtn');
 
         // Send activity heartbeat to track customer presence
         function sendActivityHeartbeat() {
@@ -845,7 +850,6 @@
         });
 
         window.addEventListener('load', async () => {
-            messageInput.focus();
             scrollToBottom();
             
             if (sessionStorage.getItem('staffJustJoined') === 'true') {
@@ -873,6 +877,15 @@
                         isLiveChatMode = true;
                         currentSupportType = data.session.support_type || 'staff';
                         
+                        // Hide support selector, show chat input
+                        supportTypeSelector.classList.remove('active');
+                        chatInputContainer.style.display = 'block';
+                        endChatBtn.classList.add('active');
+                        
+                        // Enable input when reconnecting
+                        messageInput.disabled = false;
+                        sendBtn.disabled = false;
+                        
                         const status = data.session.status;
                         currentChatStatus = status;
                         
@@ -886,7 +899,13 @@
                             startActivityHeartbeat();
                         }
                         
+                        if (currentSupportType === 'delivery') {
+                            await loadCustomerOrders();
+                        }
+                        
                         startPolling();
+                        messageInput.focus();
+                        scrollToBottom();
                     }
                 } catch (error) {
                     console.error('Error checking for active session:', error);
@@ -1018,11 +1037,11 @@
             return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
         }
 
-        function addMessage(message, type = 'bot', senderName = null) {
+        function addMessage(message, type = 'staff', senderName = null) {
             const messageDiv = document.createElement('div');
             messageDiv.className = `message ${type}`;
             
-            let avatar = '🤖';
+            let avatar = '👨‍💼';
             if (type === 'user') avatar = '👤';
             if (type === 'staff') avatar = '👨‍💼';
             if (type === 'delivery') avatar = '🚚';
@@ -1049,12 +1068,20 @@
             }
         }
 
-        function toggleTyping(show) {
-            typingIndicator.style.display = show ? 'block' : 'none';
-            scrollToBottom();
+        function showEndChatModal() {
+            liveChatModal.style.display = 'block';
         }
 
-        function toggleLiveChat() {
+        function closeEndChatModal() {
+            liveChatModal.style.display = 'none';
+        }
+
+        function confirmEndChat() {
+            closeEndChatModal();
+            endLiveChatSession();
+        }
+
+        async function startLiveChatWithType(type) {
             const isAuthenticated = {{ Auth::check() ? 'true' : 'false' }};
             
             if (!isAuthenticated) {
@@ -1062,22 +1089,7 @@
                 window.location.href = '{{ route("home") }}';
                 return;
             }
-            
-            if (isLiveChatMode) {
-                if (confirm('Are you sure you want to end this live chat session?')) {
-                    endLiveChatSession();
-                }
-            } else {
-                liveChatModal.style.display = 'block';
-            }
-        }
 
-        function closeLiveChatModal() {
-            liveChatModal.style.display = 'none';
-        }
-
-        async function startLiveChatWithType(type) {
-            closeLiveChatModal();
             currentSupportType = type;
             
             try {
@@ -1098,6 +1110,15 @@
                     isLiveChatMode = true;
                     currentChatStatus = 'waiting';
                     
+                    // Hide support type selector, show chat input
+                    supportTypeSelector.classList.remove('active');
+                    chatInputContainer.style.display = 'block';
+                    endChatBtn.classList.add('active');
+                    
+                    // Enable input
+                    messageInput.disabled = false;
+                    sendBtn.disabled = false;
+                    
                     // Load orders if delivery chat
                     if (type === 'delivery') {
                         await loadCustomerOrders();
@@ -1107,6 +1128,7 @@
                     updateUIForLiveChat('waiting', data.queue_position);
                     addMessage(`🎫 You have been added to the queue. A ${staffType} will be with you shortly...`, 'system');
                     startPolling();
+                    messageInput.focus();
                 } else {
                     alert(data.message || 'Failed to start live chat. Please try again.');
                 }
@@ -1117,23 +1139,13 @@
         }
 
         function updateUIForLiveChat(status, queuePosition = null) {
-            const btn = liveChatBtn;
-            const icon = document.getElementById('liveChatIcon');
-            const text = document.getElementById('liveChatText');
-
             if (status === 'waiting') {
-                btn.className = 'live-chat-btn waiting';
-                icon.textContent = '⏱️';
-                text.innerHTML = `Waiting... <span class="queue-badge">#${queuePosition}</span>`;
                 headerAvatar.textContent = '⏱️';
                 headerTitle.textContent = 'Waiting for Support';
                 headerStatus.innerHTML = `<span class="live-chat-status">You are #${queuePosition} in queue</span>`;
                 chatModeIndicator.innerHTML = `<span>⏱️</span><span>Waiting for support to join...</span>`;
                 chatModeIndicator.className = `chat-mode-indicator ${currentSupportType === 'delivery' ? 'delivery' : 'live'}`;
             } else if (status === 'active') {
-                btn.className = 'live-chat-btn active';
-                icon.textContent = '✓';
-                text.textContent = 'End Chat';
                 headerAvatar.textContent = currentSupportType === 'delivery' ? '🚚' : '👨‍💼';
                 headerTitle.textContent = currentSupportType === 'delivery' ? 'Delivery Support' : 'Live Support';
                 headerStatus.innerHTML = '<span class="live-chat-status">Connected to support</span>';
@@ -1225,74 +1237,52 @@
             
             ordersSidebar.classList.remove('active');
             
-            liveChatBtn.className = 'live-chat-btn';
-            document.getElementById('liveChatIcon').textContent = '💬';
-            document.getElementById('liveChatText').textContent = 'Chat with Support';
+            // Show support type selector, hide chat input
+            supportTypeSelector.classList.add('active');
+            chatInputContainer.style.display = 'none';
+            endChatBtn.classList.remove('active');
             
-            headerAvatar.textContent = '🤖';
-            headerTitle.textContent = 'AI Assistant';
-            headerStatus.textContent = 'Online • Ready to help';
+            // Disable input
+            messageInput.disabled = true;
+            sendBtn.disabled = true;
             
-            chatModeIndicator.innerHTML = '<span>🤖</span><span>Chatting with AI Assistant</span>';
+            headerAvatar.textContent = '💬';
+            headerTitle.textContent = 'Live Support';
+            headerStatus.textContent = 'Choose a support type to begin';
+            
+            chatModeIndicator.innerHTML = '<span>💬</span><span>Start a live chat to send messages</span>';
             chatModeIndicator.className = 'chat-mode-indicator';
             
-            addMessage('Chat session ended. You can chat with our AI assistant or start a new live chat.', 'system');
+            addMessage('Chat session ended. Choose a support type to start a new session.', 'system');
         }
 
         async function sendMessage(message) {
+            if (!isLiveChatMode || !liveChatSessionId) {
+                alert('Please start a live chat session first.');
+                return;
+            }
+
             sendBtn.disabled = true;
             messageInput.disabled = true;
-
-            if (suggestedQuestions.children.length > 0) {
-                suggestedQuestions.style.display = 'none';
-            }
 
             addMessage(message, 'user');
             messageInput.value = '';
 
-            if (isLiveChatMode && liveChatSessionId) {
-                try {
-                    await fetch('{{ route("livechat.send") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        },
-                        body: JSON.stringify({
-                            session_id: liveChatSessionId,
-                            message: message
-                        })
-                    });
-                } catch (error) {
-                    console.error('Error sending message:', error);
-                    addMessage('Failed to send message. Please try again.', 'system');
-                }
-            } else {
-                toggleTyping(true);
-
-                try {
-                    const response = await fetch('{{ route("chatbot.send") }}', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-                        },
-                        body: JSON.stringify({ message: message })
-                    });
-
-                    const data = await response.json();
-                    toggleTyping(false);
-
-                    if (response.ok) {
-                        addMessage(data.response);
-                    } else {
-                        addMessage('Sorry, I encountered an error. Please try again.');
-                    }
-                } catch (error) {
-                    toggleTyping(false);
-                    addMessage('Sorry, I\'m having trouble connecting.');
-                    console.error('Error:', error);
-                }
+            try {
+                await fetch('{{ route("livechat.send") }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    },
+                    body: JSON.stringify({
+                        session_id: liveChatSessionId,
+                        message: message
+                    })
+                });
+            } catch (error) {
+                console.error('Error sending message:', error);
+                addMessage('Failed to send message. Please try again.', 'system');
             }
 
             sendBtn.disabled = false;
@@ -1307,16 +1297,6 @@
                 sendMessage(message);
             }
         });
-
-        function sendSuggested(question) {
-            sendMessage(question);
-        }
-
-        window.onclick = function(event) {
-            if (event.target == liveChatModal) {
-                closeLiveChatModal();
-            }
-        };
 
         messageInput.addEventListener('keydown', (e) => {
             if (e.key === 'Enter' && !e.shiftKey) {

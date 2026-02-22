@@ -8,9 +8,10 @@
 <div class="container-fluid px-4 py-4">
     <div class="row">
         <div class="col-12 mb-4">
-            <a href="{{ route('admin.livechat.index') }}" class="btn btn-modern-secondary btn-sm">
-                <i class="fas fa-arrow-left me-2"></i> Back to Live Chats
-            </a>
+           <a href="{{ route('admin.livechat.index') }}" class="btn btn-modern-secondary btn-sm border" 
+   style="margin-top: -100px; border-color: var(--bs-border-color) !important;">
+    <i class="fas fa-arrow-left me-2"></i> Back to Live Chats
+</a>
         </div>
 
         <div class="col-lg-10 col-xl-9 mx-auto">
@@ -175,11 +176,13 @@
 ============================================ */
 .chat-container {
     display: flex;
+    margin-top:-50px;
     flex-direction: column;
     height: calc(100vh - 200px);
     min-height: 600px;
     max-height: 800px;
     overflow: hidden;
+    border: 1px solid var(--bs-border-color);
 }
 
 /* ============================================

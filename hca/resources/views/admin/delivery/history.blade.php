@@ -4,126 +4,327 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Delivery History</title>
+    
+    <!-- CRITICAL: Load theme BEFORE any styles to prevent flicker -->
+    <script>
+        (function() {
+            const savedTheme = localStorage.getItem('delivery-theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+        })();
+    </script>
+    
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    
     <style>
+        /* CSS Variables Only */
+        :root {
+            --primary-blue: #667eea;
+            --primary-purple: #764ba2;
+            --primary-dark: #2D3748;
+            --success: #48BB78;
+            --warning: #F6AD55;
+            --danger: #FC8181;
+            --info: #63B3ED;
+            --light-bg: #F7FAFC;
+            --card-bg: #FFFFFF;
+            --text-primary: #1A202C;
+            --text-secondary: #718096;
+            --border-color: #E2E8F0;
+            --sidebar-width: 280px;
+            --hover-bg: rgba(0, 0, 0, 0.05);
+        }
+
+        [data-theme="dark"] {
+            --primary-blue: #667eea;
+            --primary-purple: #764ba2;
+            --primary-dark: #1A202C;
+            --success: #48BB78;
+            --warning: #F6AD55;
+            --danger: #FC8181;
+            --info: #63B3ED;
+            --light-bg: #1A202C;
+            --card-bg: #2D3748;
+            --text-primary: #F7FAFC;
+            --text-secondary: #A0AEC0;
+            --border-color: #4A5568;
+            --hover-bg: rgba(255, 255, 255, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            background-color: #f8f9fa;
+            font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--light-bg);
+            color: var(--text-primary);
+            line-height: 1.6;
+            transition: background-color 0.3s ease, color 0.3s ease;
+            overflow-x: hidden;
         }
-        .navbar-delivery {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+
+        /* Main Content */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            padding: 6rem 2rem 2rem;
+            min-height: 100vh;
+            transition: all 0.3s ease;
         }
-        .sidebar {
-            position: fixed;
-            top: 0;
-            bottom: 0;
-            left: 0;
-            z-index: 100;
-            padding: 48px 0 0;
-            box-shadow: inset -1px 0 0 rgba(0, 0, 0, .1);
-            background: white;
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 2rem;
         }
-        .sidebar .nav-link {
-            font-weight: 500;
-            color: #333;
-            padding: 0.75rem 1rem;
-        }
-        .sidebar .nav-link.active {
-            color: #fff;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-        .sidebar .nav-link:hover {
-            background-color: #f8f9fa;
-        }
-               }
-            /* Notification Styles */
-        .notification-bell {
-            position: relative;
-            cursor: pointer;
-            padding: 8px 15px;
-        }
-        .notification-badge {
-            position: absolute;
-            top: 2px;
-            right: 8px;
-            background: #dc3545;
-            color: white;
-            border-radius: 50%;
-            padding: 2px 6px;
-            font-size: 10px;
-            font-weight: bold;
-        }
-        .notification-dropdown {
-            position: absolute;
-            right: 80px;
-            top: 100%;
-            width: 380px;
-            max-height: 500px;
-            overflow-y: auto;
-            background: white;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-            border-radius: 8px;
-            z-index: 1000;
-            display: none;
-            margin-top: 10px;
-        }
-        .notification-dropdown.show {
-            display: block;
-        }
-        .notification-item {
-            padding: 15px;
-            border-bottom: 1px solid #f0f0f0;
-            transition: background 0.2s;
-            color: #333;
-        }
-        .notification-item:hover {
-            background: #f8f9fa;
-        }
-        .notification-item.unread {
-            background: #e3f2fd;
-        }
-        .notification-header {
+
+        .page-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 0.5rem;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 15px;
-            border-bottom: 2px solid #f0f0f0;
-            background: white;
+            gap: 1rem;
         }
-        .notification-time {
-            font-size: 11px;
-            color: #999;
+
+        .page-subtitle {
+            color: var(--text-secondary);
+            font-size: 1rem;
         }
-        .notification-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
+
+        .date-badge {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Stats Cards */
+        .stat-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 1.75rem;
+            border: 1px solid var(--border-color);
+            transition: all 0.2s ease;
+            height: 100%;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .stat-card-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 12px;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
         }
-        .notification-icon.admin {
-            background: #fff3cd;
-            color: #856404;
+
+        .stat-card-icon.primary {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.15), rgba(102, 126, 234, 0.05));
+            color: var(--primary-blue);
         }
-        .card {
-            border: none;
-            box-shadow: 0 0 15px rgba(0,0,0,0.1);
+
+        .stat-card-icon.success {
+            background: linear-gradient(135deg, rgba(72, 187, 120, 0.15), rgba(72, 187, 120, 0.05));
+            color: var(--success);
+        }
+
+        .stat-card-icon.warning {
+            background: linear-gradient(135deg, rgba(246, 173, 85, 0.15), rgba(246, 173, 85, 0.05));
+            color: var(--warning);
+        }
+
+        .stat-card-icon.info {
+            background: linear-gradient(135deg, rgba(99, 179, 237, 0.15), rgba(99, 179, 237, 0.05));
+            color: var(--info);
+        }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0.5rem 0;
+        }
+
+        .stat-card-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Content Cards */
+        .content-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        .content-card-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .content-card-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin: 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .content-card-body {
+            padding: 2rem;
+        }
+
+        /* Badges */
+        .badge-modern {
+            padding: 0.375rem 0.875rem;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+        }
+
+        .badge-success {
+            background: rgba(72, 187, 120, 0.15);
+            color: var(--success);
+        }
+
+        .badge-warning {
+            background: rgba(246, 173, 85, 0.15);
+            color: var(--warning);
+        }
+
+        .badge-danger {
+            background: rgba(252, 129, 129, 0.15);
+            color: var(--danger);
+        }
+
+        .badge-info {
+            background: rgba(99, 179, 237, 0.15);
+            color: var(--info);
+        }
+
+        .badge-primary {
+            background: rgba(102, 126, 234, 0.15);
+            color: var(--primary-blue);
+        }
+
+        /* Buttons */
+        .btn-modern {
+            padding: 0.625rem 1.25rem;
             border-radius: 10px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            justify-content: center;
         }
-        main {
-            margin-left: 250px;
+
+        .btn-modern-primary {
+            background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+            color: white;
         }
+
+        .btn-modern-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(102, 126, 234, 0.3);
+            color: white;
+        }
+
+        .btn-modern-secondary {
+            background: var(--light-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+        }
+
+        .btn-modern-secondary:hover {
+            background: var(--hover-bg);
+        }
+
+        .btn-modern-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-modern-danger:hover {
+            background: #f56565;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 16px rgba(252, 129, 129, 0.3);
+            color: white;
+        }
+
+        /* Alerts */
+        .alert-modern {
+            padding: 1rem 1.5rem;
+            border-radius: 12px;
+            border: none;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .alert-success {
+            background: rgba(72, 187, 120, 0.15);
+            color: var(--success);
+        }
+
+        /* Modal */
+        .modal-content {
+            background: var(--card-bg);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .modal-footer {
+            border-top: 1px solid var(--border-color);
+        }
+
+        /* Timeline Styles */
         .timeline {
             position: relative;
             padding: 20px 0;
         }
+        
         .timeline-item {
             position: relative;
             padding-left: 50px;
             padding-bottom: 30px;
         }
+        
         .timeline-item::before {
             content: '';
             position: absolute;
@@ -131,11 +332,13 @@
             top: 0;
             bottom: -30px;
             width: 2px;
-            background: #e0e0e0;
+            background: var(--border-color);
         }
+        
         .timeline-item:last-child::before {
             display: none;
         }
+        
         .timeline-icon {
             position: absolute;
             left: 0;
@@ -148,170 +351,323 @@
             justify-content: center;
             color: white;
             font-size: 14px;
+            z-index: 1;
         }
-        .status-badge {
-            font-size: 0.875rem;
-            padding: 0.375rem 0.75rem;
+        
+        .timeline-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            transition: all 0.2s ease;
         }
+
+        .timeline-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-change {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        /* Address text styling */
+        .address-text {
+            color: var(--text-secondary);
+            margin-bottom: 0.75rem;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease;
+        }
+
+        /* Responsive */
         @media (max-width: 768px) {
-            main {
+            .main-content {
                 margin-left: 0;
+                padding: 6rem 1rem 1rem;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+            }
+
+            .stat-card-value {
+                font-size: 1.5rem;
+            }
+            
+            .timeline-item {
+                padding-left: 40px;
+            }
+            
+            .timeline-icon {
+                width: 28px;
+                height: 28px;
+                font-size: 12px;
             }
         }
     </style>
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- Modern Sidebar -->
+    @include('admin.delivery.layouts.sidebar')
+
+    <!-- Modern Navbar -->
     @include('admin.delivery.layouts.navbar')
 
-    <div class="container-fluid">
-        <div class="row">
-            <!-- Sidebar -->
-          @include('admin.delivery.layouts.sidebar')
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Page Header -->
+        <div class="page-header d-flex justify-content-between align-items-start mb-4">
+            <div>
+                <h1 class="page-title">
+                    <i class="fas fa-history me-2" style="color: var(--primary-blue);"></i>
+                    Delivery History
+                </h1>
+                <p class="page-subtitle">Track all delivery status updates and changes</p>
+            </div>
+            <div class="date-badge">
+                <i class="fas fa-calendar"></i>
+                <span id="currentDate">{{ date('F d, Y') }}</span>
+            </div>
+        </div>
 
-            <!-- Main Content -->
-            <main class="col-md-10 ms-sm-auto px-md-4 py-4">
-                <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pb-2 mb-4 border-bottom">
-                    <h1 class="h2"><i class="fas fa-history me-2 text-primary"></i>Delivery History</h1>
-                    <div class="btn-toolbar mb-2 mb-md-0">
-                        <span class="badge bg-primary fs-6 px-3 py-2">
-                            <i class="fas fa-calendar me-2"></i>{{ date('F d, Y') }}
-                        </span>
+        <!-- Stats Summary -->
+        <div class="row mb-4 g-4">
+            <div class="col-md-4">
+                <div class="stat-card animate-fade-in">
+                    <div class="stat-card-icon primary">
+                        <i class="fas fa-clipboard-list"></i>
                     </div>
+                    <div class="stat-card-value">{{ $logs->count() }}</div>
+                    <div class="stat-card-label">Total Status Updates</div>
                 </div>
-
-                <!-- Stats Summary -->
-                <div class="row mb-4">
-                    <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <i class="fas fa-clipboard-list fa-2x text-primary mb-2"></i>
-                                <h4 class="mb-0">{{ $logs->count() }}</h4>
-                                <p class="text-muted mb-0">Total Status Updates</p>
-                            </div>
-                        </div>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card animate-fade-in" style="animation-delay: 0.1s;">
+                    <div class="stat-card-icon success">
+                        <i class="fas fa-calendar-day"></i>
                     </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <i class="fas fa-calendar-day fa-2x text-success mb-2"></i>
-                                <h4 class="mb-0">{{ $logs->where('updated_at', '>=', now()->startOfDay())->count() }}</h4>
-                                <p class="text-muted mb-0">Updates Today</p>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-md-4">
-                        <div class="card bg-light">
-                            <div class="card-body text-center">
-                                <i class="fas fa-calendar-week fa-2x text-info mb-2"></i>
-                                <h4 class="mb-0">{{ $logs->where('updated_at', '>=', now()->subDays(7))->count() }}</h4>
-                                <p class="text-muted mb-0">Updates This Week</p>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="stat-card-value">{{ $logs->where('updated_at', '>=', now()->startOfDay())->count() }}</div>
+                    <div class="stat-card-label">Updates Today</div>
                 </div>
-
-                <!-- History Timeline -->
-                <div class="card">
-                    <div class="card-header bg-white">
-                        <h5 class="mb-0"><i class="fas fa-list-alt me-2"></i>Status Change Timeline</h5>
+            </div>
+            <div class="col-md-4">
+                <div class="stat-card animate-fade-in" style="animation-delay: 0.2s;">
+                    <div class="stat-card-icon info">
+                        <i class="fas fa-calendar-week"></i>
                     </div>
-                    <div class="card-body">
-                        @forelse($logs as $log)
-                            <div class="timeline-item">
-                                <div class="timeline-icon 
-                                    @if($log->new_status == 'Delivered') bg-success
-                                    @elseif($log->new_status == 'Out for Delivery') bg-info
-                                    @elseif($log->new_status == 'Cancelled') bg-danger
-                                    @else bg-warning
-                                    @endif">
-                                    @if($log->new_status == 'Delivered')
-                                        <i class="fas fa-check"></i>
-                                    @elseif($log->new_status == 'Out for Delivery')
-                                        <i class="fas fa-truck"></i>
-                                    @elseif($log->new_status == 'Cancelled')
-                                        <i class="fas fa-times"></i>
-                                    @else
-                                        <i class="fas fa-clock"></i>
-                                    @endif
-                                </div>
+                    <div class="stat-card-value">{{ $logs->where('updated_at', '>=', now()->subDays(7))->count() }}</div>
+                    <div class="stat-card-label">Updates This Week</div>
+                </div>
+            </div>
+        </div>
 
-                                <div class="card border-0 shadow-sm">
-                                    <div class="card-body">
-                                        <div class="row align-items-center">
-                                            <div class="col-md-8">
-                                                <h6 class="mb-2">
-                                                    <span class="badge bg-secondary me-2">#{{ $log->order_id }}</span>
-                                                    <strong>{{ $log->customer_name }}</strong>
-                                                </h6>
-                                                <p class="mb-2 text-muted">
-                                                    <i class="fas fa-map-marker-alt me-2"></i>
-                                                    {{ Str::limit($log->address, 60) }}
-                                                </p>
-                                                <div class="status-change">
-                                                    <span class="badge 
-                                                        @if($log->old_status == 'Delivered') bg-success
-                                                        @elseif($log->old_status == 'Out for Delivery') bg-info
-                                                        @elseif($log->old_status == 'Cancelled') bg-danger
-                                                        @else bg-warning text-dark
-                                                        @endif status-badge">
-                                                        {{ $log->old_status ?? 'N/A' }}
-                                                    </span>
-                                                    <i class="fas fa-arrow-right mx-2 text-muted"></i>
-                                                    <span class="badge 
-                                                        @if($log->new_status == 'Delivered') bg-success
-                                                        @elseif($log->new_status == 'Out for Delivery') bg-info
-                                                        @elseif($log->new_status == 'Cancelled') bg-danger
-                                                        @else bg-warning text-dark
-                                                        @endif status-badge">
-                                                        {{ $log->new_status }}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4 text-end">
-                                                <p class="mb-1">
-                                                    <i class="fas fa-calendar text-primary me-2"></i>
-                                                    <small>{{ \Carbon\Carbon::parse($log->updated_at)->format('M d, Y') }}</small>
-                                                </p>
-                                                <p class="mb-0">
-                                                    <i class="fas fa-clock text-info me-2"></i>
-                                                    <small>{{ \Carbon\Carbon::parse($log->updated_at)->format('h:i A') }}</small>
-                                                </p>
-                                            </div>
+        <!-- History Timeline -->
+        <div class="content-card animate-fade-in">
+            <div class="content-card-header">
+                <h5 class="content-card-title">
+                    <i class="fas fa-list-alt me-2"></i>
+                    Status Change Timeline
+                </h5>
+                <div class="badge-modern badge-primary">
+                    <i class="fas fa-sync-alt me-1"></i>
+                    {{ $logs->count() }} Updates
+                </div>
+            </div>
+            <div class="content-card-body">
+                <div class="timeline">
+                    @forelse($logs as $log)
+                        <div class="timeline-item">
+                            <div class="timeline-icon 
+                                @if($log->new_status == 'Delivered') bg-success
+                                @elseif($log->new_status == 'Out for Delivery') bg-info
+                                @elseif($log->new_status == 'Cancelled') bg-danger
+                                @else bg-warning text-dark
+                                @endif">
+                                @if($log->new_status == 'Delivered')
+                                    <i class="fas fa-check"></i>
+                                @elseif($log->new_status == 'Out for Delivery')
+                                    <i class="fas fa-truck"></i>
+                                @elseif($log->new_status == 'Cancelled')
+                                    <i class="fas fa-times"></i>
+                                @else
+                                    <i class="fas fa-clock"></i>
+                                @endif
+                            </div>
+
+                            <div class="timeline-card">
+                                <div class="row align-items-center">
+                                    <div class="col-md-8">
+                                        <h6 class="mb-2">
+                                            <span class="badge bg-secondary me-2">#{{ $log->order_id }}</span>
+                                            <strong>{{ $log->customer_name }}</strong>
+                                        </h6>
+                                        <p class="mb-2 address-text">
+                                            <i class="fas fa-map-marker-alt me-2"></i>
+                                            {{ Str::limit($log->address, 60) }}
+                                        </p>
+                                        <div class="status-change">
+                                            <span class="badge-modern 
+                                                @if($log->old_status == 'Delivered') badge-success
+                                                @elseif($log->old_status == 'Out for Delivery') badge-info
+                                                @elseif($log->old_status == 'Cancelled') badge-danger
+                                                @else badge-warning
+                                                @endif">
+                                                {{ $log->old_status ?? 'N/A' }}
+                                            </span>
+                                            <i class="fas fa-arrow-right mx-2" style="color: var(--text-secondary);"></i>
+                                            <span class="badge-modern 
+                                                @if($log->new_status == 'Delivered') badge-success
+                                                @elseif($log->new_status == 'Out for Delivery') badge-info
+                                                @elseif($log->new_status == 'Cancelled') badge-danger
+                                                @else badge-warning
+                                                @endif">
+                                                {{ $log->new_status }}
+                                            </span>
                                         </div>
+                                    </div>
+                                    <div class="col-md-4 text-end">
+                                        <p class="mb-1">
+                                            <i class="fas fa-calendar" style="color: var(--primary-blue);"></i>
+                                            <small style="color: var(--text-secondary);">{{ \Carbon\Carbon::parse($log->updated_at)->format('M d, Y') }}</small>
+                                        </p>
+                                        <p class="mb-0">
+                                            <i class="fas fa-clock" style="color: var(--info);"></i>
+                                            <small style="color: var(--text-secondary);">{{ \Carbon\Carbon::parse($log->updated_at)->format('h:i A') }}</small>
+                                        </p>
                                     </div>
                                 </div>
                             </div>
-                        @empty
-                            <div class="text-center py-5">
-                                <i class="fas fa-history fa-4x text-muted mb-3"></i>
-                                <p class="text-muted">No delivery history available</p>
-                            </div>
-                        @endforelse
-                    </div>
+                        </div>
+                    @empty
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <h5 class="mb-3">No delivery history available</h5>
+                            <p class="text-muted">No status updates have been recorded yet.</p>
+                        </div>
+                    @endforelse
                 </div>
+            </div>
+        </div>
 
-                <!-- Export Options -->
-                @if($logs->count() > 0)
-                    <div class="text-end mt-4">
-                        <button class="btn btn-outline-primary" onclick="window.print()">
-                            <i class="fas fa-print me-2"></i>Print History
+        <!-- Export Options -->
+        @if($logs->count() > 0)
+            <div class="text-end mt-4">
+                <button class="btn-modern btn-modern-secondary" onclick="window.print()">
+                    <i class="fas fa-print me-2"></i>Print History
+                </button>
+            </div>
+        @endif
+    </main>
+
+    <!-- Logout Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="fas fa-sign-out-alt me-2 text-danger"></i>
+                        Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body text-center py-4">
+                    <i class="fas fa-question-circle fa-4x mb-4" style="color: var(--warning);"></i>
+                    <h5 class="mb-3">Are you sure you want to logout?</h5>
+                    <p class="text-muted">You will be redirected to the login page.</p>
+                </div>
+                <div class="modal-footer justify-content-center border-0">
+                    <button type="button" class="btn-modern btn-modern-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-1"></i> Cancel
+                    </button>
+                    <form action="{{ route('delivery.logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn-modern btn-modern-danger">
+                            <i class="fas fa-sign-out-alt me-1"></i> Yes, Logout
                         </button>
-                    </div>
-                @endif
-            </main>
+                    </form>
+                </div>
+            </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
     <script>
-        // Notification Toggle
-        function toggleNotifications() {
-            const dropdown = document.getElementById('notificationDropdown');
-            dropdown.classList.toggle('show');
+        document.addEventListener('DOMContentLoaded', function() {
+            // Update Current Date
+            function updateCurrentDate() {
+                const options = { month: 'short', day: 'numeric', year: 'numeric' };
+                const dateString = new Date().toLocaleDateString('en-US', options);
+                const dateElement = document.getElementById('currentDate');
+                if (dateElement) {
+                    dateElement.textContent = dateString;
+                }
+            }
+            updateCurrentDate();
+
+            // Sidebar toggle for mobile
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebarOverlay');
+            
+            if (sidebarToggle && sidebar) {
+                sidebarToggle.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    sidebar.classList.toggle('show');
+                    if (sidebarOverlay) {
+                        sidebarOverlay.classList.toggle('show');
+                    }
+                });
+            }
+            
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    sidebar.classList.remove('show');
+                    sidebarOverlay.classList.remove('show');
+                });
+            }
+        });
+
+        // Theme toggle function
+        function toggleTheme() {
+            const html = document.documentElement;
+            const currentTheme = html.getAttribute('data-theme');
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            
+            html.setAttribute('data-theme', newTheme);
+            localStorage.setItem('delivery-theme', newTheme);
         }
-
-        </script>
+    </script>
 </body>
-
 </html>

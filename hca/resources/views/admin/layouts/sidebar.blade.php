@@ -22,11 +22,8 @@
                 </a>
             </li>
             <!-- Gallery Management -->
-            <li class="nav-item">
-                <a class="nav-link {{ request()->routeIs('admin.gallery.*') ? 'active' : '' }}" href="{{ route('admin.gallery.index') }}">
-                    <i class="fas fa-images me-2"></i>Gallery 
-                </a>
-            </li>
+              <!-- In sidebar.blade.php - Add this menu item -->
+
             <!-- Live Chat -->
             <li class="nav-item">
                 <a class="nav-link {{ request()->routeIs('admin.livechat.*') ? 'active' : '' }}" href="{{ route('admin.livechat.index') }}">
@@ -34,6 +31,7 @@
                     <span class="badge bg-warning ms-2" id="waitingBadge" style="display: none;"></span>
                 </a>
             </li>
+       
         </ul>
 
         <!-- Staff Management Section with Restrictions -->

@@ -560,7 +560,7 @@
 <!-- Chatbot Button -->
 <div class="chatbot-float">
     <a href="{{ route('chatbot') }}" class="chatbot-btn" title="Chat with AI Assistant">
-        <i class="bi bi-robot"></i>
+        <i class="bi bi-chat"></i>
     </a>
 </div>
 
@@ -659,7 +659,7 @@
 </section>
 
 <!-- Gallery Section -->
-<section class="gallery">
+<!-- <section class="gallery">
     <div class="container">
         <div class="section-header">
             <span class="section-label">Inspiration</span>
@@ -679,9 +679,7 @@
             </a>
         </div>
     </div>
-</section>
-
-<!-- Customize Section -->
+</section> -->
 <!-- Customize Section -->
 <section class="customize">
     <div class="container">
@@ -696,7 +694,7 @@
                 @endfor
             </div>
             <!-- CHANGED: From old product-based route to new landing page -->
-            <a href="{{ route('customization.landing') }}" class="btn-white-custom">
+            <a href="{{ route('customization.create') }}" class="btn-white-custom">
                 <i class="bi bi-palette me-2"></i>Start Customizing
             </a>
         </div>
