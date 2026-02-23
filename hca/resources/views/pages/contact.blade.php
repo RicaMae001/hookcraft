@@ -583,15 +583,15 @@
                     <p style="color: var(--text-secondary); margin-bottom: 2rem; font-weight: 400;">Follow us on social media for updates, inspiration, and special offers</p>
                     
                     <div class="social-container" style="flex-direction: column;">
-                        <a href="https://www.instagram.com/hookcraft_avenue?utm_medium=copy_link" target="_blank" class="social-item">
+                        <a href="https://www.instagram.com/hookcraft_avenue" target="_blank" class="social-item">
                             <i class="bi bi-instagram"></i>
                             <span>@hookcraft_avenue</span>
                         </a>
-                        <a href="https://tiktok.com/@hookcraftavenue" target="_blank" class="social-item">
+                        <a href="https://www.tiktok.com/@hookcraftavenue" target="_blank" class="social-item">
                             <i class="bi bi-tiktok"></i>
                             <span>@hookcraftavenue</span>
                         </a>
-                        <a href="https://www.facebook.com/hookcraft.avenue" target="_blank" class="social-item">
+                        <a href="https://www.facebook.com/CrochetbyAlys" target="_blank" class="social-item">
                             <i class="bi bi-facebook"></i>
                             <span>Hookcraft Avenue</span>
                         </a>
