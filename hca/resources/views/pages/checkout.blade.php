@@ -683,7 +683,7 @@
                                 <p style="text-align:center;color:var(--secondary-gray);
                                            font-size:0.78rem;margin-top:0.5rem;margin-bottom:0;">
                                     By placing your order you agree to our
-                                    <a href="#" style="color:var(--primary-pink);">Terms</a>
+                                    <a href="{{ route('terms') }}" style="color:var(--primary-pink);">Terms</a>
                                 </p>
                             </div>
 
@@ -705,7 +705,6 @@
                 </div>
             </div>
         </div>
-
     </div>
     @endif
 </div>
