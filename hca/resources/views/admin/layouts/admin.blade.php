@@ -325,8 +325,15 @@
         }
 
         .sidebar-link.restricted {
-            opacity: 0.5;
+            opacity: 0.55;
             cursor: not-allowed;
+            color: var(--danger) !important;
+        }
+
+        .sidebar-link.restricted:hover {
+            background: rgba(252, 129, 129, 0.08) !important;
+            color: var(--danger) !important;
+            transform: none;
         }
 
         .sidebar-link .badge {
@@ -660,10 +667,19 @@
                 <span>Customers/User</span>
             </a>
 
-            <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
-                <i class="fas fa-images"></i>
-                <span>Customize</span>
-            </a>
+            {{-- Customize: locked for Staff, accessible for Admin only --}}
+            @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
+                <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
+                    <i class="fas fa-images"></i>
+                    <span>Customize</span>
+                </a>
+            @else
+                <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Customize')">
+                    <i class="fas fa-images"></i>
+                    <span>Customize</span>
+                    <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
+                </a>
+            @endif
 
             <a href="{{ route('admin.livechat.index') }}" class="sidebar-link {{ request()->routeIs('admin.livechat.*') ? 'active' : '' }}">
                 <i class="fas fa-comments"></i>
@@ -697,13 +713,13 @@
             <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Admin Accounts')">
                 <i class="fas fa-user-shield"></i>
                 <span>Admin Accounts</span>
-                <i class="fas fa-lock ms-auto" style="font-size: 0.875rem;"></i>
+                <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
             </a>
 
             <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Delivery Staff')">
                 <i class="fas fa-truck"></i>
                 <span>Delivery Staff</span>
-                <i class="fas fa-lock ms-auto" style="font-size: 0.875rem;"></i>
+                <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
             </a>
         </div>
         @endif
@@ -714,13 +730,13 @@
             <a href="{{ route('home') }}" target="_blank" class="sidebar-link">
                 <i class="fas fa-store"></i>
                 <span>View Store</span>
-                <i class="fas fa-external-link-alt ms-auto" style="font-size: 0.75rem;"></i>
+                <i class="fas fa-external-link-alt ms-auto" style="font-size: 0.75rem; width: auto;"></i>
             </a>
 
             <a href="{{ route('gallery') }}" target="_blank" class="sidebar-link">
                 <i class="fas fa-eye"></i>
                 <span>View Gallery</span>
-                <i class="fas fa-external-link-alt ms-auto" style="font-size: 0.75rem;"></i>
+                <i class="fas fa-external-link-alt ms-auto" style="font-size: 0.75rem; width: auto;"></i>
             </a>
         </div>
     </aside>
@@ -743,7 +759,7 @@
                     <h5>You don't have permission to access <span id="sectionName" style="color: var(--danger);"></span></h5>
                     <p class="text-muted">Only Admin can access this section. Please contact your administrator if you need access.</p>
                 </div>
-                <div class="modal-footer border-0 justify-content-center">
+                <div class="modal-footer border-0 justify-content: center;">
                     <button type="button" class="btn btn-modern-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
