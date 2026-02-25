@@ -405,3 +405,4 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
         Route::get('/orders/{sessionId}', [DeliveryLiveChatController::class, 'getCustomerOrders'])->name('orders');
     });
 });
+Route::view('/terms-and-conditions', 'pages.terms')->name('terms');

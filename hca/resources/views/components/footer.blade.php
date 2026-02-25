@@ -12,14 +12,14 @@
             </div>
             <div class="col-md-6 text-md-end">
                 <div class="social-links">
-                    <a href="#" class="text-white me-3" aria-label="Facebook">
+                    <a href="https://www.facebook.com/CrochetbyAlys" class="text-white me-3" aria-label="Facebook">
                         <i class="bi bi-facebook"></i>
                     </a>
-                    <a href="#" class="text-white me-3" aria-label="Instagram">
+                    <a href="https://www.instagram.com/hookcraft_avenue" class="text-white me-3" aria-label="Instagram">
                         <i class="bi bi-instagram"></i>
                     </a>
-                    <a href="#" class="text-white" aria-label="Twitter">
-                        <i class="bi bi-twitter"></i>
+                    <a href="https://www.tiktok.com/@hookcraftavenue" class="text-white" aria-label="Tiktok">
+                        <i class="bi bi-tiktok"></i>
                     </a>
                 </div>
             </div>
