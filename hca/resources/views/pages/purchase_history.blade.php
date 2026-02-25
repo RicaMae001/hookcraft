@@ -217,6 +217,26 @@
         grid-column: 1 / -1;
     }
 
+    /* Delivery Staff Info */
+    .delivery-staff-info {
+        border-left: 4px solid var(--primary-pink) !important;
+        transition: all 0.3s ease;
+        background: white;
+        border-radius: 8px;
+    }
+
+    .delivery-staff-info:hover {
+        box-shadow: 0 4px 12px rgba(255, 182, 193, 0.2);
+    }
+
+    .staff-icon {
+        transition: transform 0.3s ease;
+    }
+
+    .delivery-staff-info:hover .staff-icon {
+        transform: scale(1.1);
+    }
+
     /* Modal Styles */
     .modal-content {
         border-radius: 20px;
@@ -527,7 +547,13 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6 text-md-end mt-3 mt-md-0">
-                                    <h5 class="mb-0 text-success fw-bold">₱{{ number_format($order->total, 2) }}</h5>
+                                    <h5 class="mb-0 text-success fw-bold">₱{{ number_format($order->grand_total ?? $order->total, 2) }}</h5>
+                                    @if(!empty($order->delivery_fee) && $order->delivery_fee > 0)
+                                        <small class="text-muted">
+                                            Subtotal ₱{{ number_format($order->total, 2) }}
+                                            + Delivery ₱{{ number_format($order->delivery_fee, 2) }}
+                                        </small>
+                                    @endif
                                 </div>
                             </div>
                         </div>
@@ -609,6 +635,85 @@
                                 </div>
                             </div>
 
+                            <!-- Delivery Staff Contact Information - NEW -->
+                            @if($order->delivery_status == 'Out for Delivery' && $order->coordinator_id)
+                            <div class="delivery-staff-info mt-3 p-3 bg-white rounded-3 border">
+                                <h6 class="fw-bold mb-2" style="color: var(--primary-pink-dark);">
+                                    <i class="fas fa-user-tie me-2"></i>Your Delivery Staff
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-sm-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="staff-icon me-2" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                                <i class="fas fa-user"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Name</small>
+                                                <span class="fw-bold">{{ $order->delivery_name ?? 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-6">
+                                        <div class="d-flex align-items-center">
+                                            <div class="staff-icon me-2" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                                <i class="fas fa-phone-alt"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Contact Number</small>
+                                                <span class="fw-bold">{{ $order->delivery_phone ?? 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 mt-2">
+                                        <div class="d-flex align-items-center">
+                                            <div class="staff-icon me-2" style="width: 32px; height: 32px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                                <i class="fas fa-envelope"></i>
+                                            </div>
+                                            <div>
+                                                <small class="text-muted d-block">Email</small>
+                                                <span class="fw-bold">{{ $order->delivery_email ?? 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="alert alert-light mt-3 mb-0 small py-2" style="background-color: #f8f9fa;">
+                                    <i class="fas fa-info-circle me-1 text-info"></i>
+                                    You can contact your delivery staff for any delivery-related concerns.
+                                </div>
+                            </div>
+                            @elseif($order->delivery_status == 'Delivered' && $order->coordinator_id)
+                            <div class="delivery-staff-info mt-3 p-3 bg-white rounded-3 border">
+                                <h6 class="fw-bold mb-2" style="color: var(--success);">
+                                    <i class="fas fa-check-circle me-2"></i>Delivered By
+                                </h6>
+                                <div class="row g-2">
+                                    <div class="col-sm-12">
+                                        <div class="d-flex align-items-center">
+                                            <div class="staff-icon me-2" style="width: 32px; height: 32px; background: var(--success); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white;">
+                                                <i class="fas fa-user-check"></i>
+                                            </div>
+                                            <div>
+                                                <span class="fw-bold">{{ $order->delivery_name ?? 'N/A' }}</span>
+                                                <small class="text-muted d-block">Delivery Staff</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @elseif($order->delivery_status == 'Pending' && !$order->coordinator_id)
+                            <div class="delivery-staff-info mt-3 p-3 bg-light rounded-3 border">
+                                <div class="d-flex align-items-center">
+                                    <div class="me-3" style="width: 40px; height: 40px; background: #e5e7eb; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #9ca3af;">
+                                        <i class="fas fa-user-clock"></i>
+                                    </div>
+                                    <div>
+                                        <p class="fw-bold mb-0">Waiting for delivery assignment</p>
+                                        <small class="text-muted">A delivery staff will be assigned to your order soon.</small>
+                                    </div>
+                                </div>
+                            </div>
+                            @endif
+
                             <!-- Order Items Preview -->
                             <div class="items-preview mt-4">
                                 <h6 class="section-title mb-3">
@@ -651,7 +756,7 @@
                         </div>
                     </div>
 
-                    <!-- Enhanced Order Details Modal -->
+                    <!-- Enhanced Order Details Modal with Delivery Staff Info -->
                     <div class="modal fade" id="orderModal{{ $order->id }}" tabindex="-1">
                         <div class="modal-dialog modal-lg modal-dialog-centered">
                             <div class="modal-content border-0 shadow-lg">
@@ -748,6 +853,41 @@
                                         </div>
                                     </div>
 
+                                    <!-- Delivery Staff Info in Modal - NEW -->
+                                    @if($order->delivery_status == 'Out for Delivery' && $order->coordinator_id)
+                                    <div class="delivery-staff-info mb-4 p-3 bg-white rounded-3 border">
+                                        <h6 class="fw-bold mb-2" style="color: var(--primary-pink-dark);">
+                                            <i class="fas fa-user-tie me-2"></i>Delivery Staff Contact
+                                        </h6>
+                                        <div class="row g-2">
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block">Name</small>
+                                                <span class="fw-bold">{{ $order->delivery_name ?? 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block">Phone</small>
+                                                <span class="fw-bold">{{ $order->delivery_phone ?? 'N/A' }}</span>
+                                            </div>
+                                            <div class="col-sm-4">
+                                                <small class="text-muted d-block">Email</small>
+                                                <span class="fw-bold">{{ $order->delivery_email ?? 'N/A' }}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @elseif($order->delivery_status == 'Delivered' && $order->coordinator_id)
+                                    <div class="delivery-staff-info mb-4 p-3 bg-white rounded-3 border">
+                                        <h6 class="fw-bold mb-2" style="color: var(--success);">
+                                            <i class="fas fa-check-circle me-2"></i>Delivered By
+                                        </h6>
+                                        <div class="row g-2">
+                                            <div class="col-sm-12">
+                                                <span class="fw-bold">{{ $order->delivery_name ?? 'N/A' }}</span>
+                                                <small class="text-muted d-block">Delivery Staff</small>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @endif
+
                                     <!-- Order Items Table -->
                                     <div class="order-items-section">
                                         <h6 class="fw-bold mb-3">
@@ -774,9 +914,19 @@
                                                     @endforeach
                                                 </tbody>
                                                 <tfoot>
+                                                    @if(!empty($order->delivery_fee) && $order->delivery_fee > 0)
+                                                    <tr>
+                                                        <td colspan="3" class="text-end fw-bold">Subtotal:</td>
+                                                        <td class="fw-bold">₱{{ number_format($order->total, 2) }}</td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td colspan="3" class="text-end fw-bold">Delivery Fee:</td>
+                                                        <td class="fw-bold">₱{{ number_format($order->delivery_fee, 2) }}</td>
+                                                    </tr>
+                                                    @endif
                                                     <tr>
                                                         <td colspan="3" class="text-end fw-bold">Total Amount:</td>
-                                                        <td class="fw-bold text-success">₱{{ number_format($order->total, 2) }}</td>
+                                                        <td class="fw-bold text-success">₱{{ number_format($order->grand_total ?? $order->total, 2) }}</td>
                                                     </tr>
                                                 </tfoot>
                                             </table>

@@ -264,7 +264,7 @@ class AdminController extends Controller
         $notifications = $this->getAllNotifications();
         $unreadCount = $this->getUnreadCount();
 
-        // FIXED: Sum grand_total instead of total so delivery fees are included in sales figure
+        // Sum grand_total instead of total so delivery fees are included in sales figure
         $totalSales = DB::table('orders')
             ->where('payment_status', 'Paid')
             ->sum(DB::raw('COALESCE(grand_total, total)'));
@@ -274,7 +274,7 @@ class AdminController extends Controller
         $totalProducts = Product::count();
         $totalUsers = User::count();
 
-        // Monthly Sales (last 6 months) - FIXED: use grand_total
+        // Monthly Sales (last 6 months) - use grand_total
         $monthlySales = DB::table('orders')
             ->select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
@@ -291,10 +291,12 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        $topProducts = DB::table('order_item')
-            ->join('products', 'order_item.product_id', '=', 'products.id')
-            ->select('products.name', DB::raw('SUM(order_item.quantity) as total_sold'))
-            ->groupBy('products.id', 'products.name')
+        // CHANGED: Top Categories instead of Top Products
+        // order_item already has category_id directly, so no join through products needed
+        $topCategories = DB::table('order_item')
+            ->join('categories', 'order_item.category_id', '=', 'categories.id')
+            ->select('categories.name', DB::raw('SUM(order_item.quantity) as total_sold'))
+            ->groupBy('categories.id', 'categories.name')
             ->orderBy('total_sold', 'desc')
             ->limit(5)
             ->get();
@@ -315,7 +317,7 @@ class AdminController extends Controller
 
         return view('admin.dashboard', compact(
             'totalSales', 'totalOrders', 'pendingOrders', 'totalProducts', 
-            'totalUsers', 'monthlySales', 'recentOrders', 'topProducts',
+            'totalUsers', 'monthlySales', 'recentOrders', 'topCategories',
             'notifications', 'unreadCount', 'lowStockProducts', 'outOfStockProducts',
             'isAdmin', 'isStaff'
         ));
@@ -650,13 +652,13 @@ class AdminController extends Controller
             if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
                 $this->deductStockFromOrder($id);
                 
-                // FIXED: Use grand_total (subtotal + delivery fee) for the payment notification
+                // Use grand_total (subtotal + delivery fee) for the payment notification
                 if ($currentOrder->customer_name) {
                     $grandTotal = $currentOrder->grand_total ?? $currentOrder->total;
                     $this->notificationService->notifyPaymentReceived(
                         $id,
                         "#{$id}",
-                        $grandTotal  // ← FIXED: was $currentOrder->total
+                        $grandTotal
                     );
                 }
             }
