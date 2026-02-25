@@ -497,11 +497,27 @@
     </div>
 </div>
 
-<!-- Image Zoom Modal -->
-<div class="modal fade" id="imageModal" tabindex="-1" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.9);" onclick="closeImageModal()">
-    <span style="position: absolute; top: 20px; right: 35px; color: #fff; font-size: 40px; font-weight: bold; cursor: pointer;" onclick="closeImageModal()">&times;</span>
-    <img style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 8px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);" id="modalImage" alt="Payment Proof">
-    <div style="position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); color: #fff; text-align: center; padding: 10px 20px; background: rgba(0, 0, 0, 0.7); border-radius: 8px;" id="modalCaption"></div>
+<!-- Image Zoom Overlay (NOT a Bootstrap modal — avoids conflicts) -->
+<div id="imageModal"
+     onclick="if(event.target===this) closeImageModal()"
+     style="display:none; position:fixed; inset:0; z-index:99999;
+            background:rgba(0,0,0,0.92); align-items:center;
+            justify-content:center; flex-direction:column; gap:1rem;
+            backdrop-filter:blur(4px);">
+    <button onclick="closeImageModal()"
+            style="position:absolute; top:18px; right:28px;
+                   background:none; border:none; color:#fff;
+                   font-size:2.5rem; line-height:1; cursor:pointer;
+                   opacity:0.8; transition:opacity 0.15s;"
+            onmouseover="this.style.opacity=1"
+            onmouseout="this.style.opacity=0.8">&times;</button>
+    <img id="modalImage" alt=""
+         style="max-width:90vw; max-height:80vh; object-fit:contain;
+                border-radius:10px; box-shadow:0 8px 40px rgba(0,0,0,0.5);">
+    <div id="modalCaption"
+         style="color:#fff; font-size:0.95rem; font-weight:600;
+                background:rgba(0,0,0,0.6); padding:6px 18px;
+                border-radius:20px; max-width:90vw; text-align:center;"></div>
 </div>
 
 <!-- Modals for each order -->
@@ -578,8 +594,20 @@
                     @php
                         $orderItems = DB::table('order_item')
                             ->join('products', 'order_item.product_id', '=', 'products.id')
+                            ->leftJoin('product_customizations', 'order_item.customization_id', '=', 'product_customizations.id')
                             ->where('order_item.order_id', $order->id)
-                            ->select('products.name', 'products.image', 'order_item.quantity', 'order_item.price')
+                            ->select(
+                                'products.name',
+                                'products.image',
+                                'order_item.quantity',
+                                'order_item.price',
+                                'order_item.is_customization',
+                                'product_customizations.custom_image',
+                                'product_customizations.customization_name',
+                                'product_customizations.customization_details',
+                                'product_customizations.special_instructions',
+                                'product_customizations.admin_notes'
+                            )
                             ->get();
                     @endphp
                     
@@ -595,17 +623,82 @@
                             </thead>
                             <tbody>
                                 @foreach($orderItems as $item)
+                                    @php
+                                        $isCustom  = $item->is_customization;
+                                        $imgSrc    = $isCustom && $item->custom_image
+                                            ? asset('uploads/customizations/' . $item->custom_image)
+                                            : asset('asset/images/' . $item->image);
+                                        $itemLabel = $item->name . ($isCustom ? ' (Custom)' : '');
+                                    @endphp
                                     <tr>
                                         <td>
                                             <div class="d-flex align-items-center gap-2">
-                                                <img src="{{ asset('asset/images/' . $item->image) }}" width="40" style="border-radius: 8px;">
-                                                <span style="font-weight: 600; font-size: 0.875rem;">{{ $item->name }}</span>
+                                                <img src="{{ $imgSrc }}"
+                                                     width="40"
+                                                     alt="{{ $itemLabel }}"
+                                                     title="Click to enlarge"
+                                                     style="border-radius: 8px; cursor: zoom-in; border: 2px solid var(--border-color); transition: transform 0.2s ease, box-shadow 0.2s ease;"
+                                                     onmouseover="this.style.transform='scale(1.12)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.18)'; this.style.borderColor='var(--primary-pink)';"
+                                                     onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='none'; this.style.borderColor='var(--border-color)';"
+                                                     onclick="openImageModal(this, '{{ addslashes($itemLabel) }}')">
+                                                <div>
+                                                    <span style="font-weight: 600; font-size: 0.875rem;">{{ $item->name }}</span>
+                                                    @if($isCustom)
+                                                        <span class="badge-modern badge-info" style="font-size: 0.7rem; padding: 2px 7px; margin-left: 4px;">Custom</span>
+                                                    @endif
+                                                </div>
                                             </div>
                                         </td>
                                         <td class="text-center">{{ $item->quantity }}</td>
                                         <td class="text-end">₱{{ number_format($item->price, 2) }}</td>
                                         <td class="text-end" style="font-weight: 700;">₱{{ number_format($item->price * $item->quantity, 2) }}</td>
                                     </tr>
+                                    {{-- Customization Info Row --}}
+                                    @if($isCustom)
+                                        <tr>
+                                            <td colspan="4" style="padding: 0 0.75rem 0.75rem;">
+                                                <div style="background: linear-gradient(135deg, #f0f4ff, #faf5ff);
+                                                            border: 1px solid #c7d7ff;
+                                                            border-left: 4px solid var(--primary-pink);
+                                                            border-radius: 10px;
+                                                            padding: 0.85rem 1rem;
+                                                            font-size: 0.82rem;">
+                                                    <div style="font-weight: 700; color: var(--primary-pink); margin-bottom: 0.6rem; font-size: 0.85rem;">
+                                                        <i class="fas fa-paint-brush me-1"></i>Customization Details
+                                                        @if($item->customization_name)
+                                                            — <span style="color: var(--text-primary);">{{ $item->customization_name }}</span>
+                                                        @endif
+                                                    </div>
+                                                    <div style="display: flex; flex-direction: column; gap: 0.45rem;">
+                                                        @if($item->customization_details)
+                                                            <div style="display: flex; gap: 0.5rem;">
+                                                                <span style="font-weight: 600; color: var(--text-secondary); min-width: 130px;">
+                                                                    <i class="fas fa-align-left me-1"></i>Description:
+                                                                </span>
+                                                                <span style="color: var(--text-primary);">{{ $item->customization_details }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($item->special_instructions)
+                                                            <div style="display: flex; gap: 0.5rem;">
+                                                                <span style="font-weight: 600; color: var(--text-secondary); min-width: 130px;">
+                                                                    <i class="fas fa-sticky-note me-1"></i>Special Notes:
+                                                                </span>
+                                                                <span style="color: var(--text-primary);">{{ $item->special_instructions }}</span>
+                                                            </div>
+                                                        @endif
+                                                        @if($item->admin_notes)
+                                                            <div style="display: flex; gap: 0.5rem; margin-top: 0.25rem; padding-top: 0.45rem; border-top: 1px dashed #c7d7ff;">
+                                                                <span style="font-weight: 600; color: var(--text-secondary); min-width: 130px;">
+                                                                    <i class="fas fa-user-shield me-1"></i>Admin Notes:
+                                                                </span>
+                                                                <span style="color: var(--text-primary); font-style: italic;">{{ $item->admin_notes }}</span>
+                                                            </div>
+                                                        @endif
+                                                    </div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    @endif
                                 @endforeach
                             </tbody>
                             <tfoot>
@@ -1094,18 +1187,18 @@
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImage');
         const captionText = document.getElementById('modalCaption');
-        
-        modal.style.display = 'flex';
-        modal.style.alignItems = 'center';
-        modal.style.justifyContent = 'center';
+
         modalImg.src = imgElement.src;
         captionText.textContent = caption || imgElement.alt;
+        modal.style.display = 'flex';
         document.body.style.overflow = 'hidden';
     }
     
     function closeImageModal() {
-        document.getElementById('imageModal').style.display = 'none';
-        document.body.style.overflow = 'auto';
+        const modal = document.getElementById('imageModal');
+        modal.style.display = 'none';
+        document.getElementById('modalImage').src = '';
+        document.body.style.overflow = '';
     }
     
     document.addEventListener('keydown', function(event) {

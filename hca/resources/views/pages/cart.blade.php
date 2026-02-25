@@ -598,17 +598,82 @@
 
         /* Print Styles */
         @media print {
-            body {
-                background: white;
-            }
-
-            .btn-checkout,
-            .btn-continue,
-            .remove-btn,
-            .quantity-control {
-                display: none;
-            }
+            body { background: white; }
+            .btn-checkout, .btn-continue, .remove-btn, .quantity-control { display: none; }
         }
+
+        /* ── Clickable image ── */
+        .product-image-wrapper { cursor: zoom-in; }
+
+        /* ── Customization info panel ── */
+        .customization-info {
+            margin-top: 0.75rem;
+            background: linear-gradient(135deg, #f0f4ff, #faf5ff);
+            border: 1px solid #c7d7ff;
+            border-left: 4px solid var(--primary-pink);
+            border-radius: 10px;
+            padding: 0.85rem 1rem;
+            font-size: 0.82rem;
+        }
+        .customization-info-title {
+            font-weight: 700;
+            color: var(--primary-pink);
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        .customization-info-row {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 0.3rem;
+        }
+        .customization-info-label {
+            font-weight: 600;
+            color: var(--secondary-gray);
+            min-width: 120px;
+            flex-shrink: 0;
+        }
+        .customization-info-value { color: var(--dark-navy); }
+        .customization-info-divider { border-top: 1px dashed #c7d7ff; margin: 0.45rem 0; }
+
+        /* ── Image Preview Overlay ── */
+        #cartImgOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 99999;
+            background: rgba(0,0,0,0.92);
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 1rem;
+            backdrop-filter: blur(4px);
+        }
+        #cartImgOverlay img {
+            max-width: 90vw;
+            max-height: 80vh;
+            object-fit: contain;
+            border-radius: 10px;
+            box-shadow: 0 8px 40px rgba(0,0,0,0.5);
+        }
+        #cartImgOverlay .overlay-caption {
+            color: #fff;
+            font-size: 0.95rem;
+            font-weight: 600;
+            background: rgba(0,0,0,0.6);
+            padding: 6px 18px;
+            border-radius: 20px;
+            max-width: 90vw;
+            text-align: center;
+        }
+        #cartImgOverlay .overlay-close {
+            position: absolute;
+            top: 18px; right: 28px;
+            background: none; border: none;
+            color: #fff; font-size: 2.5rem;
+            line-height: 1; cursor: pointer;
+            opacity: 0.8; transition: opacity 0.15s;
+        }
+        #cartImgOverlay .overlay-close:hover { opacity: 1; }
     </style>
 </head>
 <body>
@@ -667,18 +732,32 @@
                 </div>
 
                 @foreach($cartItems as $item)
+                    @php
+                        $isCustom  = $item->is_customization && $item->customization;
+                        $imgSrc    = $isCustom && $item->customization->custom_image
+                            ? asset('uploads/customizations/' . $item->customization->custom_image)
+                            : asset('asset/images/' . $item->product->image);
+                        $itemLabel = $item->product->name . ($isCustom ? ' (Custom)' : '');
+                    @endphp
                     <div class="cart-item" id="cart-item-{{ $item->id }}">
                         <div class="item-content">
                             <!-- Product Image -->
-                            <div class="product-image-wrapper">
-                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
-                                     alt="{{ $item->product->name }}" 
+                            <div class="product-image-wrapper"
+                                 onclick="openCartImgModal('{{ $imgSrc }}', '{{ addslashes($itemLabel) }}')"
+                                 title="Click to enlarge">
+                                <img src="{{ $imgSrc }}"
+                                     alt="{{ $itemLabel }}"
                                      class="product-image">
                             </div>
 
                             <!-- Product Details -->
                             <div class="item-details">
-                                <h3 class="product-name">{{ $item->product->name }}</h3>
+                                <h3 class="product-name">
+                                    {{ $item->product->name }}
+                                    @if($isCustom)
+                                        <span style="display:inline-block; background: linear-gradient(135deg,#fce7f3,#fbcfe8); color:var(--primary-pink-dark); font-size:0.72rem; font-weight:600; padding:2px 8px; border-radius:6px; margin-left:4px; vertical-align:middle;">Custom</span>
+                                    @endif
+                                </h3>
                                 <span class="product-category">
                                     <i class="bi bi-tag-fill" style="font-size: 0.7rem;"></i>
                                     {{ $item->product->category->name }}
@@ -687,6 +766,37 @@
                                     <span class="unit-price">₱{{ number_format($item->price, 2) }}</span>
                                     <span style="color: var(--secondary-gray); font-size: 0.875rem;">per item</span>
                                 </div>
+
+                                {{-- Customization Info Panel --}}
+                                @if($isCustom)
+                                    <div class="customization-info">
+                                        <div class="customization-info-title">
+                                            <i class="bi bi-brush me-1"></i>Customization Details
+                                            @if($item->customization->customization_name)
+                                                — {{ $item->customization->customization_name }}
+                                            @endif
+                                        </div>
+                                        @if($item->customization->customization_details)
+                                            <div class="customization-info-row">
+                                                <span class="customization-info-label"><i class="bi bi-align-left me-1"></i>Description:</span>
+                                                <span class="customization-info-value">{{ $item->customization->customization_details }}</span>
+                                            </div>
+                                        @endif
+                                        @if($item->customization->special_instructions)
+                                            <div class="customization-info-row">
+                                                <span class="customization-info-label"><i class="bi bi-sticky me-1"></i>Special Notes:</span>
+                                                <span class="customization-info-value">{{ $item->customization->special_instructions }}</span>
+                                            </div>
+                                        @endif
+                                        @if($item->customization->admin_notes)
+                                            <div class="customization-info-divider"></div>
+                                            <div class="customization-info-row">
+                                                <span class="customization-info-label"><i class="bi bi-shield-check me-1"></i>Admin Notes:</span>
+                                                <span class="customization-info-value" style="font-style:italic;">{{ $item->customization->admin_notes }}</span>
+                                            </div>
+                                        @endif
+                                    </div>
+                                @endif
                             </div>
 
                             <!-- Actions -->
@@ -790,8 +900,32 @@
     <div class="loading-spinner"></div>
 </div>
 
+<!-- Image Preview Overlay -->
+<div id="cartImgOverlay" onclick="if(event.target===this) closeCartImgModal()">
+    <button class="overlay-close" onclick="closeCartImgModal()" title="Close">&times;</button>
+    <img id="cartImgOverlayImg" src="" alt="">
+    <div id="cartImgOverlayCaption" class="overlay-caption"></div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script>
+    function openCartImgModal(src, caption) {
+        document.getElementById('cartImgOverlayImg').src = src;
+        document.getElementById('cartImgOverlayCaption').textContent = caption;
+        const overlay = document.getElementById('cartImgOverlay');
+        overlay.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeCartImgModal() {
+        document.getElementById('cartImgOverlay').style.display = 'none';
+        document.getElementById('cartImgOverlayImg').src = '';
+        document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') closeCartImgModal();
+    });
     // Update quantity using plus/minus buttons
     function updateQuantity(itemId, newQuantity) {
         if (newQuantity < 1) return;

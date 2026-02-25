@@ -289,6 +289,86 @@
         }
         .btn-close:hover { opacity: 1; }
 
+        /* ── Clickable product image ── */
+        .product-image-clickable {
+            cursor: zoom-in;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .product-image-clickable:hover {
+            transform: scale(1.08);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.18);
+        }
+
+        /* ── Image Preview Modal ── */
+        .img-modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.75);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            backdrop-filter: blur(4px);
+            animation: fadeInOverlay 0.2s ease;
+        }
+        .img-modal-overlay.active { display: flex; }
+        @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
+
+        .img-modal-box {
+            background: var(--white);
+            border-radius: 16px;
+            overflow: hidden;
+            max-width: 520px;
+            width: 100%;
+            box-shadow: 0 25px 60px rgba(0,0,0,0.4);
+            animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes popIn {
+            from { transform: scale(0.85); opacity: 0; }
+            to   { transform: scale(1);    opacity: 1; }
+        }
+        .img-modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.85rem 1.1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .img-modal-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--dark-navy);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 85%;
+        }
+        .img-modal-close {
+            background: none;
+            border: none;
+            font-size: 1.3rem;
+            cursor: pointer;
+            color: var(--secondary-gray);
+            line-height: 1;
+            padding: 0 0.25rem;
+            transition: color 0.15s;
+        }
+        .img-modal-close:hover { color: var(--danger-red); }
+        .img-modal-body {
+            padding: 1rem;
+            text-align: center;
+            background: #f9f9f9;
+        }
+        .img-modal-body img {
+            max-width: 100%;
+            max-height: 420px;
+            object-fit: contain;
+            border-radius: 8px;
+            display: block;
+            margin: 0 auto;
+        }
+
         /* ── Empty state ── */
         .empty-state { text-align: center; padding: 4rem 1rem; }
         .empty-icon { font-size: 4rem; color: var(--border-color); margin-bottom: 1rem; }
@@ -530,14 +610,21 @@
                                         $isCustom  = $item->is_customization && $item->customization;
                                         $itemPrice = $isCustom ? $item->customization->admin_price : $item->product->price;
                                         $itemName  = $isCustom ? $item->product->name . ' (Custom)' : $item->product->name;
-                                        $itemImg   = $isCustom && $item->customization->image
-                                                        ? $item->customization->image
-                                                        : $item->product->image;
                                     @endphp
                                     <div class="product-item">
-                                        <img src="{{ asset('asset/images/' . $itemImg) }}"
-                                             alt="{{ $itemName }}"
-                                             class="product-image">
+                                        @if($isCustom && $item->customization->custom_image)
+                                            <img src="{{ asset('uploads/customizations/' . $item->customization->custom_image) }}"
+                                                 alt="{{ $itemName }}"
+                                                 class="product-image product-image-clickable"
+                                                 onclick="openImageModal(this.src, '{{ $itemName }}')"
+                                                 title="Click to enlarge">
+                                        @else
+                                            <img src="{{ asset('asset/images/' . $item->product->image) }}"
+                                                 alt="{{ $itemName }}"
+                                                 class="product-image product-image-clickable"
+                                                 onclick="openImageModal(this.src, '{{ $itemName }}')"
+                                                 title="Click to enlarge">
+                                        @endif
                                         <div class="product-details">
                                             <div class="product-name">{{ $itemName }}</div>
                                             <div class="product-meta">
@@ -707,6 +794,19 @@
         </div>
     </div>
     @endif
+</div>
+
+{{-- ── Image Preview Modal ── --}}
+<div class="img-modal-overlay" id="imgModalOverlay" onclick="closeImageModal(event)">
+    <div class="img-modal-box" id="imgModalBox">
+        <div class="img-modal-header">
+            <span class="img-modal-title" id="imgModalTitle"></span>
+            <button class="img-modal-close" onclick="closeImageModal(null)" title="Close">&#x2715;</button>
+        </div>
+        <div class="img-modal-body">
+            <img id="imgModalImg" src="" alt="">
+        </div>
+    </div>
 </div>
 
 @include('components.footer')
@@ -1185,5 +1285,28 @@ document.getElementById('checkoutForm').addEventListener('submit', function (e) 
         delivery_distance_km: document.getElementById('deliveryDistanceInput').value,
         grand_total: document.getElementById('grandTotalInput').value
     });
+});
+
+// ════════════════════════════════════════════════════════════════
+//  IMAGE PREVIEW MODAL
+// ════════════════════════════════════════════════════════════════
+function openImageModal(src, title) {
+    document.getElementById('imgModalImg').src   = src;
+    document.getElementById('imgModalTitle').textContent = title;
+    const overlay = document.getElementById('imgModalOverlay');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal(event) {
+    // If triggered by overlay click, only close if clicking the overlay itself (not the box)
+    if (event && event.target !== document.getElementById('imgModalOverlay')) return;
+    document.getElementById('imgModalOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+// Close on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeImageModal(null);
 });
 </script>

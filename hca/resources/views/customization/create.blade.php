@@ -197,7 +197,7 @@
         /* Category Grid */
         .category-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             gap: 15px;
             margin-bottom: 20px;
         }
@@ -205,11 +205,10 @@
         .category-card {
             background: white;
             border: 2px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 25px;
+            border-radius: 16px;
+            overflow: hidden;
             cursor: pointer;
             transition: all 0.3s ease;
-            text-align: center;
             text-decoration: none;
             color: inherit;
             display: block;
@@ -217,7 +216,7 @@
 
         .category-card:hover {
             border-color: var(--primary);
-            transform: translateY(-2px);
+            transform: translateY(-4px);
             box-shadow: var(--hover-shadow);
         }
 
@@ -226,21 +225,52 @@
             background: linear-gradient(135deg, #fff5f8 0%, #ffe4ec 100%);
         }
 
-        .category-icon {
-            font-size: 2.5rem;
+        /* ── Category image ── */
+        .category-img-wrap {
+            width: 100%;
+            aspect-ratio: 4 / 3;
+            overflow: hidden;
+            background: #f1f5f9;
+            position: relative;
+        }
+
+        .category-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.4s ease;
+        }
+
+        .category-card:hover .category-img-wrap img {
+            transform: scale(1.07);
+        }
+
+        /* Fallback icon shown when no image */
+        .category-img-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
             color: var(--primary);
-            margin-bottom: 10px;
+            background: linear-gradient(135deg, #fff5f8, #ffe4ec);
+        }
+
+        .category-body {
+            padding: 16px 18px;
+            text-align: center;
         }
 
         .category-name {
-            font-weight: 600;
+            font-weight: 700;
             color: #1e293b;
-            margin-bottom: 5px;
-            font-size: 1.1rem;
+            margin-bottom: 4px;
+            font-size: 1rem;
         }
 
         .category-count {
-            font-size: 0.9rem;
+            font-size: 0.85rem;
             color: #64748b;
         }
 
@@ -505,49 +535,29 @@
 
         /* Animations */
         @keyframes fadeInDown {
-            from {
-                opacity: 0;
-                transform: translateY(-30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(-30px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            from { opacity: 0; transform: translateY(30px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeIn {
             from { opacity: 0; }
-            to { opacity: 1; }
+            to   { opacity: 1; }
         }
 
         /* Responsive */
         @media (max-width: 968px) {
-            .form-grid {
-                grid-template-columns: 1fr;
-            }
+            .form-grid { grid-template-columns: 1fr; }
+            .progress-steps { flex-direction: column; align-items: center; }
+            .btn { width: 100%; justify-content: center; margin-right: 0; margin-bottom: 10px; }
+        }
 
-            .progress-steps {
-                flex-direction: column;
-                align-items: center;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-                margin-right: 0;
-                margin-bottom: 10px;
-            }
+        @media (max-width: 600px) {
+            .category-grid { grid-template-columns: repeat(2, 1fr); }
         }
     </style>
 </head>
@@ -621,14 +631,30 @@
 
                     <div class="category-grid">
                         @foreach($categories as $cat)
-                            <a href="{{ route('customization.create', ['category_id' => $cat->id]) }}" 
+                            @php
+                                $refProduct = $cat->products->first();
+                            @endphp
+                            <a href="{{ route('customization.create', ['category_id' => $cat->id]) }}"
                                class="category-card">
-                                <div class="category-icon">
-                                    <i class="fas fa-box"></i>
+                                <div class="category-img-wrap">
+                                    @if($refProduct && $refProduct->image)
+                                        <img src="{{ asset('asset/images/' . $refProduct->image) }}"
+                                             alt="{{ $cat->name }}"
+                                             onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                                        <div class="category-img-fallback" style="display:none; position:absolute; inset:0;">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                    @else
+                                        <div class="category-img-fallback">
+                                            <i class="fas fa-box"></i>
+                                        </div>
+                                    @endif
                                 </div>
-                                <div class="category-name">{{ $cat->name }}</div>
-                                <div class="category-count">
-                                    {{ $cat->products->count() }} available products
+                                <div class="category-body">
+                                    <div class="category-name">{{ $cat->name }}</div>
+                                    <div class="category-count">
+                                        {{ $cat->products->count() }} available products
+                                    </div>
                                 </div>
                             </a>
                         @endforeach
@@ -660,7 +686,7 @@
                                 Reference Product
                             </div>
                             <div class="product-preview-flex">
-                                <img src="{{ asset('asset/images/' . $referenceProduct->image) }}" 
+                                <img src="{{ asset('asset/images/' . $referenceProduct->image) }}"
                                      alt="{{ $referenceProduct->name }}"
                                      onerror="this.src='{{ asset('images/placeholder.jpg') }}'">
                                 <div class="product-info">
@@ -686,10 +712,10 @@
 
                             <div class="form-group">
                                 <label class="form-label required">Customization Name</label>
-                                <input type="text" 
+                                <input type="text"
                                        class="form-input"
-                                       id="customization_name" 
-                                       name="customization_name" 
+                                       id="customization_name"
+                                       name="customization_name"
                                        placeholder="e.g., Romantic Red Rose Bouquet"
                                        required
                                        value="{{ old('customization_name') }}">
@@ -697,18 +723,18 @@
 
                             <div class="form-group">
                                 <label class="form-label required">Detailed Description</label>
-                                <textarea class="form-textarea" 
-                                          id="customization_details" 
-                                          name="customization_details" 
+                                <textarea class="form-textarea"
+                                          id="customization_details"
+                                          name="customization_details"
                                           placeholder="Describe your vision in detail:&#10;• What flowers do you want?&#10;• Preferred colors and style?&#10;• Size and arrangement preferences?&#10;• Any specific flowers to include or avoid?&#10;• What's the occasion?"
                                           required>{{ old('customization_details') }}</textarea>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Special Instructions (Optional)</label>
-                                <textarea class="form-textarea" 
-                                          id="special_instructions" 
-                                          name="special_instructions" 
+                                <textarea class="form-textarea"
+                                          id="special_instructions"
+                                          name="special_instructions"
                                           placeholder="Any additional details, delivery preferences, or special requests..."
                                           style="min-height: 100px;">{{ old('special_instructions') }}</textarea>
                             </div>
@@ -728,9 +754,9 @@
                                 <div class="upload-icon"><i class="fas fa-cloud-upload-alt"></i></div>
                                 <div class="upload-text">Click to upload image</div>
                                 <div class="upload-subtext">JPG, PNG, GIF up to 5MB</div>
-                                <input type="file" 
-                                       id="custom_image" 
-                                       name="custom_image" 
+                                <input type="file"
+                                       id="custom_image"
+                                       name="custom_image"
                                        accept="image/*"
                                        onchange="previewImage(this)">
                             </div>
@@ -859,13 +885,13 @@
         document.getElementById('customizationForm').addEventListener('submit', function(e) {
             const customizationName = document.getElementById('customization_name').value;
             const customizationDetails = document.getElementById('customization_details').value;
-            
+
             if (!customizationName.trim() || !customizationDetails.trim()) {
                 e.preventDefault();
                 alert('Please fill in all required fields.');
                 return;
             }
-            
+
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
             submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Submitting...';
