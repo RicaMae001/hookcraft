@@ -250,6 +250,12 @@ Route::middleware(['auth'])->group(function () {
     // ORDER MANAGEMENT
     // ===================================
     Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
+
+    // ===================================
+    // DELIVERY MAP TRACKER — Customer-facing rider location poll
+    // Used by the live map on the order card (polls every 15s)
+    // ===================================
+    Route::get('/deliveries/{id}/location', [DeliveryController::class, 'getRiderLocation'])->name('deliveries.location');
 });
 
 // ===================================
@@ -388,6 +394,10 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
     
     // Payment Proof Upload
     Route::post('/deliveries/{id}/upload-payment-proof', [DeliveryController::class, 'uploadPaymentProof'])->name('upload-payment-proof');
+    
+    // Proof of Delivery and Payment Upload Routes
+    Route::post('/deliveries/{id}/upload-proof-of-delivery', [DeliveryController::class, 'uploadProofOfDelivery'])->name('upload-proof-of-delivery');
+    Route::post('/deliveries/{id}/upload-proof-of-payment',  [DeliveryController::class, 'uploadProofOfPayment'])->name('upload-proof-of-payment');
     
     // Delivery History
     Route::get('/history', [DeliveryController::class, 'history'])->name('history');

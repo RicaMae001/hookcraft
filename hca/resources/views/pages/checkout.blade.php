@@ -41,7 +41,6 @@
 
         .container { max-width: 1200px; margin: 0 auto; padding: 0 1rem; }
 
-        /* ── Page Header ── */
         .page-header { text-align: center; margin-bottom: 2rem; padding-top: 1rem; }
         .page-header h2 {
             font-size: 2rem; font-weight: 700; color: var(--dark-navy);
@@ -49,7 +48,6 @@
         }
         .page-header .subtitle { color: var(--secondary-gray); font-size: 1rem; max-width: 600px; margin: 0 auto; }
 
-        /* ── Cards ── */
         .card {
             border: none; border-radius: var(--border-radius);
             box-shadow: var(--shadow-md); overflow: hidden;
@@ -65,7 +63,6 @@
         .card-header i { color: var(--primary-pink); }
         .card-body { padding: 1.5rem; }
 
-        /* ── User Info ── */
         .user-info-display {
             background: linear-gradient(135deg, rgba(248,231,243,0.4), rgba(248,231,243,0.2));
             border: 1px solid rgba(214,51,132,0.2);
@@ -88,7 +85,6 @@
         }
         .user-info-value { font-size: 0.95rem; font-weight: 500; color: var(--dark-navy); }
 
-        /* ── Location Info box ── */
         .location-info {
             background: linear-gradient(135deg, #e3f2fd, #f0f4ff);
             border: 1px solid #90caf9; border-radius: 8px;
@@ -97,7 +93,6 @@
             display: flex; align-items: flex-start; gap: 0.5rem;
         }
 
-        /* ── Address display ── */
         .address-display {
             background: linear-gradient(135deg, #f8f9fa, #fff);
             border: 1px solid var(--border-color);
@@ -111,7 +106,6 @@
             font-size: 0.75rem; font-weight: 500; margin: 2px; border: 1px solid #ce93d8;
         }
 
-        /* ── Form elements ── */
         .form-group { margin-bottom: 1rem; }
         .form-label {
             font-weight: 600; color: var(--dark-navy);
@@ -136,17 +130,71 @@
         }
         .input-group .form-control { border-left: none; border-radius: 0 8px 8px 0; }
 
-        /* ── Map ── */
+        /* ── Map wrapper with styled header/footer like delivery page ── */
+        .map-wrapper {
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+            margin-bottom: 0.5rem;
+            box-shadow: var(--shadow-sm);
+        }
+        .map-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px;
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
+            color: #fff;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+        .map-header-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-weight: 700;
+            font-size: 0.82rem;
+        }
+        .map-status-pill {
+            font-size: 0.7rem;
+            background: rgba(255,255,255,0.22);
+            padding: 2px 9px;
+            border-radius: 20px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
         #map {
-            height: 300px; width: 100%;
-            border-radius: 8px; margin-bottom: 10px; border: 2px solid var(--border-color);
+            height: 300px;
+            width: 100%;
+        }
+        .map-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 7px 14px;
+            background: var(--light-gray);
+            border-top: 1px solid var(--border-color);
+            font-size: 0.76rem;
+            color: var(--secondary-gray);
+            font-weight: 500;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .map-footer-stat {
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
-        /* ── Right column ── */
+        /* Animated dash route */
+        @keyframes dashMove {
+            from { stroke-dashoffset: 80; }
+            to   { stroke-dashoffset: 0;  }
+        }
+
         .right-column { position: sticky; top: 2rem; }
         .order-summary-wrapper { display: flex; flex-direction: column; gap: 1rem; }
 
-        /* ── Product items ── */
         .product-item {
             display: flex; align-items: center; padding: 0.5rem;
             border-bottom: 1px solid var(--border-color); transition: var(--transition);
@@ -165,7 +213,6 @@
         .product-meta { color: var(--secondary-gray); font-size: 0.75rem; margin-bottom: 0.125rem; }
         .product-price { font-weight: 700; color: var(--primary-pink); font-size: 0.9rem; }
 
-        /* ── Summary sections ── */
         .summary-section { padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
         .summary-section:last-child { border-bottom: none; }
         .summary-row {
@@ -174,7 +221,6 @@
         }
         .summary-row:last-child { margin-bottom: 0; }
 
-        /* ── Delivery fee box ── */
         .delivery-fee-box {
             background: linear-gradient(135deg, #fff8e1, #fef3c7);
             border: 1px solid #f59e0b; border-radius: 8px;
@@ -191,7 +237,6 @@
             display: flex; align-items: center; gap: 0.25rem; flex-wrap: wrap;
         }
 
-        /* Spinner */
         .fee-spinner {
             display: inline-block; width: 13px; height: 13px;
             border: 2px solid rgba(214,51,132,0.2); border-top-color: var(--primary-pink);
@@ -200,7 +245,6 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* ── Grand total row ── */
         .grand-total-row {
             display: flex; justify-content: space-between; align-items: center;
             background: linear-gradient(135deg, rgba(214,51,132,0.07), rgba(233,30,99,0.04));
@@ -210,7 +254,6 @@
         .grand-total-row .gt-label { font-size: 0.95rem; font-weight: 700; color: var(--dark-navy); }
         .grand-total-row .gt-value { font-size: 1.15rem; font-weight: 800; color: var(--primary-pink); }
 
-        /* ── Security badges ── */
         .security-badge {
             display: inline-flex; align-items: center; gap: 0.25rem;
             background: #e8f5e9; color: #2e7d32; padding: 0.25rem 0.5rem;
@@ -218,7 +261,6 @@
             margin-right: 0.25rem; margin-bottom: 0.25rem;
         }
 
-        /* ── Payment options ── */
         .payment-options {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
             gap: 0.5rem; margin-top: 0.25rem;
@@ -246,7 +288,6 @@
         }
         .payment-option p { color: var(--secondary-gray); font-size: 0.75rem; margin: 0; line-height: 1.2; }
 
-        /* ── Buttons ── */
         .btn {
             border-radius: 8px; padding: 0.75rem 1.5rem; font-weight: 600;
             transition: var(--transition); border: none; font-size: 0.95rem;
@@ -274,7 +315,6 @@
         .btn-sm { padding: 0.5rem 0.9rem; font-size: 0.85rem; }
         .w-100 { width: 100%; }
 
-        /* ── Alerts ── */
         .alert {
             padding: 0.75rem 1rem; border-radius: 8px; margin-bottom: 1rem;
             display: flex; align-items: flex-start; gap: 0.5rem; font-size: 0.875rem;
@@ -289,7 +329,6 @@
         }
         .btn-close:hover { opacity: 1; }
 
-        /* ── Clickable product image ── */
         .product-image-clickable {
             cursor: zoom-in;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -299,28 +338,18 @@
             box-shadow: 0 4px 12px rgba(0,0,0,0.18);
         }
 
-        /* ── Image Preview Modal ── */
         .img-modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.75);
-            z-index: 9999;
-            align-items: center;
-            justify-content: center;
-            padding: 1.5rem;
-            backdrop-filter: blur(4px);
-            animation: fadeInOverlay 0.2s ease;
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.75); z-index: 9999;
+            align-items: center; justify-content: center; padding: 1.5rem;
+            backdrop-filter: blur(4px); animation: fadeInOverlay 0.2s ease;
         }
         .img-modal-overlay.active { display: flex; }
         @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
 
         .img-modal-box {
-            background: var(--white);
-            border-radius: 16px;
-            overflow: hidden;
-            max-width: 520px;
-            width: 100%;
+            background: var(--white); border-radius: 16px; overflow: hidden;
+            max-width: 520px; width: 100%;
             box-shadow: 0 25px 60px rgba(0,0,0,0.4);
             animation: popIn 0.25s cubic-bezier(0.34,1.56,0.64,1);
         }
@@ -329,51 +358,27 @@
             to   { transform: scale(1);    opacity: 1; }
         }
         .img-modal-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 0.85rem 1.1rem;
-            border-bottom: 1px solid var(--border-color);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0.85rem 1.1rem; border-bottom: 1px solid var(--border-color);
         }
         .img-modal-title {
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--dark-navy);
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 85%;
+            font-size: 0.9rem; font-weight: 600; color: var(--dark-navy);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 85%;
         }
         .img-modal-close {
-            background: none;
-            border: none;
-            font-size: 1.3rem;
-            cursor: pointer;
-            color: var(--secondary-gray);
-            line-height: 1;
-            padding: 0 0.25rem;
-            transition: color 0.15s;
+            background: none; border: none; font-size: 1.3rem; cursor: pointer;
+            color: var(--secondary-gray); line-height: 1; padding: 0 0.25rem; transition: color 0.15s;
         }
         .img-modal-close:hover { color: var(--danger-red); }
-        .img-modal-body {
-            padding: 1rem;
-            text-align: center;
-            background: #f9f9f9;
-        }
+        .img-modal-body { padding: 1rem; text-align: center; background: #f9f9f9; }
         .img-modal-body img {
-            max-width: 100%;
-            max-height: 420px;
-            object-fit: contain;
-            border-radius: 8px;
-            display: block;
-            margin: 0 auto;
+            max-width: 100%; max-height: 420px; object-fit: contain;
+            border-radius: 8px; display: block; margin: 0 auto;
         }
 
-        /* ── Empty state ── */
         .empty-state { text-align: center; padding: 4rem 1rem; }
         .empty-icon { font-size: 4rem; color: var(--border-color); margin-bottom: 1rem; }
 
-        /* ── Layout ── */
         .row { display: flex; flex-wrap: wrap; }
         .row.g-4 { gap: 1.5rem; flex-wrap: nowrap; }
         .col-lg-8 { width: 66.6667%; flex-shrink: 0; }
@@ -381,7 +386,6 @@
         .col-md-6 { width: 50%; padding: 0 0.375rem; }
         .cols-row { display: flex; margin: 0 -0.375rem; flex-wrap: wrap; }
 
-        /* ── Responsive ── */
         @media (max-width: 991px) {
             .row.g-4 { flex-wrap: wrap; gap: 1rem; }
             .col-lg-8, .col-lg-4 { width: 100%; }
@@ -552,10 +556,38 @@
                             <label class="form-label">
                                 <i class="bi bi-map"></i>Location Map
                             </label>
-                            <div id="map"></div>
+
+                            {{-- ── Styled map wrapper (matches delivery page) ── --}}
+                            <div class="map-wrapper">
+                                <div class="map-header">
+                                    <div class="map-header-title">
+                                        <i class="bi bi-truck"></i>
+                                        Delivery Route
+                                    </div>
+                                    <span class="map-status-pill" id="mapStatusPill">Select address</span>
+                                </div>
+                                <div id="map"></div>
+                                <div class="map-footer">
+                                    <div class="map-footer-stat">
+                                        <i class="bi bi-geo-alt-fill" style="color:var(--primary-pink);"></i>
+                                        <span>Hipodromo, Cebu City</span>
+                                        <i class="bi bi-arrow-right" style="opacity:0.5;font-size:0.7rem;"></i>
+                                        <i class="bi bi-house-fill" style="color:#198754;"></i>
+                                        <span id="mapFooterDest">—</span>
+                                    </div>
+                                    <div class="map-footer-stat">
+                                        <i class="bi bi-signpost-split" style="color:var(--primary-pink);"></i>
+                                        <span id="mapFooterDist">—</span>
+                                        &nbsp;
+                                        <i class="bi bi-clock" style="color:#f59e0b;"></i>
+                                        <span id="mapFooterEta">—</span>
+                                    </div>
+                                </div>
+                            </div>
+
                             <small style="color:var(--secondary-gray);font-size:0.78rem;">
                                 Click on the map or select a barangay to pin your delivery location.
-                                The dashed line shows the route from our store.
+                                The route shows the road path from our store.
                             </small>
                         </div>
 
@@ -599,7 +631,6 @@
                         </div>
                         <div class="card-body">
 
-                            {{-- Items --}}
                             <div class="summary-section">
                                 <h6 style="font-size:0.9rem;margin-bottom:0.5rem;">
                                     Items ({{ $cartItems->count() }})
@@ -638,7 +669,6 @@
                                 @endforeach
                             </div>
 
-                            {{-- Price Breakdown --}}
                             <div class="summary-section">
 
                                 <div class="summary-row">
@@ -646,7 +676,6 @@
                                     <span>₱{{ number_format($total, 2) }}</span>
                                 </div>
 
-                                {{-- Delivery Fee — updated live by JS --}}
                                 <div class="delivery-fee-box">
                                     <div class="fee-row">
                                         <span class="fee-label">
@@ -673,7 +702,6 @@
                                     <span style="color:#198754;">Included</span>
                                 </div>
 
-                                {{-- Grand Total --}}
                                 <div class="grand-total-row">
                                     <span class="gt-label">
                                         <i class="bi bi-receipt" style="margin-right:4px;"></i>Grand Total
@@ -683,7 +711,6 @@
                                     </span>
                                 </div>
 
-                                {{-- COD cash reminder --}}
                                 <div id="codReminder"
                                      class="alert alert-warning"
                                      style="display:none;margin-top:0.5rem;padding:0.5rem 0.75rem;">
@@ -697,7 +724,6 @@
 
                             </div>
 
-                            {{-- Security + support --}}
                             <div class="summary-section">
                                 <div style="display:flex;flex-wrap:wrap;margin-bottom:0.5rem;">
                                     <span class="security-badge">
@@ -745,19 +771,6 @@
                                            id="paymentCOD" style="display:none;"
                                            form="checkoutForm" checked>
                                 </div>
-
-                                {{-- Uncomment to enable GCash:
-                                <div class="payment-option"
-                                     id="optGCash"
-                                     onclick="selectPayment('GCash', this)">
-                                    <div class="icon"><i class="bi bi-phone"></i></div>
-                                    <h6>GCash</h6>
-                                    <p>Pay via GCash transfer</p>
-                                    <input type="radio" name="payment_method" value="GCash"
-                                           id="paymentGCash" style="display:none;"
-                                           form="checkoutForm">
-                                </div>
-                                --}}
                             </div>
 
                             <div style="margin-top:1rem;">
@@ -796,7 +809,7 @@
     @endif
 </div>
 
-{{-- ── Image Preview Modal ── --}}
+{{-- Image Preview Modal --}}
 <div class="img-modal-overlay" id="imgModalOverlay" onclick="closeImageModal(event)">
     <div class="img-modal-box" id="imgModalBox">
         <div class="img-modal-header">
@@ -814,14 +827,10 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 // ════════════════════════════════════════════════════════════════
-//  DELIVERY FEE
-//  Origin : Hipodromo, Cebu City
-//  Formula: haversine × 1.3 road-factor
-//           ₱40 base (first 2 km) + ₱15/km after → round up ₱5 → cap ₱200
+//  STORE COORDINATES — Hipodromo, Cebu City
 // ════════════════════════════════════════════════════════════════
+const ORIGIN = { lat: 10.314152, lng: 123.906935 };
 
-// const ORIGIN = { lat: 10.3219, lng: 123.9019 };
-const ORIGIN = { lat: 10.3141, lng: 123.9070 };
 const DELIVERY = {
     baseFee:    40,
     baseKm:      2,
@@ -832,7 +841,6 @@ const DELIVERY = {
 
 const SUBTOTAL = {{ $total }};
 
-// ── City configs ──────────────────────────────────────────────
 const CITY_CONFIGS = {
     1: { name: 'Cebu City',      center: [10.3157, 123.8854], bounds: [[10.25, 123.80], [10.38, 123.97]], minZoom: 12, maxZoom: 18 },
     2: { name: 'Lapu-Lapu City', center: [10.3103, 123.9494], bounds: [[10.27, 123.90], [10.35, 124.00]], minZoom: 13, maxZoom: 18 },
@@ -840,20 +848,15 @@ const CITY_CONFIGS = {
     4: { name: 'Talisay City',   center: [10.2444, 123.8493], bounds: [[10.20, 123.81], [10.29, 123.89]], minZoom: 13, maxZoom: 18 }
 };
 
-// ── State ─────────────────────────────────────────────────────
 let citiesData    = [];
 let barangaysData = [];
 let currentCity   = null;
 let currentFee    = 0;
 
-// ── DOM refs ──────────────────────────────────────────────────
-const citySelect      = document.getElementById('citySelect');
-const barangaySelect  = document.getElementById('barangaySelect');
-const locationInfoBox = document.getElementById('locationInfoBox');
+const citySelect     = document.getElementById('citySelect');
+const barangaySelect = document.getElementById('barangaySelect');
 
-// ════════════════════════════════════════════════════════════════
-//  PAYMENT SELECTION
-// ════════════════════════════════════════════════════════════════
+// ── Payment ───────────────────────────────────────────────────
 function selectPayment(method, el) {
     document.querySelectorAll('.payment-option').forEach(o => o.classList.remove('selected'));
     el.classList.add('selected');
@@ -861,9 +864,7 @@ function selectPayment(method, el) {
     refreshCodReminder();
 }
 
-// ════════════════════════════════════════════════════════════════
-//  DELIVERY FEE HELPERS
-// ════════════════════════════════════════════════════════════════
+// ── Fee helpers ───────────────────────────────────────────────
 function haversineKm(lat1, lng1, lat2, lng2) {
     const R  = 6371;
     const dL = (lat2 - lat1) * Math.PI / 180;
@@ -884,8 +885,10 @@ function computeFee(destLat, destLng) {
     return { fee, road };
 }
 
-function applyDeliveryFee(destLat, destLng, labelName) {
+function applyDeliveryFee(destLat, destLng, labelName, roadKm) {
     const { fee, road } = computeFee(destLat, destLng);
+    // Use actual road distance from OSRM if available, else fallback
+    const displayRoad = roadKm !== undefined ? roadKm : road;
     currentFee = fee;
     const grand = SUBTOTAL + fee;
 
@@ -894,11 +897,11 @@ function applyDeliveryFee(destLat, destLng, labelName) {
         '₱' + grand.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
     document.getElementById('routeDestLabel').textContent      = labelName;
-    document.getElementById('routeDistLabel').textContent      = road.toFixed(1);
+    document.getElementById('routeDistLabel').textContent      = displayRoad.toFixed(1);
     document.getElementById('deliveryRouteInfo').style.display = 'flex';
 
     document.getElementById('deliveryFeeInput').value      = fee.toFixed(2);
-    document.getElementById('deliveryDistanceInput').value = road.toFixed(1);
+    document.getElementById('deliveryDistanceInput').value = displayRoad.toFixed(1);
     document.getElementById('grandTotalInput').value       = grand.toFixed(2);
 
     refreshCodReminder();
@@ -922,6 +925,7 @@ function showCalculating() {
         '<span class="fee-spinner"></span><span style="font-size:0.78rem;color:#b45309;">Calculating…</span>';
     document.getElementById('deliveryRouteInfo').style.display = 'none';
     document.getElementById('codReminder').style.display       = 'none';
+    setMapStatus('Calculating route…');
 }
 
 function resetFee() {
@@ -935,6 +939,28 @@ function resetFee() {
     document.getElementById('deliveryDistanceInput').value     = '0';
     document.getElementById('grandTotalInput').value           = SUBTOTAL.toFixed(2);
     document.getElementById('codReminder').style.display       = 'none';
+    resetMapFooter();
+    setMapStatus('Select address');
+}
+
+// ── Map status pill + footer helpers ─────────────────────────
+function setMapStatus(text) {
+    document.getElementById('mapStatusPill').textContent = text;
+}
+function setMapFooter(dest, dist, eta) {
+    document.getElementById('mapFooterDest').textContent = dest || '—';
+    document.getElementById('mapFooterDist').textContent = dist || '—';
+    document.getElementById('mapFooterEta').textContent  = eta  || '—';
+}
+function resetMapFooter() {
+    setMapFooter('—', '—', '—');
+}
+function fmtDist(km) {
+    return km < 1 ? (km * 1000).toFixed(0) + ' m' : km.toFixed(1) + ' km';
+}
+function fmtTime(s) {
+    const m = Math.round(s / 60);
+    return m < 1 ? 'Arriving!' : m < 60 ? m + ' min' : Math.floor(m/60) + 'h ' + (m%60) + 'm';
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -949,23 +975,35 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '© OpenStreetMap', maxZoom: 18
 }).addTo(map);
 
-// Store pin
+// ── Store pin (styled like delivery page) ────────────────────
 L.marker([ORIGIN.lat, ORIGIN.lng], {
     icon: L.divIcon({
+        className: '',
         html: `<div style="position:relative;">
-                 <div style="background:#dc3545;width:14px;height:14px;border-radius:50%;
-                      border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.4);"></div>
-                 <div style="position:absolute;top:-24px;left:50%;transform:translateX(-50%);
-                      background:#dc3545;color:#fff;font-size:9px;padding:2px 6px;
-                      border-radius:4px;white-space:nowrap;font-weight:700;">📦 Store</div>
+                 <div style="background:linear-gradient(135deg,#d63384,#e91e63);
+                      width:30px;height:30px;border-radius:50%;border:3px solid #fff;
+                      box-shadow:0 3px 10px rgba(214,51,132,0.45);
+                      display:flex;align-items:center;justify-content:center;">
+                   <i class="bi bi-shop" style="color:#fff;font-size:0.75rem;"></i>
+                 </div>
+                 <div style="position:absolute;top:-26px;left:50%;transform:translateX(-50%);
+                      background:linear-gradient(135deg,#d63384,#e91e63);color:#fff;
+                      font-size:9px;padding:2px 7px;border-radius:10px;
+                      white-space:nowrap;font-weight:800;letter-spacing:0.02em;
+                      box-shadow:0 2px 6px rgba(214,51,132,0.4);">🏪 STORE</div>
                </div>`,
-        iconSize: [14, 14], iconAnchor: [7, 7]
+        iconSize: [30, 30], iconAnchor: [15, 15]
     })
-}).addTo(map).bindPopup('<strong>📦 Hookcraft Avenue</strong><br>Hipodromo, Cebu City');
+}).addTo(map).bindPopup('<b>🏪 Hookcraft Avenue</b><br>Hipodromo, Cebu City');
 
-let marker       = null;
+let destMarker   = null;
 let boundaryRect = null;
-let routeLine    = null;
+let routeLayers  = [];   // holds all route polylines so we can clear them
+
+function clearRouteLayers() {
+    routeLayers.forEach(l => map.removeLayer(l));
+    routeLayers = [];
+}
 
 function drawBoundary(bounds) {
     if (boundaryRect) map.removeLayer(boundaryRect);
@@ -974,25 +1012,26 @@ function drawBoundary(bounds) {
     }).addTo(map);
 }
 
-function drawRoute(destLat, destLng) {
-    if (routeLine) map.removeLayer(routeLine);
-    routeLine = L.polyline(
-        [[ORIGIN.lat, ORIGIN.lng], [destLat, destLng]],
-        { color: '#d63384', weight: 2, opacity: 0.6, dashArray: '8 5' }
-    ).addTo(map);
-}
-
-function placeMarker(lat, lng, popupText) {
+function placeDestMarker(lat, lng, popupText) {
     document.getElementById('latitude').value  = lat;
     document.getElementById('longitude').value = lng;
-    if (marker) map.removeLayer(marker);
-    marker = L.marker([lat, lng], {
+    if (destMarker) map.removeLayer(destMarker);
+    destMarker = L.marker([lat, lng], {
         icon: L.divIcon({
-            html: '<div style="background:#d63384;width:20px;height:20px;border-radius:50%;border:3px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,0.3);"></div>',
-            iconSize: [20, 20], iconAnchor: [10, 10]
+            className: '',
+            html: `<div style="width:28px;height:28px;
+                        background:linear-gradient(135deg,#f093fb,#f5576c);
+                        border-radius:50% 50% 50% 0;
+                        transform:rotate(-45deg);
+                        border:3px solid #fff;
+                        box-shadow:0 3px 10px rgba(0,0,0,0.25);
+                        display:flex;align-items:center;justify-content:center;">
+                     <i class="bi bi-house-fill" style="transform:rotate(45deg);color:#fff;font-size:0.75rem;"></i>
+                   </div>`,
+            iconSize: [28, 28], iconAnchor: [14, 28]
         })
     }).addTo(map);
-    if (popupText) marker.bindPopup('<strong>' + popupText + '</strong>').openPopup();
+    if (popupText) destMarker.bindPopup('<b>📦 ' + popupText + '</b>').openPopup();
     map.setView([lat, lng], 15);
 }
 
@@ -1000,6 +1039,81 @@ function inBounds(lat, lng, cityId) {
     if (!CITY_CONFIGS[cityId]) return false;
     const b = CITY_CONFIGS[cityId].bounds;
     return lat >= b[0][0] && lat <= b[1][0] && lng >= b[0][1] && lng <= b[1][1];
+}
+
+// ════════════════════════════════════════════════════════════════
+//  OSRM ROAD ROUTE — matches delivery page style
+// ════════════════════════════════════════════════════════════════
+async function drawRoadRoute(destLat, destLng, labelName) {
+    clearRouteLayers();
+
+    // Destination pulse ring
+    const pulse = L.circle([destLat, destLng], {
+        radius: 35, color: '#f5576c', fillColor: '#f5576c', fillOpacity: 0.2, weight: 2.5
+    }).addTo(map);
+    routeLayers.push(pulse);
+
+    try {
+        const url = 'https://router.project-osrm.org/route/v1/driving/'
+            + ORIGIN.lng + ',' + ORIGIN.lat + ';'
+            + destLng    + ',' + destLat
+            + '?overview=full&geometries=geojson&steps=false';
+
+        const res  = await fetch(url);
+        const data = await res.json();
+
+        if (data.code !== 'Ok' || !data.routes?.length) throw new Error('no route');
+
+        const route  = data.routes[0];
+        const coords = route.geometry.coordinates.map(c => [c[1], c[0]]);
+        const distKm = route.distance / 1000;
+        const durS   = route.duration;
+
+        // Glow layer
+        const glow = L.polyline(coords, {
+            color: '#d63384', weight: 14, opacity: 0.18,
+            lineJoin: 'round', lineCap: 'round'
+        }).addTo(map);
+        routeLayers.push(glow);
+
+        // Main solid line
+        const main = L.polyline(coords, {
+            color: '#d63384', weight: 6, opacity: 0.92,
+            lineJoin: 'round', lineCap: 'round'
+        }).addTo(map);
+        routeLayers.push(main);
+
+        // Animated white dashes on top
+        const dashes = L.polyline(coords, {
+            color: '#fff', weight: 2.5, opacity: 0.75,
+            dashArray: '8 18', lineJoin: 'round', lineCap: 'round'
+        }).addTo(map);
+        routeLayers.push(dashes);
+
+        map.fitBounds(main.getBounds(), { padding: [50, 50] });
+
+        // Update status pill & footer
+        setMapStatus('Route loaded · ' + fmtDist(distKm));
+        setMapFooter(labelName, fmtDist(distKm), fmtTime(durS));
+
+        applyDeliveryFee(destLat, destLng, labelName, distKm);
+
+    } catch (e) {
+        // Fallback: styled dashed straight line
+        console.warn('OSRM routing failed, using straight line:', e);
+        const d = haversineKm(ORIGIN.lat, ORIGIN.lng, destLat, destLng);
+        const road = Math.round(d * DELIVERY.roadFactor * 10) / 10;
+
+        const fallback = L.polyline([[ORIGIN.lat, ORIGIN.lng], [destLat, destLng]], {
+            color: '#d63384', weight: 4, opacity: 0.7, dashArray: '9 9'
+        }).addTo(map);
+        routeLayers.push(fallback);
+        map.fitBounds(fallback.getBounds(), { padding: [40, 40] });
+
+        setMapStatus('Approx. route · ' + fmtDist(road));
+        setMapFooter(labelName, fmtDist(road), '—');
+        applyDeliveryFee(destLat, destLng, labelName, road);
+    }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1033,9 +1147,7 @@ function detectCityId(lat, lng) {
     return null;
 }
 
-// ════════════════════════════════════════════════════════════════
-//  LOAD CITIES
-// ════════════════════════════════════════════════════════════════
+// ── Load cities ───────────────────────────────────────────────
 async function loadCities(detectedId) {
     try {
         const res  = await fetch('/api/locations/cities/1');
@@ -1045,7 +1157,7 @@ async function loadCities(detectedId) {
             : data.filter(c => CITY_CONFIGS[c.id]);
         fillCityDropdown();
         if (detectedId && CITY_CONFIGS[detectedId]) {
-            locationInfoBox.innerHTML =
+            document.getElementById('locationInfoBox').innerHTML =
                 '<i class="bi bi-check-circle-fill" style="color:#15803d;flex-shrink:0;"></i>'
                 + '<span><strong>Great!</strong> You\'re in our delivery area: <strong>'
                 + CITY_CONFIGS[detectedId].name + '</strong></span>';
@@ -1067,9 +1179,7 @@ function fillCityDropdown() {
     citiesData.forEach(c => citySelect.add(new Option(c.city_name, c.id)));
 }
 
-// ════════════════════════════════════════════════════════════════
-//  CITY SELECTION
-// ════════════════════════════════════════════════════════════════
+// ── City selection ────────────────────────────────────────────
 citySelect.addEventListener('change', function () {
     const id = parseInt(this.value);
     if (!id) { resetCity(); return; }
@@ -1096,15 +1206,13 @@ function resetCity() {
     barangaySelect.disabled = true;
     barangaySelect.innerHTML = '<option value="">Select city first</option>';
     if (boundaryRect) map.removeLayer(boundaryRect);
-    if (routeLine)    map.removeLayer(routeLine);
+    clearRouteLayers();
     document.getElementById('addressDisplay').classList.remove('active');
     resetBarangay();
     resetFee();
 }
 
-// ════════════════════════════════════════════════════════════════
-//  BARANGAY LOADING + SELECTION
-// ════════════════════════════════════════════════════════════════
+// ── Barangays ─────────────────────────────────────────────────
 function loadBarangays(cityId) {
     fetch('/api/locations/barangays/' + cityId)
         .then(r => r.json())
@@ -1133,17 +1241,15 @@ barangaySelect.addEventListener('change', async function () {
 });
 
 function resetBarangay() {
-    if (marker)    map.removeLayer(marker);
-    if (routeLine) map.removeLayer(routeLine);
+    if (destMarker)  map.removeLayer(destMarker);
+    clearRouteLayers();
     document.getElementById('selectedBarangay').textContent = '—';
     document.getElementById('barangayId').value             = '';
     document.getElementById('latitude').value               = '';
     document.getElementById('longitude').value              = '';
 }
 
-// ════════════════════════════════════════════════════════════════
-//  GEOCODING — barangay → lat/lng via Nominatim
-// ════════════════════════════════════════════════════════════════
+// ── Geocode barangay → lat/lng via Nominatim ─────────────────
 async function geocodeBarangay(barangay) {
     if (!currentCity) return;
     const label = barangay.barangay_name + ', ' + currentCity.city_name;
@@ -1164,15 +1270,13 @@ async function geocodeBarangay(barangay) {
             [lat, lng] = CITY_CONFIGS[currentCity.id].center;
         }
 
-        placeMarker(lat, lng, label);
-        drawRoute(lat, lng);
-        applyDeliveryFee(lat, lng, label);
+        placeDestMarker(lat, lng, label);
+        await drawRoadRoute(lat, lng, label);
 
     } catch {
         const [lat, lng] = CITY_CONFIGS[currentCity.id].center;
-        placeMarker(lat, lng, label);
-        drawRoute(lat, lng);
-        applyDeliveryFee(lat, lng, label);
+        placeDestMarker(lat, lng, label);
+        await drawRoadRoute(lat, lng, label);
     }
 }
 
@@ -1186,8 +1290,7 @@ map.on('click', async function (e) {
         return;
     }
 
-    placeMarker(lat, lng, null);
-    drawRoute(lat, lng);
+    placeDestMarker(lat, lng, null);
     showCalculating();
 
     let label = currentCity.city_name;
@@ -1212,101 +1315,68 @@ map.on('click', async function (e) {
                     document.getElementById('barangayId').value             = matched.id;
                     document.getElementById('addressDisplay').classList.add('active');
                     label = matched.barangay_name + ', ' + currentCity.city_name;
-                    marker.bindPopup('<strong>' + matched.barangay_name + '</strong><br>Auto-detected').openPopup();
+                    destMarker.bindPopup('<b>📦 ' + matched.barangay_name + '</b><br>Auto-detected').openPopup();
                 }
             }
         }
     } catch { /* ignore */ }
 
-    applyDeliveryFee(lat, lng, label);
+    await drawRoadRoute(lat, lng, label);
 });
 
 // ════════════════════════════════════════════════════════════════
-//  ENSURE DELIVERY FIELDS ARE SET (NEW FUNCTION)
+//  FORM VALIDATION
 // ════════════════════════════════════════════════════════════════
 function ensureDeliveryFieldsSet() {
     const lat = parseFloat(document.getElementById('latitude').value);
     const lng = parseFloat(document.getElementById('longitude').value);
-    const cityId = parseInt(document.getElementById('citySelect').value);
-    
-    // If we have coordinates but fee is still 0, calculate it
     if (lat && lng && !isNaN(lat) && !isNaN(lng) && parseFloat(document.getElementById('deliveryFeeInput').value) === 0) {
         const { fee, road } = computeFee(lat, lng);
-        document.getElementById('deliveryFeeInput').value = fee.toFixed(2);
+        document.getElementById('deliveryFeeInput').value      = fee.toFixed(2);
         document.getElementById('deliveryDistanceInput').value = road.toFixed(1);
-        document.getElementById('grandTotalInput').value = (SUBTOTAL + fee).toFixed(2);
+        document.getElementById('grandTotalInput').value       = (SUBTOTAL + fee).toFixed(2);
     }
-    
-    // Final safety check - ensure all numeric fields have values (never empty)
-    if (!document.getElementById('deliveryFeeInput').value || document.getElementById('deliveryFeeInput').value === '') {
-        document.getElementById('deliveryFeeInput').value = '0.00';
-    }
-    if (!document.getElementById('deliveryDistanceInput').value || document.getElementById('deliveryDistanceInput').value === '') {
-        document.getElementById('deliveryDistanceInput').value = '0.00';
-    }
-    if (!document.getElementById('grandTotalInput').value || document.getElementById('grandTotalInput').value === '') {
-        document.getElementById('grandTotalInput').value = SUBTOTAL.toFixed(2);
-    }
+    if (!document.getElementById('deliveryFeeInput').value)      document.getElementById('deliveryFeeInput').value      = '0.00';
+    if (!document.getElementById('deliveryDistanceInput').value) document.getElementById('deliveryDistanceInput').value = '0.00';
+    if (!document.getElementById('grandTotalInput').value)       document.getElementById('grandTotalInput').value       = SUBTOTAL.toFixed(2);
 }
 
-// ════════════════════════════════════════════════════════════════
-//  FORM VALIDATION (UPDATED)
-// ════════════════════════════════════════════════════════════════
 document.getElementById('checkoutForm').addEventListener('submit', function (e) {
-
     if (!citySelect.value || !barangaySelect.value) {
         e.preventDefault();
         alert('Please select your city and barangay before placing your order.');
         return false;
     }
-
     const lat = parseFloat(document.getElementById('latitude').value);
     const lng = parseFloat(document.getElementById('longitude').value);
-
     if (lat && lng && !isNaN(lat) && !isNaN(lng) && !inBounds(lat, lng, parseInt(citySelect.value))) {
         e.preventDefault();
         alert('Selected location must be within ' + (currentCity ? currentCity.city_name : 'the service area') + '.');
         return false;
     }
-
-    // Ensure all delivery fields are set before submission
     ensureDeliveryFieldsSet();
-    
-    // One final check - if delivery fee is still 0 but we have coordinates, block submission
     if (parseFloat(document.getElementById('deliveryFeeInput').value) === 0 && lat && lng && !isNaN(lat) && !isNaN(lng)) {
         e.preventDefault();
-        alert('Please wait for delivery fee calculation to complete. If this persists, try selecting your barangay again.');
+        alert('Please wait for delivery fee calculation to complete.');
         return false;
     }
-    
-    // Log the values being submitted (for debugging)
-    console.log('Submitting with values:', {
-        delivery_fee: document.getElementById('deliveryFeeInput').value,
-        delivery_distance_km: document.getElementById('deliveryDistanceInput').value,
-        grand_total: document.getElementById('grandTotalInput').value
-    });
 });
 
 // ════════════════════════════════════════════════════════════════
 //  IMAGE PREVIEW MODAL
 // ════════════════════════════════════════════════════════════════
 function openImageModal(src, title) {
-    document.getElementById('imgModalImg').src   = src;
-    document.getElementById('imgModalTitle').textContent = title;
-    const overlay = document.getElementById('imgModalOverlay');
-    overlay.classList.add('active');
+    document.getElementById('imgModalImg').src             = src;
+    document.getElementById('imgModalTitle').textContent   = title;
+    document.getElementById('imgModalOverlay').classList.add('active');
     document.body.style.overflow = 'hidden';
 }
-
 function closeImageModal(event) {
-    // If triggered by overlay click, only close if clicking the overlay itself (not the box)
     if (event && event.target !== document.getElementById('imgModalOverlay')) return;
     document.getElementById('imgModalOverlay').classList.remove('active');
     document.body.style.overflow = '';
 }
-
-// Close on Escape key
-document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') closeImageModal(null);
-});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImageModal(null); });
 </script>
+</body>
+</html>
