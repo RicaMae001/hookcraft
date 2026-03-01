@@ -35,12 +35,12 @@
         <!-- Right Side Actions -->
         <div class="nav-actions">
             <!-- Cart -->
-            <a href="{{ route('cart.index') }}" class="action-btn" title="Cart">
+            <!-- <a href="{{ route('cart.index') }}" class="action-btn" title="Cart">
                 <i class="bi bi-cart3"></i>
                 @if($cartCount > 0)
                     <span class="action-badge">{{ $cartCount }}</span>
                 @endif
-            </a>
+            </a> -->
 
             @if($isLoggedIn)
                 <!-- User Profile Dropdown -->

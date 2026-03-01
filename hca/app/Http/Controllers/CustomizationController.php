@@ -14,10 +14,7 @@ use Illuminate\Support\Facades\Log;
 class CustomizationController extends Controller
 {
     // ==================== LANDING PAGE ====================
-    
-    /**
-     * Show landing page with all categories for customization
-     */
+
     public function landing()
     {
         $categories = Category::whereHas('products', function($query) {
@@ -30,15 +27,12 @@ class CustomizationController extends Controller
         }])
         ->orderBy('name', 'asc')
         ->get();
-        
+
         return view('customization.landing', compact('categories'));
     }
 
     // ==================== CUSTOMER METHODS ====================
-    
-    /**
-     * Show customization creation form
-     */
+
     public function create(Request $request)
     {
         $category = null;
@@ -46,6 +40,7 @@ class CustomizationController extends Controller
         $categories = Category::whereHas('products', function($query) {
             $query->where('is_available', 1);
         })->orderBy('name', 'asc')->get();
+<<<<<<< HEAD
         
         if ($request->has('category_id')) {
             $category = Category::with(['products' => function($query) {
@@ -53,6 +48,14 @@ class CustomizationController extends Controller
                       ->orderBy('id', 'asc');
             }])->find($request->category_id);
             
+=======
+
+        if ($request->has('category_id')) {
+            $category = Category::with(['products' => function($query) {
+                $query->where('is_available', 1)->orderBy('id', 'asc');
+            }])->find($request->category_id);
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             if ($category && $category->products->count() > 0) {
                 $referenceProduct = $category->products->first();
             }
@@ -62,17 +65,31 @@ class CustomizationController extends Controller
     }
 
     /**
-     * Store new customization request
+     * Store new customization request — saves customer materials as customization_options
      */
     public function store(Request $request)
     {
         $request->validate([
+<<<<<<< HEAD
             'category_id'           => 'required|exists:categories,id',
             'product_id'            => 'nullable|exists:products,id',
             'customization_name'    => 'required|string|max:255',
             'customization_details' => 'required|string',
             'special_instructions'  => 'nullable|string',
             'custom_image'          => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+=======
+            'category_id'            => 'required|exists:categories,id',
+            'product_id'             => 'nullable|exists:products,id',
+            'customization_name'     => 'required|string|max:255',
+            'customization_details'  => 'required|string',
+            'special_instructions'   => 'nullable|string',
+            'custom_image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
+            // Customer expected materials
+            'materials'              => 'nullable|array',
+            'materials.*.label'      => 'required_with:materials|string|max:255',
+            'materials.*.quantity'   => 'required_with:materials|numeric|min:0',
+            'materials.*.unit_price' => 'required_with:materials|numeric|min:0',
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         ]);
 
         if (!Auth::check()) {
@@ -80,13 +97,17 @@ class CustomizationController extends Controller
         }
 
         DB::beginTransaction();
-        
+
         try {
+<<<<<<< HEAD
             if ($request->has('product_id') && $request->product_id) {
+=======
+            // Determine reference product
+            if ($request->filled('product_id')) {
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $referenceProduct = Product::where('id', $request->product_id)
-                    ->where('is_available', 1)
-                    ->first();
-                
+                    ->where('is_available', 1)->first();
+
                 if (!$referenceProduct) {
                     return redirect()->back()
                         ->with('error', 'The selected product is not available.')
@@ -97,7 +118,7 @@ class CustomizationController extends Controller
                     ->where('is_available', 1)
                     ->orderBy('id', 'asc')
                     ->first();
-                
+
                 if (!$referenceProduct) {
                     return redirect()->back()
                         ->with('error', 'No available products found in this category.')
@@ -105,14 +126,26 @@ class CustomizationController extends Controller
                 }
             }
 
+            // Handle image upload
             $imagePath = null;
             if ($request->hasFile('custom_image')) {
-                $image = $request->file('custom_image');
+                $image     = $request->file('custom_image');
                 $imageName = time() . '_' . $image->getClientOriginalName();
                 $image->move(public_path('uploads/customizations'), $imageName);
                 $imagePath = $imageName;
             }
 
+            // Calculate customer's estimated total from materials
+            $customerEstimate = 0;
+            if ($request->filled('materials')) {
+                foreach ($request->materials as $row) {
+                    if (!empty($row['label'])) {
+                        $customerEstimate += (float)($row['quantity'] ?? 1) * (float)($row['unit_price'] ?? 0);
+                    }
+                }
+            }
+
+            // Create the customization
             $customization = ProductCustomization::create([
                 'user_id'               => Auth::id(),
                 'product_id'            => $referenceProduct->id,
@@ -121,18 +154,47 @@ class CustomizationController extends Controller
                 'customization_details' => $request->customization_details,
                 'special_instructions'  => $request->special_instructions,
                 'custom_image'          => $imagePath,
+<<<<<<< HEAD
                 'total_price'           => 0,
+=======
+                'total_price'           => $customerEstimate,
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 'status'                => 'Pending',
                 'admin_price'           => null,
                 'admin_notes'           => null,
                 'admin_id'              => null,
             ]);
 
+            // Save customer material rows as customization_options
+            if ($request->filled('materials')) {
+                foreach ($request->materials as $row) {
+                    if (empty($row['label'])) continue;
+
+                    $subtotal = (float)($row['quantity'] ?? 1) * (float)($row['unit_price'] ?? 0);
+
+                    \App\Models\CustomizationOption::create([
+                        'customization_id' => $customization->id,
+                        'option_type'      => 'material',
+                        'option_value'     => json_encode([
+                            'label'      => $row['label'],
+                            'quantity'   => (float)($row['quantity'] ?? 1),
+                            'unit_price' => (float)($row['unit_price'] ?? 0),
+                            'subtotal'   => $subtotal,
+                        ]),
+                        'additional_price' => $subtotal,
+                    ]);
+                }
+            }
+
             Log::info('Customization request submitted', [
                 'user_id'          => Auth::id(),
                 'customization_id' => $customization->id,
                 'category_id'      => $request->category_id,
                 'product_id'       => $referenceProduct->id,
+<<<<<<< HEAD
+=======
+                'materials_count'  => count($request->materials ?? []),
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ]);
 
             DB::commit();
@@ -147,16 +209,13 @@ class CustomizationController extends Controller
                 'user_id'     => Auth::id(),
                 'category_id' => $request->category_id ?? 'not provided',
             ]);
-            
+
             return redirect()->back()
                 ->with('error', 'Error submitting customization request: ' . $e->getMessage())
                 ->withInput();
         }
     }
 
-    /**
-     * Show all user's customizations
-     */
     public function myCustomizations()
     {
         if (!Auth::check()) {
@@ -171,9 +230,6 @@ class CustomizationController extends Controller
         return view('customization.my-customizations', compact('customizations'));
     }
 
-    /**
-     * Show single customization details
-     */
     public function show($id)
     {
         if (!Auth::check()) {
@@ -187,9 +243,6 @@ class CustomizationController extends Controller
         return view('customization.show', compact('customization'));
     }
 
-    /**
-     * Show edit form for customization
-     */
     public function edit($id)
     {
         if (!Auth::check()) {
@@ -213,9 +266,6 @@ class CustomizationController extends Controller
         return view('customization.edit', compact('customization', 'categories', 'products'));
     }
 
-    /**
-     * Update customization
-     */
     public function update(Request $request, $id)
     {
         if (!Auth::check()) {
@@ -236,7 +286,7 @@ class CustomizationController extends Controller
         ]);
 
         DB::beginTransaction();
-        
+
         try {
             $updateData = [
                 'customization_name'    => $request->customization_name,
@@ -244,17 +294,24 @@ class CustomizationController extends Controller
                 'special_instructions'  => $request->special_instructions,
             ];
 
+<<<<<<< HEAD
             if ($request->has('product_id') && $request->product_id) {
+=======
+            if ($request->filled('product_id')) {
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $newReferenceProduct = Product::where('id', $request->product_id)
-                    ->where('is_available', 1)
-                    ->first();
-                
+                    ->where('is_available', 1)->first();
+
                 if (!$newReferenceProduct) {
                     return redirect()->back()
                         ->with('error', 'The selected product is not available.')
                         ->withInput();
                 }
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $updateData['product_id']  = $newReferenceProduct->id;
                 $updateData['category_id'] = $newReferenceProduct->category_id;
             } else {
@@ -262,13 +319,17 @@ class CustomizationController extends Controller
                     ->where('is_available', 1)
                     ->orderBy('id', 'asc')
                     ->first();
-                
+
                 if (!$newReferenceProduct) {
                     return redirect()->back()
                         ->with('error', 'No available products found in this category.')
                         ->withInput();
                 }
+<<<<<<< HEAD
                 
+=======
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $updateData['product_id']  = $newReferenceProduct->id;
                 $updateData['category_id'] = $newReferenceProduct->category_id;
             }
@@ -276,9 +337,7 @@ class CustomizationController extends Controller
             if ($request->hasFile('custom_image')) {
                 if ($customization->custom_image) {
                     $oldImagePath = public_path('uploads/customizations/' . $customization->custom_image);
-                    if (file_exists($oldImagePath)) {
-                        unlink($oldImagePath);
-                    }
+                    if (file_exists($oldImagePath)) unlink($oldImagePath);
                 }
 
                 $image     = $request->file('custom_image');
@@ -297,16 +356,13 @@ class CustomizationController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Customization update failed', ['error' => $e->getMessage()]);
-            
+
             return redirect()->back()
                 ->with('error', 'Error updating customization: ' . $e->getMessage())
                 ->withInput();
         }
     }
 
-    /**
-     * Delete customization
-     */
     public function destroy($id)
     {
         if (!Auth::check()) {
@@ -316,12 +372,14 @@ class CustomizationController extends Controller
         $customization = ProductCustomization::where('user_id', Auth::id())
             ->whereNull('order_id')
             ->findOrFail($id);
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         if ($customization->custom_image) {
             $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+            if (file_exists($imagePath)) unlink($imagePath);
         }
 
         $customization->delete();
@@ -330,9 +388,6 @@ class CustomizationController extends Controller
             ->with('success', 'Customization deleted successfully');
     }
 
-    /**
-     * Add approved customization to cart
-     */
     public function addToCart($id)
     {
         if (!Auth::check()) {
@@ -352,7 +407,11 @@ class CustomizationController extends Controller
             }
 
             DB::beginTransaction();
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             $cart = \App\Models\Cart::firstOrCreate(
                 ['user_id' => Auth::id(), 'is_buy_now' => 0]
             );
@@ -375,10 +434,9 @@ class CustomizationController extends Controller
                 ]);
 
                 $cartCount = \App\Models\CartItem::whereHas('cart', function($query) {
-                    $query->where('user_id', Auth::id())
-                          ->where('is_buy_now', 0);
+                    $query->where('user_id', Auth::id())->where('is_buy_now', 0);
                 })->sum('quantity');
-                
+
                 session(['cart_count' => $cartCount]);
 
                 DB::commit();
@@ -397,15 +455,12 @@ class CustomizationController extends Controller
                 'error'            => $e->getMessage(),
                 'customization_id' => $id,
             ]);
-            
+
             return redirect()->route('customization.my-customizations')
                 ->with('error', 'Failed to add to cart: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Proceed directly to checkout with customization
-     */
     public function proceedCheckout($id)
     {
         if (!Auth::check()) {
@@ -425,7 +480,11 @@ class CustomizationController extends Controller
             }
 
             DB::beginTransaction();
+<<<<<<< HEAD
             
+=======
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             $cart = \App\Models\Cart::firstOrCreate(
                 ['user_id' => Auth::id(), 'is_buy_now' => 0]
             );
@@ -448,10 +507,9 @@ class CustomizationController extends Controller
                 ]);
 
                 $cartCount = \App\Models\CartItem::whereHas('cart', function($query) {
-                    $query->where('user_id', Auth::id())
-                          ->where('is_buy_now', 0);
+                    $query->where('user_id', Auth::id())->where('is_buy_now', 0);
                 })->sum('quantity');
-                
+
                 session(['cart_count' => $cartCount]);
             }
 
@@ -462,22 +520,18 @@ class CustomizationController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            
             Log::error('Failed to proceed to checkout with customization', [
                 'error'            => $e->getMessage(),
                 'customization_id' => $id,
             ]);
-            
+
             return redirect()->route('customization.my-customizations')
                 ->with('error', 'Failed to proceed to checkout: ' . $e->getMessage());
         }
     }
 
     // ==================== ADMIN METHODS ====================
-    
-    /**
-     * Check if user is admin
-     */
+
     private function requireAdmin()
     {
         if (!session('admin_id')) {
@@ -485,7 +539,7 @@ class CustomizationController extends Controller
         }
 
         $admin = DB::table('admin')->where('id', session('admin_id'))->first();
-        
+
         if (!$admin) {
             session()->forget(['admin_id', 'admin_name', 'admin_role', 'user_type']);
             return redirect()->route('staff.login')->with('error', 'Session expired. Please login again.');
@@ -499,32 +553,31 @@ class CustomizationController extends Controller
         return null;
     }
 
-    /**
-     * Admin: View all customizations
-     */
     public function adminIndex(Request $request)
     {
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $status = $request->get('status');
-        
-        $query = ProductCustomization::with(['user', 'product.category']);
-        
+        $query  = ProductCustomization::with(['user', 'product.category']);
+
         if ($status) {
             $query->where('status', $status);
         }
+<<<<<<< HEAD
         
         $customizations = $query->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
+=======
+
+        $customizations = $query
+            ->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
         return view('admin.customizations.index', compact('customizations'));
     }
 
-    /**
-     * Admin: View single customization
-     */
     public function adminShow($id)
     {
         $roleCheck = $this->requireAdmin();
@@ -537,7 +590,7 @@ class CustomizationController extends Controller
     }
 
     /**
-     * Admin: Update customization status and price
+     * Admin: Update customization status, price, and official price breakdown
      */
     public function adminUpdate(Request $request, $id)
     {
@@ -545,16 +598,48 @@ class CustomizationController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $request->validate([
+<<<<<<< HEAD
             'status'       => 'required|in:Pending,Approved,Rejected,Completed',
             'admin_price'  => 'required_if:status,Approved|nullable|numeric|min:0',
             'admin_notes'  => 'nullable|string',
+=======
+            'status'                      => 'required|in:Pending,Approved,Rejected,Completed',
+            'admin_price'                 => 'required_if:status,Approved|nullable|numeric|min:0',
+            'admin_notes'                 => 'nullable|string',
+            // Official price breakdown rows
+            'breakdown'                   => 'nullable|array',
+            'breakdown.*.label'           => 'required_with:breakdown|string|max:255',
+            'breakdown.*.quantity'        => 'required_with:breakdown|numeric|min:0',
+            'breakdown.*.unit_price'      => 'required_with:breakdown|numeric|min:0',
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         ]);
 
         $customization = ProductCustomization::findOrFail($id);
 
         DB::beginTransaction();
         try {
+            // Build breakdown rows and sum total
+            $breakdownRows  = [];
+            $breakdownTotal = 0;
+
+            if ($request->filled('breakdown')) {
+                foreach ($request->breakdown as $row) {
+                    if (empty($row['label'])) continue;
+
+                    $subtotal        = (float)$row['quantity'] * (float)$row['unit_price'];
+                    $breakdownTotal += $subtotal;
+
+                    $breakdownRows[] = [
+                        'label'      => $row['label'],
+                        'quantity'   => (float)$row['quantity'],
+                        'unit_price' => (float)$row['unit_price'],
+                        'subtotal'   => $subtotal,
+                    ];
+                }
+            }
+
             $updateData = [
+<<<<<<< HEAD
                 'status'      => $request->status,
                 'admin_notes' => $request->admin_notes,
                 'admin_id'    => session('admin_id'),
@@ -564,6 +649,24 @@ class CustomizationController extends Controller
                 $updateData['admin_price']  = $request->admin_price;
                 $updateData['total_price']  = $request->admin_price;
             } elseif ($request->status !== 'Approved') {
+=======
+                'status'          => $request->status,
+                'admin_notes'     => $request->admin_notes,
+                'admin_id'        => session('admin_id'),
+                'price_breakdown' => !empty($breakdownRows) ? $breakdownRows : null,
+            ];
+
+            if ($request->status === 'Approved') {
+                // Use typed price if provided, otherwise use breakdown total
+                $finalPrice = $request->filled('admin_price')
+                    ? (float)$request->admin_price
+                    : $breakdownTotal;
+
+                $updateData['admin_price'] = $finalPrice;
+                $updateData['total_price'] = $finalPrice;
+            } elseif ($request->status !== 'Completed') {
+                // Don't wipe price if marking Completed
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $updateData['admin_price'] = null;
             }
 
@@ -573,7 +676,12 @@ class CustomizationController extends Controller
                 'admin_id'         => session('admin_id'),
                 'customization_id' => $customization->id,
                 'status'           => $request->status,
+<<<<<<< HEAD
                 'price'            => $request->admin_price ?? 'N/A'
+=======
+                'price'            => $updateData['admin_price'] ?? 'N/A',
+                'breakdown_items'  => count($breakdownRows),
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ]);
 
             DB::commit();
@@ -585,45 +693,49 @@ class CustomizationController extends Controller
             DB::rollBack();
             Log::error('Customization update failed', [
                 'error'    => $e->getMessage(),
+<<<<<<< HEAD
                 'admin_id' => session('admin_id')
+=======
+                'admin_id' => session('admin_id'),
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ]);
-            
+
             return redirect()->back()
                 ->with('error', 'Error updating customization: ' . $e->getMessage());
         }
     }
 
-    /**
-     * Admin: Delete customization
-     */
     public function adminDestroy($id)
     {
         $roleCheck = $this->requireAdmin();
         if ($roleCheck) return $roleCheck;
 
         $customization = ProductCustomization::findOrFail($id);
+<<<<<<< HEAD
         
+=======
+
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         if ($customization->custom_image) {
             $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
-            if (file_exists($imagePath)) {
-                unlink($imagePath);
-            }
+            if (file_exists($imagePath)) unlink($imagePath);
         }
 
         $customization->delete();
 
         Log::info('Customization deleted by admin', [
             'customization_id' => $id,
+<<<<<<< HEAD
             'admin_id'         => session('admin_id')
+=======
+            'admin_id'         => session('admin_id'),
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         ]);
 
         return redirect()->route('admin.customizations.index')
             ->with('success', 'Customization deleted successfully');
     }
 
-    /**
-     * AJAX: Get products by category (for product selection)
-     */
     public function getProductsByCategory($categoryId)
     {
         $products = Product::where('category_id', $categoryId)
@@ -632,21 +744,19 @@ class CustomizationController extends Controller
             ->get(['id', 'name', 'price', 'image', 'description']);
 
         if ($products->count() > 0) {
+<<<<<<< HEAD
             return response()->json([
                 'success'  => true,
                 'products' => $products
             ]);
+=======
+            return response()->json(['success' => true, 'products' => $products]);
+>>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'No available products in this category'
-        ], 404);
+        return response()->json(['success' => false, 'message' => 'No available products in this category'], 404);
     }
 
-    /**
-     * AJAX: Get first product from category (for auto-selection)
-     */
     public function getFirstProductByCategory($categoryId)
     {
         $product = Product::where('category_id', $categoryId)
@@ -667,9 +777,6 @@ class CustomizationController extends Controller
             ]);
         }
 
-        return response()->json([
-            'success' => false,
-            'message' => 'No available products in this category'
-        ], 404);
+        return response()->json(['success' => false, 'message' => 'No available products in this category'], 404);
     }
 }

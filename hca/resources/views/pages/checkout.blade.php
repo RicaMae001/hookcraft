@@ -386,6 +386,175 @@
         .col-md-6 { width: 50%; padding: 0 0.375rem; }
         .cols-row { display: flex; margin: 0 -0.375rem; flex-wrap: wrap; }
 
+        /* Terms Modal Styles */
+        .modal-terms-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.7);
+            z-index: 10000;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+            backdrop-filter: blur(6px);
+            animation: fadeInOverlay 0.3s ease;
+        }
+        .modal-terms-overlay.active { display: flex; }
+
+        .modal-terms-box {
+            background: var(--white);
+            border-radius: 20px;
+            max-width: 650px;
+            width: 100%;
+            max-height: 85vh;
+            overflow: hidden;
+            box-shadow: 0 30px 70px rgba(0,0,0,0.5);
+            animation: slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            display: flex;
+            flex-direction: column;
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px) scale(0.95); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        .modal-terms-header {
+            padding: 1.25rem 1.75rem;
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .modal-terms-header h3 {
+            margin: 0;
+            font-weight: 700;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .modal-terms-close {
+            background: rgba(255,255,255,0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .modal-terms-close:hover {
+            background: rgba(255,255,255,0.3);
+            transform: rotate(90deg);
+        }
+
+        .modal-terms-body {
+            padding: 1.75rem;
+            overflow-y: auto;
+            max-height: 50vh;
+            background: #fafafa;
+        }
+
+        .terms-section {
+            margin-bottom: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            padding: 1.25rem;
+            border: 1px solid #f0f0f0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+        }
+        .terms-section h4 {
+            color: var(--primary-pink);
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .terms-section p {
+            color: #4a4a4a;
+            font-size: 0.9rem;
+            line-height: 1.6;
+            margin-bottom: 0;
+        }
+        .terms-list {
+            list-style: none;
+            padding: 0;
+            margin: 0.5rem 0 0 0;
+        }
+        .terms-list li {
+            padding: 0.4rem 0;
+            padding-left: 1.8rem;
+            position: relative;
+            font-size: 0.9rem;
+            color: #555;
+        }
+        .terms-list li:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            color: var(--primary-pink);
+            font-weight: 700;
+        }
+
+        .modal-terms-footer {
+            padding: 1.25rem 1.75rem;
+            background: white;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .terms-agree-check {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.95rem;
+            font-weight: 500;
+        }
+        .terms-agree-check input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: var(--primary-pink);
+            cursor: pointer;
+        }
+        .terms-agree-check label {
+            cursor: pointer;
+        }
+        .modal-terms-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .btn-terms-decline {
+            background: #f1f3f4;
+            color: #5f6368;
+            border: 1px solid #dadce0;
+        }
+        .btn-terms-decline:hover {
+            background: #e8eaed;
+        }
+        .btn-terms-accept {
+            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
+            color: white;
+            min-width: 100px;
+        }
+        .btn-terms-accept:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(214,51,132,0.3);
+        }
+        .btn-terms-accept:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
         @media (max-width: 991px) {
             .row.g-4 { flex-wrap: wrap; gap: 1rem; }
             .col-lg-8, .col-lg-4 { width: 100%; }
@@ -401,6 +570,9 @@
             #map { height: 200px; }
             .user-info-one-line-content { flex-direction: column; gap: 0.75rem; }
             .col-md-6 { width: 100%; }
+            .modal-terms-footer { flex-direction: column; align-items: flex-start; }
+            .modal-terms-actions { width: 100%; }
+            .btn-terms-accept, .btn-terms-decline { flex: 1; }
         }
         @media (max-width: 576px) {
             .container { padding: 0 0.75rem; }
@@ -774,16 +946,16 @@
                             </div>
 
                             <div style="margin-top:1rem;">
-                                <button type="submit"
-                                        form="checkoutForm"
+                                <button type="button"
                                         class="btn btn-primary w-100"
-                                        id="placeOrderBtn">
+                                        id="placeOrderBtn"
+                                        onclick="showTermsModal()">
                                     <i class="bi bi-lock"></i>Place Secure Order
                                 </button>
                                 <p style="text-align:center;color:var(--secondary-gray);
                                            font-size:0.78rem;margin-top:0.5rem;margin-bottom:0;">
                                     By placing your order you agree to our
-                                    <a href="{{ route('terms') }}" style="color:var(--primary-pink);">Terms</a>
+                                    <a href="#" onclick="showTermsModal(); return false;" style="color:var(--primary-pink);">Terms & Conditions</a>
                                 </p>
                             </div>
 
@@ -807,6 +979,81 @@
         </div>
     </div>
     @endif
+</div>
+
+{{-- Terms and Conditions Modal --}}
+<div class="modal-terms-overlay" id="termsModalOverlay" onclick="closeTermsModal(event)">
+    <div class="modal-terms-box" onclick="event.stopPropagation()">
+        <div class="modal-terms-header">
+            <h3>
+                <i class="bi bi-file-text"></i>
+                Terms & Conditions
+            </h3>
+            <button class="modal-terms-close" onclick="closeTermsModal(null)">×</button>
+        </div>
+        <div class="modal-terms-body">
+            <div class="terms-section">
+                <h4><i class="bi bi-bag-check"></i> Order & Payment</h4>
+                <ul class="terms-list">
+                    <li>All orders are final once placed and confirmed</li>
+                    <li>Payment is due upon delivery (Cash on Delivery only)</li>
+                    <li>Prices are in Philippine Peso (₱) and inclusive of applicable taxes</li>
+                    <li>We reserve the right to cancel any order due to stock unavailability</li>
+                </ul>
+            </div>
+            
+            <div class="terms-section">
+                <h4><i class="bi bi-truck"></i> Delivery Terms</h4>
+                <ul class="terms-list">
+                    <li>Delivery is available only within Cebu City and selected areas</li>
+                    <li>Delivery fees are calculated based on distance and displayed before order placement</li>
+                    <li>Estimated delivery time is 1-3 business days within Cebu City</li>
+                    <li>Please ensure someone is available to receive the order at the provided address</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h4><i class="bi bi-arrow-return-left"></i> Returns & Refunds</h4>
+                <ul class="terms-list">
+                    <li>Customized items are non-refundable and non-returnable</li>
+                    <li>For defective items, please contact us within 24 hours of delivery</li>
+                    <li>Returns are subject to inspection and approval by our team</li>
+                    <li>Refunds will be processed within 5-7 business days if approved</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h4><i class="bi bi-shield-lock"></i> Privacy & Security</h4>
+                <ul class="terms-list">
+                    <li>Your personal information is secure and encrypted</li>
+                    <li>We do not share your data with third parties without consent</li>
+                    <li>By placing an order, you agree to receive order updates via SMS/email</li>
+                </ul>
+            </div>
+
+            <div class="terms-section">
+                <h4><i class="bi bi-exclamation-triangle"></i> Important Notes</h4>
+                <ul class="terms-list">
+                    <li>Please double-check your delivery address before confirming</li>
+                    <li>Delivery personnel may contact you for location assistance</li>
+                    <li>Hookcraft Avenue reserves the right to modify these terms</li>
+                    <li>For questions, contact our support team</li>
+                </ul>
+            </div>
+        </div>
+        <div class="modal-terms-footer">
+            <div class="terms-agree-check">
+                <input type="checkbox" id="agreeTerms" onchange="toggleAcceptButton()">
+                <label for="agreeTerms">I have read and agree to the Terms & Conditions</label>
+            </div>
+            <div class="modal-terms-actions">
+                <button class="btn btn-terms-decline" onclick="closeTermsModal(null)">Decline</button>
+                <button class="btn btn-terms-accept" id="acceptTermsBtn" disabled onclick="acceptTermsAndSubmit()">
+                    Accept & Place Order
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- Image Preview Modal --}}
@@ -855,6 +1102,65 @@ let currentFee    = 0;
 
 const citySelect     = document.getElementById('citySelect');
 const barangaySelect = document.getElementById('barangaySelect');
+
+// ── Terms Modal Functions ─────────────────────────────────────────
+function showTermsModal() {
+    // First validate the form before showing terms
+    if (!validateCheckoutForm()) {
+        return false;
+    }
+    
+    // Reset checkbox and button state
+    document.getElementById('agreeTerms').checked = false;
+    document.getElementById('acceptTermsBtn').disabled = true;
+    
+    // Show modal
+    document.getElementById('termsModalOverlay').classList.add('active');
+    document.body.style.overflow = 'hidden';
+    return false;
+}
+
+function closeTermsModal(event) {
+    if (event && event.target !== document.getElementById('termsModalOverlay') && event !== null) return;
+    document.getElementById('termsModalOverlay').classList.remove('active');
+    document.body.style.overflow = '';
+}
+
+function toggleAcceptButton() {
+    const agreeCheck = document.getElementById('agreeTerms').checked;
+    document.getElementById('acceptTermsBtn').disabled = !agreeCheck;
+}
+
+function acceptTermsAndSubmit() {
+    // Ensure delivery fields are set
+    ensureDeliveryFieldsSet();
+    
+    // Submit the form
+    document.getElementById('checkoutForm').submit();
+}
+
+// ── Form Validation ───────────────────────────────────────────────
+function validateCheckoutForm() {
+    if (!citySelect.value || !barangaySelect.value) {
+        alert('Please select your city and barangay before placing your order.');
+        return false;
+    }
+    
+    const lat = parseFloat(document.getElementById('latitude').value);
+    const lng = parseFloat(document.getElementById('longitude').value);
+    
+    if (lat && lng && !isNaN(lat) && !isNaN(lng) && !inBounds(lat, lng, parseInt(citySelect.value))) {
+        alert('Selected location must be within ' + (currentCity ? currentCity.city_name : 'the service area') + '.');
+        return false;
+    }
+    
+    if (parseFloat(document.getElementById('deliveryFeeInput').value) === 0 && lat && lng && !isNaN(lat) && !isNaN(lng)) {
+        alert('Please wait for delivery fee calculation to complete.');
+        return false;
+    }
+    
+    return true;
+}
 
 // ── Payment ───────────────────────────────────────────────────
 function selectPayment(method, el) {
@@ -1325,7 +1631,7 @@ map.on('click', async function (e) {
 });
 
 // ════════════════════════════════════════════════════════════════
-//  FORM VALIDATION
+//  FORM VALIDATION & HELPER FUNCTIONS
 // ════════════════════════════════════════════════════════════════
 function ensureDeliveryFieldsSet() {
     const lat = parseFloat(document.getElementById('latitude').value);
@@ -1341,27 +1647,6 @@ function ensureDeliveryFieldsSet() {
     if (!document.getElementById('grandTotalInput').value)       document.getElementById('grandTotalInput').value       = SUBTOTAL.toFixed(2);
 }
 
-document.getElementById('checkoutForm').addEventListener('submit', function (e) {
-    if (!citySelect.value || !barangaySelect.value) {
-        e.preventDefault();
-        alert('Please select your city and barangay before placing your order.');
-        return false;
-    }
-    const lat = parseFloat(document.getElementById('latitude').value);
-    const lng = parseFloat(document.getElementById('longitude').value);
-    if (lat && lng && !isNaN(lat) && !isNaN(lng) && !inBounds(lat, lng, parseInt(citySelect.value))) {
-        e.preventDefault();
-        alert('Selected location must be within ' + (currentCity ? currentCity.city_name : 'the service area') + '.');
-        return false;
-    }
-    ensureDeliveryFieldsSet();
-    if (parseFloat(document.getElementById('deliveryFeeInput').value) === 0 && lat && lng && !isNaN(lat) && !isNaN(lng)) {
-        e.preventDefault();
-        alert('Please wait for delivery fee calculation to complete.');
-        return false;
-    }
-});
-
 // ════════════════════════════════════════════════════════════════
 //  IMAGE PREVIEW MODAL
 // ════════════════════════════════════════════════════════════════
@@ -1376,7 +1661,12 @@ function closeImageModal(event) {
     document.getElementById('imgModalOverlay').classList.remove('active');
     document.body.style.overflow = '';
 }
-document.addEventListener('keydown', e => { if (e.key === 'Escape') closeImageModal(null); });
+document.addEventListener('keydown', e => { 
+    if (e.key === 'Escape') {
+        closeImageModal(null);
+        closeTermsModal(null);
+    }
+});
 </script>
 </body>
 </html>
