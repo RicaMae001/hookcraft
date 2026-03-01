@@ -436,23 +436,21 @@ class DeliveryController extends Controller
                 $this->addUserPaymentNotification($order);
 
                 // Return JSON for fetch() calls, redirect for regular form posts
-                if ($request->expectsJson() || $request->ajax()) {
-                    return response()->json(['success' => 'Payment proof uploaded successfully!']);
-                }
-
-                return back()->with('success', 'Payment proof uploaded successfully! Payment status updated to Paid.');
+                // Always return JSON (blade uses fetch with Accept: application/json)
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Payment proof uploaded successfully! Payment status updated to Paid.',
+                ]);
             }
-            
-            return response()->json(['error' => 'No file was uploaded. Please try again.'], 422);
-            
+
+            return response()->json(['success' => false, 'error' => 'No file was uploaded.'], 422);
+
         } catch (\Exception $e) {
             Log::error("Payment proof upload error for Order #{$id}: " . $e->getMessage());
-
-            if ($request->expectsJson() || $request->ajax()) {
-                return response()->json(['error' => 'Upload failed: ' . $e->getMessage()], 500);
-            }
-
-            return back()->with('error', 'Error uploading payment proof: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'error'   => 'Upload failed: ' . $e->getMessage(),
+            ], 500);
         }
     }
 

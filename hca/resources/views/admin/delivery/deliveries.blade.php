@@ -952,8 +952,8 @@ function previewProofFile(input, id) {
 
 function submitProof(id, url) {
     const fileInput = document.getElementById('proofFile' + id);
-    const btn = document.getElementById('proofSubmitBtn' + id);
-    const msg = document.getElementById('proofMsg' + id);
+    const btn       = document.getElementById('proofSubmitBtn' + id);
+    const msg       = document.getElementById('proofMsg' + id);
 
     if (!fileInput || !fileInput.files[0]) {
         if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'Please select an image first.'; }
@@ -968,21 +968,34 @@ function submitProof(id, url) {
     btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading…';
     if (msg) msg.textContent = '';
 
-    fetch(url, { method: 'POST', body: formData })
-        .then(res => {
-            if (res.ok || res.redirected) {
-                if (msg) { msg.style.color = 'var(--success)'; msg.textContent = 'Uploaded successfully! Reloading…'; }
-                setTimeout(() => window.location.reload(), 800);
-            } else {
-                throw new Error('Server error: ' + res.status);
-            }
-        })
-        .catch(err => {
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Submit Payment Proof';
-            if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = 'Upload failed. Please try again.'; }
-            console.error(err);
-        });
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json',
+        },
+        redirect: 'follow',
+    })
+    .then(async res => {
+        let data = {};
+        const contentType = res.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+            data = await res.json();
+        }
+        if (res.ok) {
+            if (msg) { msg.style.color = 'var(--success)'; msg.textContent = data.success || 'Uploaded successfully! Reloading…'; }
+            setTimeout(() => window.location.reload(), 800);
+        } else {
+            throw new Error(data.message || data.error || ('Server error: ' + res.status));
+        }
+    })
+    .catch(err => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Submit Payment Proof';
+        if (msg) { msg.style.color = 'var(--danger)'; msg.textContent = err.message || 'Upload failed. Please try again.'; }
+        console.error('submitProof error:', err);
+    });
 }
 
 function openImageModal(img) {
