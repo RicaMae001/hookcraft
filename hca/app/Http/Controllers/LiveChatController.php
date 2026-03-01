@@ -15,6 +15,9 @@ class LiveChatController extends Controller
     // CUSTOMER METHODS
     // ============================================
 
+    /**
+     * Get customer's ongoing orders with product images
+     */
     public function getCustomerOngoingOrders()
     {
         if (!Auth::check()) {
@@ -55,6 +58,10 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Get customer's pending/reviewing customization requests
+     * Special case: shows customize info + image for unprocessed requests
+     */
     public function getCustomerPendingCustomizations()
     {
         if (!Auth::check()) {
@@ -64,11 +71,14 @@ class LiveChatController extends Controller
         try {
             $customizations = DB::table('product_customizations')
                 ->join('products', 'product_customizations.product_id', '=', 'products.id')
+                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                ->leftJoin('orders', 'product_customizations.order_id', '=', 'orders.id')
                 ->where('product_customizations.user_id', Auth::id())
                 ->orderBy('product_customizations.created_at', 'desc')
                 ->take(20)
                 ->select(
                     'product_customizations.id',
+                    'product_customizations.order_id',
                     'product_customizations.customization_name',
                     'product_customizations.customization_details',
                     'product_customizations.special_instructions',
@@ -78,22 +88,49 @@ class LiveChatController extends Controller
                     'product_customizations.admin_notes',
                     'product_customizations.status',
                     'product_customizations.created_at',
+                    'product_customizations.updated_at',
                     'products.name as product_name',
-                    'products.image as product_image'
+                    'products.image as product_image',
+                    'products.price as product_base_price',
+                    'categories.name as category_name',
+                    'orders.id as linked_order_id'
                 )
                 ->get()
                 ->map(function ($c) {
                     $c->ref = 'CUST-' . str_pad($c->id, 5, '0', STR_PAD_LEFT);
+                    $c->order_number = $c->linked_order_id
+                        ? 'ORD-' . str_pad($c->linked_order_id, 5, '0', STR_PAD_LEFT)
+                        : null;
 
+                    // Resolve custom image URL
                     $c->image_url = $c->custom_image
                         ? asset('uploads/customizations/' . $c->custom_image)
                         : null;
 
+                    // Resolve base product image
                     $c->product_image_url = $c->product_image
-                        ? asset('images/' . $c->product_image)
+                        ? asset('asset/images/' . $c->product_image)
                         : null;
 
+                    // Fetch material options
+                    $c->options = DB::table('customization_options')
+                        ->where('customization_id', $c->id)
+                        ->get()
+                        ->map(function ($opt) {
+                            $decoded = json_decode($opt->option_value, true);
+                            if (is_array($decoded)) {
+                                $opt->parsed = $decoded;
+                            } else {
+                                $opt->parsed = ['label' => $opt->option_value, 'quantity' => 1, 'unit_price' => 0, 'subtotal' => (float)$opt->additional_price];
+                            }
+                            $opt->additional_price = (float) $opt->additional_price;
+                            return $opt;
+                        });
+
+                    $c->options_total     = $c->options->sum('additional_price');
                     $c->is_pending_approval = in_array($c->status, ['Pending', 'Reviewing']);
+                    $c->formatted_date    = \Carbon\Carbon::parse($c->created_at)->format('M d, Y');
+
                     return $c;
                 });
 
@@ -105,6 +142,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Customer activity heartbeat
+     */
     public function heartbeat(Request $request)
     {
         if (!Auth::check()) {
@@ -130,6 +170,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Customer requests STAFF live chat
+     */
     public function request(Request $request)
     {
         if (!Auth::check()) {
@@ -203,6 +246,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Customer requests DELIVERY live chat
+     */
     public function requestDeliveryChat(Request $request)
     {
         if (!Auth::check()) {
@@ -276,6 +322,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Get user's active chat session
+     */
     public function getActiveSession()
     {
         if (!Auth::check()) {
@@ -304,6 +353,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Check for unread messages
+     */
     public function checkUnread()
     {
         if (!Auth::check()) {
@@ -339,6 +391,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Get chat history for resuming session
+     */
     public function getChatHistory($sessionId)
     {
         if (!Auth::check()) {
@@ -378,6 +433,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Mark messages as read
+     */
     public function markAsRead($sessionId)
     {
         if (!Auth::check()) {
@@ -408,6 +466,10 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Customer sends a message.
+     * Supports: plain text, product share, and customize request share.
+     */
     public function sendMessage(Request $request)
     {
         if (!Auth::check()) {
@@ -417,9 +479,11 @@ class LiveChatController extends Controller
         $request->validate([
             'session_id'             => 'required|string',
             'message'                => 'required|string|max:2000',
+            // Product fields
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|numeric',
             'product_image'          => 'nullable|string|max:500',
+            // Customize fields
             'customize_ref'          => 'nullable|string|max:50',
             'customize_name'         => 'nullable|string|max:255',
             'customize_details'      => 'nullable|string|max:1000',
@@ -427,6 +491,7 @@ class LiveChatController extends Controller
             'customize_status'       => 'nullable|string|max:50',
             'customize_price'        => 'nullable|numeric',
             'customize_image'        => 'nullable|string|max:500',
+            'customize_materials'    => 'nullable|string|max:5000',
         ]);
 
         try {
@@ -452,9 +517,11 @@ class LiveChatController extends Controller
                 'sender_type'            => 'customer',
                 'sender_id'              => Auth::id(),
                 'message'                => $request->message,
+                // Product
                 'product_name'           => $request->product_name,
                 'product_price'          => $request->product_price,
                 'product_image'          => $request->product_image,
+                // Customize
                 'customize_ref'          => $request->customize_ref,
                 'customize_name'         => $request->customize_name,
                 'customize_details'      => $request->customize_details,
@@ -462,6 +529,7 @@ class LiveChatController extends Controller
                 'customize_status'       => $request->customize_status,
                 'customize_price'        => $request->customize_price,
                 'customize_image'        => $request->customize_image,
+                'customize_materials'    => $request->customize_materials,
                 'is_read'                => false,
                 'created_at'             => now(),
                 'updated_at'             => now(),
@@ -475,6 +543,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Poll for new messages and status updates
+     */
     public function poll($sessionId)
     {
         if (!Auth::check()) {
@@ -545,6 +616,9 @@ class LiveChatController extends Controller
         }
     }
 
+    /**
+     * Customer ends the chat session
+     */
     public function endSession(Request $request)
     {
         if (!Auth::check()) {
@@ -718,6 +792,10 @@ class LiveChatController extends Controller
         return view('admin.livechat.livechat_chat', compact('session', 'messages'));
     }
 
+    /**
+     * Admin/delivery sends a message.
+     * Supports: plain text, product share, and customize request share.
+     */
     public function adminSendMessage(Request $request)
     {
         if (!session('admin_id')) {
@@ -727,9 +805,11 @@ class LiveChatController extends Controller
         $request->validate([
             'session_id'             => 'required|integer',
             'message'                => 'required|string|max:2000',
+            // Product
             'product_name'           => 'nullable|string|max:255',
             'product_price'          => 'nullable|numeric',
             'product_image'          => 'nullable|string|max:500',
+            // Customize
             'customize_ref'          => 'nullable|string|max:50',
             'customize_name'         => 'nullable|string|max:255',
             'customize_details'      => 'nullable|string|max:1000',
@@ -737,6 +817,7 @@ class LiveChatController extends Controller
             'customize_status'       => 'nullable|string|max:50',
             'customize_price'        => 'nullable|numeric',
             'customize_image'        => 'nullable|string|max:500',
+            'customize_materials'    => 'nullable|string|max:5000',
         ]);
 
         try {
@@ -763,9 +844,11 @@ class LiveChatController extends Controller
                 'sender_type'            => 'admin',
                 'sender_id'              => session('admin_id'),
                 'message'                => $request->message,
+                // Product
                 'product_name'           => $request->product_name,
                 'product_price'          => $request->product_price,
                 'product_image'          => $request->product_image,
+                // Customize
                 'customize_ref'          => $request->customize_ref,
                 'customize_name'         => $request->customize_name,
                 'customize_details'      => $request->customize_details,
@@ -773,6 +856,7 @@ class LiveChatController extends Controller
                 'customize_status'       => $request->customize_status,
                 'customize_price'        => $request->customize_price,
                 'customize_image'        => $request->customize_image,
+                'customize_materials'    => $request->customize_materials,
                 'is_read'                => false,
                 'created_at'             => now(),
                 'updated_at'             => now(),
@@ -971,6 +1055,7 @@ class LiveChatController extends Controller
 
     /**
      * Admin sidebar: Get a specific customer's orders
+     * GET /admin/livechat/customer-orders/{userId}
      */
     public function adminGetCustomerOrders($userId)
     {
@@ -1014,7 +1099,8 @@ class LiveChatController extends Controller
     }
 
     /**
-     * Admin sidebar: Get a specific customer's customizations
+     * Admin sidebar: Get a specific customer's customizations with materials
+     * GET /admin/livechat/customer-customizations/{userId}
      */
     public function adminGetCustomerCustomizations($userId)
     {
@@ -1025,11 +1111,14 @@ class LiveChatController extends Controller
         try {
             $customizations = DB::table('product_customizations')
                 ->join('products', 'product_customizations.product_id', '=', 'products.id')
+                ->leftJoin('categories', 'products.category_id', '=', 'categories.id')
+                ->leftJoin('orders', 'product_customizations.order_id', '=', 'orders.id')
                 ->where('product_customizations.user_id', $userId)
                 ->orderBy('product_customizations.created_at', 'desc')
                 ->take(20)
                 ->select(
                     'product_customizations.id',
+                    'product_customizations.order_id',
                     'product_customizations.customization_name',
                     'product_customizations.customization_details',
                     'product_customizations.special_instructions',
@@ -1040,21 +1129,48 @@ class LiveChatController extends Controller
                     'product_customizations.status',
                     'product_customizations.created_at',
                     'products.name as product_name',
-                    'products.image as product_image'
+                    'products.image as product_image',
+                    'categories.name as category_name'
                 )
                 ->get()
                 ->map(function ($c) {
                     $c->ref = 'CUST-' . str_pad($c->id, 5, '0', STR_PAD_LEFT);
+                    $c->order_number = $c->order_id
+                        ? 'ORD-' . str_pad($c->order_id, 5, '0', STR_PAD_LEFT)
+                        : null;
 
                     $c->image_url = $c->custom_image
                         ? asset('uploads/customizations/' . $c->custom_image)
                         : null;
 
                     $c->product_image_url = $c->product_image
-                        ? asset('images/' . $c->product_image)
+                        ? asset('asset/images/' . $c->product_image)
                         : null;
 
-                    $c->is_pending_approval = in_array($c->status, ['Pending', 'Reviewing']);
+                    // Load material options with JSON parsing
+                    $c->options = DB::table('customization_options')
+                        ->where('customization_id', $c->id)
+                        ->get()
+                        ->map(function ($opt) {
+                            $decoded = json_decode($opt->option_value, true);
+                            if (is_array($decoded)) {
+                                $opt->parsed = $decoded;
+                            } else {
+                                $opt->parsed = [
+                                    'label'      => $opt->option_value,
+                                    'quantity'   => 1,
+                                    'unit_price' => 0,
+                                    'subtotal'   => (float) $opt->additional_price,
+                                ];
+                            }
+                            $opt->additional_price = (float) $opt->additional_price;
+                            return $opt;
+                        });
+
+                    $c->options_total           = $c->options->sum('additional_price');
+                    $c->is_pending_approval     = in_array($c->status, ['Pending', 'Reviewing']);
+                    $c->formatted_date          = \Carbon\Carbon::parse($c->created_at)->format('M d, Y');
+
                     return $c;
                 });
 
@@ -1065,4 +1181,5 @@ class LiveChatController extends Controller
             return response()->json(['success' => false, 'message' => 'Failed to get customizations'], 500);
         }
     }
+
 }

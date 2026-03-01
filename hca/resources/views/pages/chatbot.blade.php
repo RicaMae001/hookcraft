@@ -150,20 +150,24 @@
         .customize-card {
             background: linear-gradient(135deg, #FFF8F0 0%, #FFF3E0 100%);
             border-radius: 14px;
-            padding: 13px;
+            padding: 14px;
             margin-bottom: 12px;
             border: 2px solid #FFE0B2;
             transition: all 0.3s;
         }
         .customize-card:hover { border-color: #FF9800; box-shadow: 0 4px 15px rgba(255,152,0,0.2); }
 
+        .customize-card-top {
+            display: flex; justify-content: space-between; align-items: flex-start;
+            margin-bottom: 6px; gap: 6px;
+        }
         .customize-ref {
-            font-weight: bold; color: #E65100; margin-bottom: 5px; font-size: 13px;
+            font-weight: bold; color: #E65100; font-size: 13px;
         }
         .customize-status {
             display: inline-flex; align-items: center; gap: 5px;
             padding: 3px 10px; border-radius: 10px;
-            font-size: 11px; font-weight: 600; margin-bottom: 8px;
+            font-size: 11px; font-weight: 600; white-space: nowrap;
         }
         .cstatus-pending    { background: #FFF3CD; color: #856404; }
         .cstatus-reviewing  { background: #CCE5FF; color: #004085; }
@@ -171,23 +175,92 @@
         .cstatus-rejected   { background: #F8D7DA; color: #721C24; }
         .cstatus-completed  { background: #D4EDDA; color: #155724; }
 
+        .customize-name {
+            font-size: 14px; font-weight: 700; color: #333; margin-bottom: 8px;
+            line-height: 1.3;
+        }
+
+        .customize-product-row {
+            display: flex; align-items: center; gap: 8px; margin-bottom: 9px;
+            padding: 7px 9px; background: rgba(255,152,0,0.07);
+            border-radius: 9px; border: 1px solid #FFE0B2;
+        }
+        .customize-product-img {
+            width: 38px; height: 38px; object-fit: cover; border-radius: 7px;
+            border: 1px solid #FFB74D; cursor: zoom-in; flex-shrink: 0;
+            transition: transform 0.2s;
+        }
+        .customize-product-img:hover { transform: scale(1.1); }
+        .customize-product-info { flex: 1; min-width: 0; }
+        .customize-product-name { font-size: 11px; font-weight: 600; color: #555; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .customize-product-cat  { font-size: 10px; color: #999; margin-top: 1px; }
+
         .customize-img-wrap {
             margin: 8px 0;
-            position: relative; display: inline-block; cursor: zoom-in;
+            position: relative; display: block; cursor: zoom-in;
         }
         .customize-img-wrap img {
-            width: 100%; max-height: 120px; object-fit: cover;
+            width: 100%; max-height: 130px; object-fit: cover;
             border-radius: 10px; border: 2px solid #FFB74D;
             transition: transform 0.2s, box-shadow 0.2s;
         }
         .customize-img-wrap:hover img { transform: scale(1.02); box-shadow: 0 4px 14px rgba(255,152,0,0.3); }
+        .customize-img-label {
+            font-size: 10px; color: #aaa; margin-top: 3px; text-align: center;
+        }
 
-        .customize-detail { font-size: 12px; color: #666; margin: 4px 0; }
-        .customize-detail i { width: 15px; color: #FF9800; }
+        .customize-detail { font-size: 12px; color: #666; margin: 4px 0; display: flex; align-items: flex-start; gap: 5px; }
+        .customize-detail i { width: 14px; color: #FF9800; margin-top: 2px; flex-shrink: 0; }
         .customize-detail strong { color: #444; }
 
+        /* Section dividers inside card */
+        .customize-section {
+            margin: 9px 0; padding: 8px 10px;
+            background: rgba(255,255,255,0.7);
+            border-radius: 9px; border: 1px solid #FFE0B2;
+        }
+        .customize-section-title {
+            font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.5px; color: #FF9800; margin-bottom: 5px;
+        }
+
+        /* Materials/options table */
+        .materials-table { width: 100%; font-size: 11px; border-collapse: collapse; }
+        .materials-table td { padding: 2px 4px; color: #555; }
+        .materials-table td:last-child { text-align: right; font-weight: 600; color: #E65100; }
+        .materials-total { font-size: 11px; font-weight: 700; color: #E65100; text-align: right; margin-top: 3px; border-top: 1px dashed #FFE0B2; padding-top: 3px; }
+
+        /* Admin notes / price section */
+        .admin-response-box {
+            margin-top: 9px; padding: 9px 10px;
+            border-radius: 10px; border: 1.5px solid;
+        }
+        .admin-response-box.approved { background: #F0FFF4; border-color: #C3E6CB; }
+        .admin-response-box.pending  { background: #FFFDF0; border-color: #FFD700; }
+        .admin-response-box.rejected { background: #FFF0F0; border-color: #F5C6CB; }
+        .admin-price-row { font-size: 14px; font-weight: 800; color: #155724; margin-bottom: 4px; }
+        .admin-notes-row { font-size: 11px; color: #555; font-style: italic; }
+        .awaiting-box {
+            display: flex; align-items: center; gap: 6px;
+            padding: 7px 10px; border-radius: 9px;
+            background: linear-gradient(135deg, #FFF3CD, #FFE69C);
+            border: 1px solid #FFD700; font-size: 11px; color: #856404;
+            margin-top: 9px;
+        }
+
+        /* Date/order badge row */
+        .customize-meta-row {
+            display: flex; gap: 6px; flex-wrap: wrap; margin: 7px 0 9px;
+        }
+        .customize-meta-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 2px 8px; border-radius: 7px;
+            font-size: 10px; background: #F5F5F5; color: #777; border: 1px solid #E0E0E0;
+        }
+        .customize-meta-badge i { font-size: 9px; }
+
         .share-customize-btn {
-            width: 100%; padding: 7px; margin-top: 8px;
+            width: 100%; padding: 8px; margin-top: 10px;
             background: linear-gradient(135deg, #FF9800 0%, #F57C00 100%);
             color: white; border: none; border-radius: 9px;
             font-size: 12px; font-weight: 600; cursor: pointer; transition: all 0.3s;
@@ -421,6 +494,18 @@
         .modal-btn.secondary { background: #E0E0E0; color: #666; }
         .modal-btn:hover { transform: translateY(-2px); }
 
+        /* Materials inside chat bubble */
+        .customize-bubble-materials {
+            margin: 7px 0 5px;
+            background: rgba(255,255,255,0.15);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 9px;
+            padding: 7px 9px;
+        }
+        .cbm-title {
+            font-size: 11px; font-weight: 700; margin-bottom: 5px; opacity: 0.9;
+        }
+
         /* Pending notice badge */
         .pending-notice {
             background: linear-gradient(135deg, #FFF3CD, #FFE69C);
@@ -641,18 +726,67 @@ function buildProductCard(productData) {
 // ── Build customize card in message bubble ───────────────────────
 function buildCustomizeCard(customizeData) {
     if (!customizeData) return '';
+    const statusIcon = { 'Pending':'⏳', 'Reviewing':'🔍', 'Approved':'✅', 'Rejected':'❌', 'Completed':'🎉' };
+    const sIcon   = statusIcon[customizeData.status] || '🎨';
     const imgHtml = customizeData.image_url
         ? `<img class="customize-bubble-img"
                 src="${escapeHtml(customizeData.image_url)}"
                 alt="Customize Image"
-                onclick="openImageModal('${customizeData.image_url.replace(/'/g,"\\'")}','${(customizeData.name||'Customize').replace(/'/g,"\\'")}')">` 
+                onclick="openImageModal('${customizeData.image_url.replace(/'/g,"\\'")}','${(customizeData.name||'Customize').replace(/'/g,"\\'")} — Reference Image')"
+                onerror="this.style.display='none'">` 
         : '';
-    const priceHtml = customizeData.price 
-        ? `<div class="customize-bubble-row">💰 Price: ₱${fmtPrice(customizeData.price)}</div>` : '';
+    const catHtml = customizeData.category_name
+        ? `<div class="customize-bubble-row" style="font-size:10px;opacity:0.75">🏷️ ${escapeHtml(customizeData.category_name)}</div>` : '';
+    const productHtml = customizeData.product_name
+        ? `<div class="customize-bubble-row">📦 Based on: <strong>${escapeHtml(customizeData.product_name)}</strong></div>` : '';
+    const priceHtml = customizeData.price > 0
+        ? `<div class="customize-bubble-row" style="font-weight:700">💰 ₱${fmtPrice(customizeData.price)}</div>` : '';
     const detailHtml = customizeData.details
-        ? `<div class="customize-bubble-row">📝 ${escapeHtml(customizeData.details.substring(0,80))}${customizeData.details.length>80?'...':''}</div>` : '';
+        ? `<div class="customize-bubble-row">📝 ${escapeHtml(customizeData.details)}</div>` : '';
     const instrHtml = customizeData.instructions
-        ? `<div class="customize-bubble-row">💬 ${escapeHtml(customizeData.instructions.substring(0,60))}${customizeData.instructions.length>60?'...':''}</div>` : '';
+        ? `<div class="customize-bubble-row">💬 <em>${escapeHtml(customizeData.instructions)}</em></div>` : '';
+    const adminNotesHtml = (customizeData.admin_notes && (customizeData.status === 'Approved' || customizeData.status === 'Rejected'))
+        ? `<div class="customize-bubble-row" style="opacity:0.8">🗒️ Admin: ${escapeHtml(customizeData.admin_notes)}</div>` : '';
+    const orderHtml = customizeData.order_number
+        ? `<div class="customize-bubble-row" style="font-size:10px">🧾 Order: ${escapeHtml(customizeData.order_number)}</div>` : '';
+    const dateHtml = customizeData.formatted_date
+        ? `<div class="customize-bubble-row" style="font-size:10px;opacity:0.6">📅 ${escapeHtml(customizeData.formatted_date)}</div>` : '';
+
+    // Materials table from JSON
+    let materialsHtml = '';
+    try {
+        const mats = typeof customizeData.materials_json === 'string'
+            ? JSON.parse(customizeData.materials_json)
+            : (customizeData.materials_json || []);
+        if (mats && mats.length > 0) {
+            const rows = mats.map(m =>
+                `<tr>
+                    <td style="padding:2px 4px">${escapeHtml(m.label||'Item')}</td>
+                    <td style="padding:2px 4px;text-align:center;opacity:0.7">x${m.quantity||1}</td>
+                    <td style="padding:2px 4px">₱${fmtPrice(m.unit_price||0)}</td>
+                    <td style="padding:2px 4px;text-align:right;font-weight:700">₱${fmtPrice(m.subtotal||0)}</td>
+                </tr>`
+            ).join('');
+            const totalAmt = mats.reduce((s,m) => s + (parseFloat(m.subtotal)||0), 0);
+            materialsHtml = `
+                <div class="customize-bubble-materials">
+                    <div class="cbm-title">📋 Materials / Options</div>
+                    <table style="width:100%;font-size:11px;border-collapse:collapse">
+                        <thead><tr style="opacity:0.6;font-size:10px">
+                            <td style="padding:1px 4px">Item</td>
+                            <td style="padding:1px 4px;text-align:center">Qty</td>
+                            <td style="padding:1px 4px">Unit</td>
+                            <td style="padding:1px 4px;text-align:right">Sub</td>
+                        </tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div style="text-align:right;font-weight:800;font-size:12px;margin-top:4px;padding-top:4px;border-top:1px dashed rgba(255,255,255,0.3)">
+                        Estimate: ₱${fmtPrice(totalAmt)}
+                    </div>
+                </div>`;
+        }
+    } catch(e) { /* ignore */ }
+
     return `
         <div class="customize-card-bubble">
             <div class="customize-bubble-header">
@@ -662,11 +796,11 @@ function buildCustomizeCard(customizeData) {
                     <div class="customize-bubble-ref">${escapeHtml(customizeData.ref || '')}</div>
                 </div>
             </div>
-            ${imgHtml}
-            ${priceHtml}
-            ${detailHtml}
-            ${instrHtml}
-            <span class="customize-bubble-status">${escapeHtml(customizeData.status || 'Pending')}</span>
+            ${catHtml}${productHtml}${imgHtml}
+            ${detailHtml}${instrHtml}
+            ${materialsHtml}
+            ${priceHtml}${adminNotesHtml}${orderHtml}${dateHtml}
+            <span class="customize-bubble-status">${sIcon} ${escapeHtml(customizeData.status || 'Pending')}</span>
         </div>`;
 }
 
@@ -817,51 +951,155 @@ function renderOrders(orders) {
 }
 
 function renderCustomizations(customizations) {
+    const statusMap = {
+        'Pending':   'cstatus-pending',
+        'Reviewing': 'cstatus-reviewing',
+        'Approved':  'cstatus-approved',
+        'Rejected':  'cstatus-rejected',
+        'Completed': 'cstatus-completed'
+    };
+    const statusIcon = { 'Pending':'⏳', 'Reviewing':'🔍', 'Approved':'✅', 'Rejected':'❌', 'Completed':'🎉' };
+
     customizeContent.innerHTML = customizations.map(c => {
-        const statusMap = {
-            'Pending':   'cstatus-pending',
-            'Reviewing': 'cstatus-reviewing',
-            'Approved':  'cstatus-approved',
-            'Rejected':  'cstatus-rejected',
-            'Completed': 'cstatus-completed'
-        };
         const statusClass = statusMap[c.status] || 'cstatus-pending';
+        const sIcon       = statusIcon[c.status] || '🎨';
         const isPending   = c.status === 'Pending' || c.status === 'Reviewing';
+        const isApproved  = c.status === 'Approved';
+        const isRejected  = c.status === 'Rejected';
+        const adminPrice  = parseFloat(c.admin_price) || 0;
+        const custEstimate= parseFloat(c.options_total || c.total_price) || 0;
 
+        // ── Custom image ──
         const imgHtml = c.image_url ? `
-            <div class="customize-img-wrap" style="width:100%">
+            <div class="customize-img-wrap">
                 <img src="${escapeHtml(c.image_url)}" alt="Custom Image"
-                     onclick="openImageModal('${c.image_url.replace(/'/g,"\\'")}','${(c.customization_name||'').replace(/'/g,"\\'")}')">
+                     onclick="openImageModal('${c.image_url.replace(/'/g,"\\'")}','${(c.customization_name||'').replace(/'/g,"\\'")} — Reference Image')"
+                     onerror="this.parentElement.style.display='none'">
+                <div class="customize-img-label"><i class="fas fa-image"></i> Reference Image (click to enlarge)</div>
             </div>` : '';
 
-        const pendingNotice = isPending ? `
-            <div class="pending-notice">
-                <i class="fas fa-clock"></i>
-                <span>Awaiting admin approval</span>
+        // ── Product reference row ──
+        const productHtml = (c.product_name || c.category_name) ? `
+            <div class="customize-product-row">
+                ${c.product_image_url ? `<img class="customize-product-img"
+                    src="${escapeHtml(c.product_image_url)}"
+                    alt="${escapeHtml(c.product_name)}"
+                    onclick="openImageModal('${(c.product_image_url||'').replace(/'/g,"\\'")}','${(c.product_name||'').replace(/'/g,"\\'")} — Base Product')"
+                    onerror="this.style.display='none'">` : '<span style="font-size:22px">📦</span>'}
+                <div class="customize-product-info">
+                    <div class="customize-product-name">${escapeHtml(c.product_name || 'N/A')}</div>
+                    ${c.category_name ? `<div class="customize-product-cat"><i class="fas fa-tag"></i> ${escapeHtml(c.category_name)}</div>` : ''}
+                </div>
             </div>` : '';
+
+        // ── Meta badges (date, order link) ──
+        const metaHtml = `
+            <div class="customize-meta-row">
+                <span class="customize-meta-badge"><i class="fas fa-calendar-alt"></i> ${escapeHtml(c.formatted_date || '')}</span>
+                ${c.order_number ? `<span class="customize-meta-badge" style="background:#E8F5E9;color:#2E7D32;border-color:#A5D6A7"><i class="fas fa-receipt"></i> ${escapeHtml(c.order_number)}</span>` : ''}
+            </div>`;
+
+        // ── Details section ──
+        const detailsHtml = (c.customization_details || c.special_instructions) ? `
+            <div class="customize-section">
+                <div class="customize-section-title"><i class="fas fa-file-alt"></i> Request Details</div>
+                ${c.customization_details ? `<div class="customize-detail"><i class="fas fa-align-left"></i><span>${escapeHtml(c.customization_details)}</span></div>` : ''}
+                ${c.special_instructions  ? `<div class="customize-detail" style="margin-top:5px"><i class="fas fa-sticky-note"></i><span><strong>Instructions:</strong> ${escapeHtml(c.special_instructions)}</span></div>` : ''}
+            </div>` : '';
+
+        // ── Materials/options ──
+        let materialsHtml = '';
+        if (c.options && c.options.length > 0) {
+            const rows = c.options.map(opt => {
+                const p = opt.parsed || {};
+                const label    = p.label || opt.option_type || 'Item';
+                const qty      = p.quantity != null ? p.quantity : 1;
+                const uprice   = p.unit_price != null ? p.unit_price : (opt.additional_price / (p.quantity||1));
+                const subtotal = p.subtotal != null ? p.subtotal : opt.additional_price;
+                return `<tr>
+                    <td>${escapeHtml(label)}</td>
+                    <td style="text-align:center;color:#888">x${qty}</td>
+                    <td>₱${fmtPrice(uprice)} ea.</td>
+                    <td>₱${fmtPrice(subtotal)}</td>
+                </tr>`;
+            }).join('');
+            materialsHtml = `
+                <div class="customize-section">
+                    <div class="customize-section-title"><i class="fas fa-list-ul"></i> Materials / Options</div>
+                    <table class="materials-table">
+                        <thead><tr style="color:#aaa;font-size:10px">
+                            <td>Item</td><td style="text-align:center">Qty</td><td>Unit</td><td style="text-align:right">Sub</td>
+                        </tr></thead>
+                        <tbody>${rows}</tbody>
+                    </table>
+                    <div class="materials-total">Customer Estimate: ₱${fmtPrice(custEstimate)}</div>
+                </div>`;
+        }
+
+        // ── Admin response ──
+        let adminHtml = '';
+        if (isApproved && adminPrice > 0) {
+            adminHtml = `
+                <div class="admin-response-box approved">
+                    <div class="admin-price-row">✅ Admin Price: ₱${fmtPrice(adminPrice)}</div>
+                    ${c.admin_notes ? `<div class="admin-notes-row"><i class="fas fa-comment"></i> "${escapeHtml(c.admin_notes)}"</div>` : ''}
+                </div>`;
+        } else if (isRejected) {
+            adminHtml = `
+                <div class="admin-response-box rejected">
+                    <div style="font-size:12px;font-weight:700;color:#721C24">❌ Request Rejected</div>
+                    ${c.admin_notes ? `<div class="admin-notes-row"><i class="fas fa-comment"></i> "${escapeHtml(c.admin_notes)}"</div>` : ''}
+                </div>`;
+        } else if (isPending) {
+            adminHtml = `
+                <div class="awaiting-box">
+                    <i class="fas fa-clock"></i>
+                    <span>Awaiting admin review &amp; pricing</span>
+                </div>`;
+        }
+
+        // ── cData for sharing — include ALL enriched info ──
+        // Build materials JSON string for sending
+        let materialsJson = null;
+        if (c.options && c.options.length > 0) {
+            materialsJson = JSON.stringify(c.options.map(opt => ({
+                label:      (opt.parsed || {}).label || opt.option_type || 'Item',
+                quantity:   (opt.parsed || {}).quantity || 1,
+                unit_price: (opt.parsed || {}).unit_price || 0,
+                subtotal:   (opt.parsed || {}).subtotal || opt.additional_price || 0,
+            })));
+        }
 
         const cData = JSON.stringify({
-            ref:          c.ref,
-            name:         c.customization_name,
-            details:      c.customization_details,
-            instructions: c.special_instructions,
-            status:       c.status,
-            price:        parseFloat(c.admin_price || c.total_price) || 0,
-            image_url:    c.image_url
+            ref:           c.ref,
+            name:          c.customization_name,
+            details:       c.customization_details,
+            instructions:  c.special_instructions,
+            status:        c.status,
+            price:         adminPrice || custEstimate,
+            image_url:     c.image_url,
+            product_name:  c.product_name,
+            category_name: c.category_name,
+            admin_notes:   c.admin_notes,
+            order_number:  c.order_number,
+            formatted_date: c.formatted_date,
+            materials_json: materialsJson,
+            options_total:  custEstimate,
         }).replace(/'/g, "&#39;");
 
         return `
             <div class="customize-card">
-                <div class="customize-ref"><i class="fas fa-fingerprint"></i> ${escapeHtml(c.ref)}</div>
-                <span class="customize-status ${statusClass}">
-                    <i class="fas fa-circle" style="font-size:8px"></i> ${escapeHtml(c.status)}
-                </span>
-                ${pendingNotice}
+                <div class="customize-card-top">
+                    <div class="customize-ref"><i class="fas fa-fingerprint"></i> ${escapeHtml(c.ref)}</div>
+                    <span class="customize-status ${statusClass}">${sIcon} ${escapeHtml(c.status)}</span>
+                </div>
+                <div class="customize-name">${escapeHtml(c.customization_name)}</div>
+                ${metaHtml}
+                ${productHtml}
                 ${imgHtml}
-                <div class="customize-detail"><i class="fas fa-tag"></i> <strong>${escapeHtml(c.customization_name)}</strong></div>
-                <div class="customize-detail"><i class="fas fa-align-left"></i> ${escapeHtml((c.customization_details||'').substring(0,60))}${(c.customization_details||'').length>60?'...':''}</div>
-                ${c.special_instructions ? `<div class="customize-detail"><i class="fas fa-sticky-note"></i> ${escapeHtml(c.special_instructions.substring(0,50))}${c.special_instructions.length>50?'...':''}</div>` : ''}
-                ${(parseFloat(c.admin_price||c.total_price)||0) > 0 ? `<div class="customize-detail"><i class="fas fa-peso-sign"></i> ₱${fmtPrice(parseFloat(c.admin_price||c.total_price))}</div>` : ''}
+                ${detailsHtml}
+                ${materialsHtml}
+                ${adminHtml}
                 <button class="share-customize-btn" onclick='shareCustomizeRequest(${cData})'>
                     <i class="fas fa-paper-plane"></i> Share in Chat
                 </button>
@@ -902,8 +1140,10 @@ async function shareCustomizeRequest(cData) {
     if (!isLiveChatMode || !liveChatSessionId) return;
 
     const statusEmoji = { 'Pending':'⏳', 'Reviewing':'🔍', 'Approved':'✅', 'Rejected':'❌', 'Completed':'🎉' };
-    const emoji = statusEmoji[cData.status] || '🎨';
-    const msgText = `${emoji} Customize Request [${cData.ref}] — ${cData.name} — Status: ${cData.status}`;
+    const emoji   = statusEmoji[cData.status] || '🎨';
+    const pricePart = cData.price > 0 ? ` | ₱${fmtPrice(cData.price)}` : '';
+    const catPart   = cData.category_name ? ` | ${cData.category_name}` : '';
+    const msgText = `${emoji} Customize Request [${cData.ref}]${catPart} — ${cData.name} — Status: ${cData.status}${pricePart}`;
 
     // Show in UI with full customize card
     addMessage(msgText, 'user', null, null, cData);
@@ -913,15 +1153,16 @@ async function shareCustomizeRequest(cData) {
             method:  'POST',
             headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken() },
             body:    JSON.stringify({
-                session_id:          liveChatSessionId,
-                message:             msgText,
-                customize_ref:       cData.ref,
-                customize_name:      cData.name,
-                customize_details:   cData.details,
+                session_id:             liveChatSessionId,
+                message:                msgText,
+                customize_ref:          cData.ref,
+                customize_name:         cData.name,
+                customize_details:      cData.details,
                 customize_instructions: cData.instructions,
-                customize_status:    cData.status,
-                customize_price:     cData.price,
-                customize_image:     cData.image_url
+                customize_status:       cData.status,
+                customize_price:        cData.price,
+                customize_image:        cData.image_url,
+                customize_materials:    cData.materials_json
             })
         });
     } catch { /* silent */ }

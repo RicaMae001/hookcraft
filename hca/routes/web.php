@@ -193,13 +193,13 @@ Route::middleware(['auth'])->group(function () {
             : 0;
 
         return view('pages.thankyou', [
-            'order'        => $order,
-            'order_id'     => $order->id,
-            'order_date'   => $order->created_at->format('F d, Y h:i A'),
-            'order_items'  => $orderItems,
-            'subtotal'     => $subtotal,
+            'order'      => $order,
+            'order_id'   => $order->id,
+            'order_date' => $order->created_at->format('F d, Y h:i A'),
+            'order_items' => $orderItems,
+            'subtotal'   => $subtotal,
             'shipping_fee' => 0.00,
-            'cartCount'    => $cartCount
+            'cartCount'  => $cartCount
         ]);
     })->name('thankyou');
 
@@ -352,11 +352,8 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::delete('/delete/{sessionId}', [LiveChatController::class, 'adminDeleteSession'])->name('delete');
         Route::post('/bulk-delete', [LiveChatController::class, 'adminBulkDelete'])->name('bulk-delete');
         Route::post('/delete-all-closed', [LiveChatController::class, 'adminDeleteAllClosed'])->name('delete-all-closed');
-
-        // ===================================
-        // ADMIN CHAT SIDEBAR — Customer data
-        // ===================================
-        Route::get('/customer-orders/{userId}',         [LiveChatController::class, 'adminGetCustomerOrders'])->name('customer-orders');
+        // Sidebar data loaders
+        Route::get('/customer-orders/{userId}', [LiveChatController::class, 'adminGetCustomerOrders'])->name('customer-orders');
         Route::get('/customer-customizations/{userId}', [LiveChatController::class, 'adminGetCustomerCustomizations'])->name('customer-customizations');
     });
 
