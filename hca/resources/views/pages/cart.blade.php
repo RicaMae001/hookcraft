@@ -849,7 +849,7 @@
 
                 <div class="summary-row">
                     <span class="summary-label">Shipping</span>
-                    <span class="summary-value free">Free</span>
+                    <span class="summary-value free">depends on location</span>
                 </div>
 
                 <div class="summary-row">

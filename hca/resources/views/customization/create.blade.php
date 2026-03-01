@@ -816,10 +816,10 @@
                                 <i class="fas fa-box"></i>
                                 <span>Reference Product: <strong>{{ $referenceProduct->name }}</strong></span>
                             </li>
-                            <li>
+                            <!-- <li>
                                 <i class="fas fa-money-bill-wave"></i>
                                 <span>Base Price: <strong>₱{{ number_format($referenceProduct->price, 2) }}</strong></span>
-                            </li>
+                            </li> -->
                             <li>
                                 <i class="fas fa-lightbulb"></i>
                                 <span>Your custom design may vary in price based on requirements</span>
