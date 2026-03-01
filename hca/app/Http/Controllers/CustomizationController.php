@@ -40,7 +40,6 @@ class CustomizationController extends Controller
         $categories = Category::whereHas('products', function($query) {
             $query->where('is_available', 1);
         })->orderBy('name', 'asc')->get();
-<<<<<<< HEAD
         
         if ($request->has('category_id')) {
             $category = Category::with(['products' => function($query) {
@@ -48,14 +47,6 @@ class CustomizationController extends Controller
                       ->orderBy('id', 'asc');
             }])->find($request->category_id);
             
-=======
-
-        if ($request->has('category_id')) {
-            $category = Category::with(['products' => function($query) {
-                $query->where('is_available', 1)->orderBy('id', 'asc');
-            }])->find($request->category_id);
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             if ($category && $category->products->count() > 0) {
                 $referenceProduct = $category->products->first();
             }
@@ -70,26 +61,12 @@ class CustomizationController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-<<<<<<< HEAD
             'category_id'           => 'required|exists:categories,id',
             'product_id'            => 'nullable|exists:products,id',
             'customization_name'    => 'required|string|max:255',
             'customization_details' => 'required|string',
             'special_instructions'  => 'nullable|string',
             'custom_image'          => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-=======
-            'category_id'            => 'required|exists:categories,id',
-            'product_id'             => 'nullable|exists:products,id',
-            'customization_name'     => 'required|string|max:255',
-            'customization_details'  => 'required|string',
-            'special_instructions'   => 'nullable|string',
-            'custom_image'           => 'nullable|image|mimes:jpeg,png,jpg,gif|max:5120',
-            // Customer expected materials
-            'materials'              => 'nullable|array',
-            'materials.*.label'      => 'required_with:materials|string|max:255',
-            'materials.*.quantity'   => 'required_with:materials|numeric|min:0',
-            'materials.*.unit_price' => 'required_with:materials|numeric|min:0',
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         ]);
 
         if (!Auth::check()) {
@@ -99,12 +76,7 @@ class CustomizationController extends Controller
         DB::beginTransaction();
 
         try {
-<<<<<<< HEAD
             if ($request->has('product_id') && $request->product_id) {
-=======
-            // Determine reference product
-            if ($request->filled('product_id')) {
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $referenceProduct = Product::where('id', $request->product_id)
                     ->where('is_available', 1)->first();
 
@@ -154,11 +126,7 @@ class CustomizationController extends Controller
                 'customization_details' => $request->customization_details,
                 'special_instructions'  => $request->special_instructions,
                 'custom_image'          => $imagePath,
-<<<<<<< HEAD
                 'total_price'           => 0,
-=======
-                'total_price'           => $customerEstimate,
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 'status'                => 'Pending',
                 'admin_price'           => null,
                 'admin_notes'           => null,
@@ -191,10 +159,6 @@ class CustomizationController extends Controller
                 'customization_id' => $customization->id,
                 'category_id'      => $request->category_id,
                 'product_id'       => $referenceProduct->id,
-<<<<<<< HEAD
-=======
-                'materials_count'  => count($request->materials ?? []),
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ]);
 
             DB::commit();
@@ -294,11 +258,7 @@ class CustomizationController extends Controller
                 'special_instructions'  => $request->special_instructions,
             ];
 
-<<<<<<< HEAD
             if ($request->has('product_id') && $request->product_id) {
-=======
-            if ($request->filled('product_id')) {
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $newReferenceProduct = Product::where('id', $request->product_id)
                     ->where('is_available', 1)->first();
 
@@ -307,11 +267,7 @@ class CustomizationController extends Controller
                         ->with('error', 'The selected product is not available.')
                         ->withInput();
                 }
-<<<<<<< HEAD
                 
-=======
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $updateData['product_id']  = $newReferenceProduct->id;
                 $updateData['category_id'] = $newReferenceProduct->category_id;
             } else {
@@ -325,11 +281,7 @@ class CustomizationController extends Controller
                         ->with('error', 'No available products found in this category.')
                         ->withInput();
                 }
-<<<<<<< HEAD
                 
-=======
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $updateData['product_id']  = $newReferenceProduct->id;
                 $updateData['category_id'] = $newReferenceProduct->category_id;
             }
@@ -372,11 +324,7 @@ class CustomizationController extends Controller
         $customization = ProductCustomization::where('user_id', Auth::id())
             ->whereNull('order_id')
             ->findOrFail($id);
-<<<<<<< HEAD
         
-=======
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         if ($customization->custom_image) {
             $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
             if (file_exists($imagePath)) unlink($imagePath);
@@ -407,11 +355,7 @@ class CustomizationController extends Controller
             }
 
             DB::beginTransaction();
-<<<<<<< HEAD
             
-=======
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             $cart = \App\Models\Cart::firstOrCreate(
                 ['user_id' => Auth::id(), 'is_buy_now' => 0]
             );
@@ -480,11 +424,7 @@ class CustomizationController extends Controller
             }
 
             DB::beginTransaction();
-<<<<<<< HEAD
             
-=======
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             $cart = \App\Models\Cart::firstOrCreate(
                 ['user_id' => Auth::id(), 'is_buy_now' => 0]
             );
@@ -564,14 +504,8 @@ class CustomizationController extends Controller
         if ($status) {
             $query->where('status', $status);
         }
-<<<<<<< HEAD
         
         $customizations = $query->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
-=======
-
-        $customizations = $query
-            ->orderByRaw("FIELD(status, 'Pending', 'Approved', 'Rejected', 'Completed')")
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ->orderBy('created_at', 'desc')
             ->paginate(20);
 
@@ -598,20 +532,9 @@ class CustomizationController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $request->validate([
-<<<<<<< HEAD
             'status'       => 'required|in:Pending,Approved,Rejected,Completed',
             'admin_price'  => 'required_if:status,Approved|nullable|numeric|min:0',
             'admin_notes'  => 'nullable|string',
-=======
-            'status'                      => 'required|in:Pending,Approved,Rejected,Completed',
-            'admin_price'                 => 'required_if:status,Approved|nullable|numeric|min:0',
-            'admin_notes'                 => 'nullable|string',
-            // Official price breakdown rows
-            'breakdown'                   => 'nullable|array',
-            'breakdown.*.label'           => 'required_with:breakdown|string|max:255',
-            'breakdown.*.quantity'        => 'required_with:breakdown|numeric|min:0',
-            'breakdown.*.unit_price'      => 'required_with:breakdown|numeric|min:0',
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         ]);
 
         $customization = ProductCustomization::findOrFail($id);
@@ -639,7 +562,6 @@ class CustomizationController extends Controller
             }
 
             $updateData = [
-<<<<<<< HEAD
                 'status'      => $request->status,
                 'admin_notes' => $request->admin_notes,
                 'admin_id'    => session('admin_id'),
@@ -649,24 +571,6 @@ class CustomizationController extends Controller
                 $updateData['admin_price']  = $request->admin_price;
                 $updateData['total_price']  = $request->admin_price;
             } elseif ($request->status !== 'Approved') {
-=======
-                'status'          => $request->status,
-                'admin_notes'     => $request->admin_notes,
-                'admin_id'        => session('admin_id'),
-                'price_breakdown' => !empty($breakdownRows) ? $breakdownRows : null,
-            ];
-
-            if ($request->status === 'Approved') {
-                // Use typed price if provided, otherwise use breakdown total
-                $finalPrice = $request->filled('admin_price')
-                    ? (float)$request->admin_price
-                    : $breakdownTotal;
-
-                $updateData['admin_price'] = $finalPrice;
-                $updateData['total_price'] = $finalPrice;
-            } elseif ($request->status !== 'Completed') {
-                // Don't wipe price if marking Completed
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
                 $updateData['admin_price'] = null;
             }
 
@@ -676,12 +580,7 @@ class CustomizationController extends Controller
                 'admin_id'         => session('admin_id'),
                 'customization_id' => $customization->id,
                 'status'           => $request->status,
-<<<<<<< HEAD
                 'price'            => $request->admin_price ?? 'N/A'
-=======
-                'price'            => $updateData['admin_price'] ?? 'N/A',
-                'breakdown_items'  => count($breakdownRows),
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ]);
 
             DB::commit();
@@ -693,11 +592,7 @@ class CustomizationController extends Controller
             DB::rollBack();
             Log::error('Customization update failed', [
                 'error'    => $e->getMessage(),
-<<<<<<< HEAD
                 'admin_id' => session('admin_id')
-=======
-                'admin_id' => session('admin_id'),
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
             ]);
 
             return redirect()->back()
@@ -711,11 +606,7 @@ class CustomizationController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $customization = ProductCustomization::findOrFail($id);
-<<<<<<< HEAD
         
-=======
-
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         if ($customization->custom_image) {
             $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
             if (file_exists($imagePath)) unlink($imagePath);
@@ -725,11 +616,7 @@ class CustomizationController extends Controller
 
         Log::info('Customization deleted by admin', [
             'customization_id' => $id,
-<<<<<<< HEAD
             'admin_id'         => session('admin_id')
-=======
-            'admin_id'         => session('admin_id'),
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         ]);
 
         return redirect()->route('admin.customizations.index')
@@ -744,14 +631,10 @@ class CustomizationController extends Controller
             ->get(['id', 'name', 'price', 'image', 'description']);
 
         if ($products->count() > 0) {
-<<<<<<< HEAD
             return response()->json([
                 'success'  => true,
                 'products' => $products
             ]);
-=======
-            return response()->json(['success' => true, 'products' => $products]);
->>>>>>> ac40d5b05e798be073767cdd8895cd60366cbc11
         }
 
         return response()->json(['success' => false, 'message' => 'No available products in this category'], 404);
