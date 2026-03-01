@@ -15,9 +15,6 @@ class LiveChatController extends Controller
     // CUSTOMER METHODS
     // ============================================
 
-    /**
-     * Get customer's ongoing orders with product images
-     */
     public function getCustomerOngoingOrders()
     {
         if (!Auth::check()) {
@@ -36,14 +33,12 @@ class LiveChatController extends Controller
                         ->where('order_id', $order->id)
                         ->count();
 
-                    // Attach product images from order items
                     $order->product_images = DB::table('order_item')
                         ->join('products', 'order_item.product_id', '=', 'products.id')
                         ->where('order_item.order_id', $order->id)
                         ->select('products.id', 'products.name', 'products.image', 'products.price', 'order_item.quantity')
                         ->get()
                         ->map(function ($item) {
-                            // ✅ FIXED: use asset/images/ to match how the rest of the app serves product images
                             $item->image_url = asset('asset/images/' . $item->image);
                             return $item;
                         });
@@ -60,9 +55,56 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Customer activity heartbeat
-     */
+    public function getCustomerPendingCustomizations()
+    {
+        if (!Auth::check()) {
+            return response()->json(['success' => false, 'message' => 'Not authenticated'], 401);
+        }
+
+        try {
+            $customizations = DB::table('product_customizations')
+                ->join('products', 'product_customizations.product_id', '=', 'products.id')
+                ->where('product_customizations.user_id', Auth::id())
+                ->orderBy('product_customizations.created_at', 'desc')
+                ->take(20)
+                ->select(
+                    'product_customizations.id',
+                    'product_customizations.customization_name',
+                    'product_customizations.customization_details',
+                    'product_customizations.special_instructions',
+                    'product_customizations.custom_image',
+                    'product_customizations.total_price',
+                    'product_customizations.admin_price',
+                    'product_customizations.admin_notes',
+                    'product_customizations.status',
+                    'product_customizations.created_at',
+                    'products.name as product_name',
+                    'products.image as product_image'
+                )
+                ->get()
+                ->map(function ($c) {
+                    $c->ref = 'CUST-' . str_pad($c->id, 5, '0', STR_PAD_LEFT);
+
+                    $c->image_url = $c->custom_image
+                        ? asset('uploads/customizations/' . $c->custom_image)
+                        : null;
+
+                    $c->product_image_url = $c->product_image
+                        ? asset('images/' . $c->product_image)
+                        : null;
+
+                    $c->is_pending_approval = in_array($c->status, ['Pending', 'Reviewing']);
+                    return $c;
+                });
+
+            return response()->json(['success' => true, 'customizations' => $customizations]);
+
+        } catch (\Exception $e) {
+            Log::error('Get customer customizations error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to get customizations'], 500);
+        }
+    }
+
     public function heartbeat(Request $request)
     {
         if (!Auth::check()) {
@@ -88,15 +130,12 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Customer requests STAFF live chat
-     */
     public function request(Request $request)
     {
         if (!Auth::check()) {
             return response()->json([
-                'success' => false,
-                'message' => 'You must be logged in to use live chat',
+                'success'  => false,
+                'message'  => 'You must be logged in to use live chat',
                 'redirect' => route('login')
             ], 401);
         }
@@ -112,11 +151,11 @@ class LiveChatController extends Controller
 
             if ($existingSession) {
                 return response()->json([
-                    'success' => true,
-                    'session_id' => $existingSession->session_id,
-                    'status' => $existingSession->status,
+                    'success'        => true,
+                    'session_id'     => $existingSession->session_id,
+                    'status'         => $existingSession->status,
                     'queue_position' => $existingSession->queue_position,
-                    'message' => 'You already have an active chat session'
+                    'message'        => 'You already have an active chat session'
                 ]);
             }
 
@@ -128,34 +167,34 @@ class LiveChatController extends Controller
             $sessionId = Str::uuid()->toString();
 
             DB::table('chat_sessions')->insert([
-                'user_id' => $user->id,
-                'session_id' => $sessionId,
-                'chat_type' => 'staff',
-                'customer_name' => $user->name,
-                'customer_email' => $user->email,
-                'status' => 'waiting',
-                'queue_position' => $queuePosition,
-                'last_activity' => now(),
+                'user_id'                => $user->id,
+                'session_id'             => $sessionId,
+                'chat_type'              => 'staff',
+                'customer_name'          => $user->name,
+                'customer_email'         => $user->email,
+                'status'                 => 'waiting',
+                'queue_position'         => $queuePosition,
+                'last_activity'          => now(),
                 'last_customer_activity' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at'             => now(),
+                'updated_at'             => now(),
             ]);
 
             $chatSessionId = DB::table('chat_sessions')->where('session_id', $sessionId)->value('id');
 
             DB::table('chat_messages')->insert([
                 'chat_session_id' => $chatSessionId,
-                'sender_type' => 'system',
-                'message' => 'Customer joined the queue',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'sender_type'     => 'system',
+                'message'         => 'Customer joined the queue',
+                'created_at'      => now(),
+                'updated_at'      => now(),
             ]);
 
             return response()->json([
-                'success' => true,
-                'session_id' => $sessionId,
+                'success'        => true,
+                'session_id'     => $sessionId,
                 'queue_position' => $queuePosition,
-                'message' => 'You have been added to the queue'
+                'message'        => 'You have been added to the queue'
             ]);
 
         } catch (\Exception $e) {
@@ -164,15 +203,12 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Customer requests DELIVERY live chat
-     */
     public function requestDeliveryChat(Request $request)
     {
         if (!Auth::check()) {
             return response()->json([
-                'success' => false,
-                'message' => 'You must be logged in to use delivery chat',
+                'success'  => false,
+                'message'  => 'You must be logged in to use delivery chat',
                 'redirect' => route('login')
             ], 401);
         }
@@ -188,11 +224,11 @@ class LiveChatController extends Controller
 
             if ($existingSession) {
                 return response()->json([
-                    'success' => true,
-                    'session_id' => $existingSession->session_id,
-                    'status' => $existingSession->status,
+                    'success'        => true,
+                    'session_id'     => $existingSession->session_id,
+                    'status'         => $existingSession->status,
                     'queue_position' => $existingSession->queue_position,
-                    'message' => 'You already have an active delivery chat session'
+                    'message'        => 'You already have an active delivery chat session'
                 ]);
             }
 
@@ -204,34 +240,34 @@ class LiveChatController extends Controller
             $sessionId = Str::uuid()->toString();
 
             DB::table('chat_sessions')->insert([
-                'user_id' => $user->id,
-                'session_id' => $sessionId,
-                'chat_type' => 'delivery',
-                'customer_name' => $user->name,
-                'customer_email' => $user->email,
-                'status' => 'waiting',
-                'queue_position' => $queuePosition,
-                'last_activity' => now(),
+                'user_id'                => $user->id,
+                'session_id'             => $sessionId,
+                'chat_type'              => 'delivery',
+                'customer_name'          => $user->name,
+                'customer_email'         => $user->email,
+                'status'                 => 'waiting',
+                'queue_position'         => $queuePosition,
+                'last_activity'          => now(),
                 'last_customer_activity' => now(),
-                'created_at' => now(),
-                'updated_at' => now(),
+                'created_at'             => now(),
+                'updated_at'             => now(),
             ]);
 
             $chatSessionId = DB::table('chat_sessions')->where('session_id', $sessionId)->value('id');
 
             DB::table('chat_messages')->insert([
                 'chat_session_id' => $chatSessionId,
-                'sender_type' => 'system',
-                'message' => 'Customer joined the delivery support queue',
-                'created_at' => now(),
-                'updated_at' => now(),
+                'sender_type'     => 'system',
+                'message'         => 'Customer joined the delivery support queue',
+                'created_at'      => now(),
+                'updated_at'      => now(),
             ]);
 
             return response()->json([
-                'success' => true,
-                'session_id' => $sessionId,
+                'success'        => true,
+                'session_id'     => $sessionId,
                 'queue_position' => $queuePosition,
-                'message' => 'You have been added to the delivery support queue'
+                'message'        => 'You have been added to the delivery support queue'
             ]);
 
         } catch (\Exception $e) {
@@ -240,9 +276,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Get user's active chat session
-     */
     public function getActiveSession()
     {
         if (!Auth::check()) {
@@ -271,9 +304,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Check for unread messages
-     */
     public function checkUnread()
     {
         if (!Auth::check()) {
@@ -297,10 +327,10 @@ class LiveChatController extends Controller
                 ->count();
 
             return response()->json([
-                'success' => true,
-                'has_unread' => $unreadCount > 0,
+                'success'      => true,
+                'has_unread'   => $unreadCount > 0,
                 'unread_count' => $unreadCount,
-                'status' => $session->status
+                'status'       => $session->status
             ]);
 
         } catch (\Exception $e) {
@@ -309,9 +339,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Get chat history for resuming session
-     */
     public function getChatHistory($sessionId)
     {
         if (!Auth::check()) {
@@ -351,9 +378,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Mark messages as read
-     */
     public function markAsRead($sessionId)
     {
         if (!Auth::check()) {
@@ -384,9 +408,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Customer sends a message (text only, or product share with metadata)
-     */
     public function sendMessage(Request $request)
     {
         if (!Auth::check()) {
@@ -394,11 +415,18 @@ class LiveChatController extends Controller
         }
 
         $request->validate([
-            'session_id'    => 'required|string',
-            'message'       => 'required|string|max:2000',
-            'product_name'  => 'nullable|string|max:255',
-            'product_price' => 'nullable|numeric',
-            'product_image' => 'nullable|string|max:500',
+            'session_id'             => 'required|string',
+            'message'                => 'required|string|max:2000',
+            'product_name'           => 'nullable|string|max:255',
+            'product_price'          => 'nullable|numeric',
+            'product_image'          => 'nullable|string|max:500',
+            'customize_ref'          => 'nullable|string|max:50',
+            'customize_name'         => 'nullable|string|max:255',
+            'customize_details'      => 'nullable|string|max:1000',
+            'customize_instructions' => 'nullable|string|max:500',
+            'customize_status'       => 'nullable|string|max:50',
+            'customize_price'        => 'nullable|numeric',
+            'customize_image'        => 'nullable|string|max:500',
         ]);
 
         try {
@@ -420,16 +448,23 @@ class LiveChatController extends Controller
                 ->update(['last_activity' => now(), 'last_customer_activity' => now()]);
 
             DB::table('chat_messages')->insert([
-                'chat_session_id' => $session->id,
-                'sender_type'     => 'customer',
-                'sender_id'       => Auth::id(),
-                'message'         => $request->message,
-                'product_name'    => $request->product_name,
-                'product_price'   => $request->product_price,
-                'product_image'   => $request->product_image,
-                'is_read'         => false,
-                'created_at'      => now(),
-                'updated_at'      => now(),
+                'chat_session_id'        => $session->id,
+                'sender_type'            => 'customer',
+                'sender_id'              => Auth::id(),
+                'message'                => $request->message,
+                'product_name'           => $request->product_name,
+                'product_price'          => $request->product_price,
+                'product_image'          => $request->product_image,
+                'customize_ref'          => $request->customize_ref,
+                'customize_name'         => $request->customize_name,
+                'customize_details'      => $request->customize_details,
+                'customize_instructions' => $request->customize_instructions,
+                'customize_status'       => $request->customize_status,
+                'customize_price'        => $request->customize_price,
+                'customize_image'        => $request->customize_image,
+                'is_read'                => false,
+                'created_at'             => now(),
+                'updated_at'             => now(),
             ]);
 
             return response()->json(['success' => true, 'message' => 'Message sent']);
@@ -440,9 +475,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Poll for new messages and status updates
-     */
     public function poll($sessionId)
     {
         if (!Auth::check()) {
@@ -513,9 +545,6 @@ class LiveChatController extends Controller
         }
     }
 
-    /**
-     * Customer ends the chat session
-     */
     public function endSession(Request $request)
     {
         if (!Auth::check()) {
@@ -634,11 +663,11 @@ class LiveChatController extends Controller
             }
 
             DB::table('chat_sessions')->where('id', $sessionId)->update([
-                'status'       => 'active',
-                'admin_id'     => session('admin_id'),
-                'started_at'   => now(),
+                'status'        => 'active',
+                'admin_id'      => session('admin_id'),
+                'started_at'    => now(),
                 'last_activity' => now(),
-                'updated_at'   => now(),
+                'updated_at'    => now(),
             ]);
 
             $admin     = DB::table('admin')->where('id', session('admin_id'))->first();
@@ -689,9 +718,6 @@ class LiveChatController extends Controller
         return view('admin.livechat.livechat_chat', compact('session', 'messages'));
     }
 
-    /**
-     * Admin/delivery sends a message (text only, or product share with metadata)
-     */
     public function adminSendMessage(Request $request)
     {
         if (!session('admin_id')) {
@@ -699,11 +725,18 @@ class LiveChatController extends Controller
         }
 
         $request->validate([
-            'session_id'    => 'required|integer',
-            'message'       => 'required|string|max:2000',
-            'product_name'  => 'nullable|string|max:255',
-            'product_price' => 'nullable|numeric',
-            'product_image' => 'nullable|string|max:500',
+            'session_id'             => 'required|integer',
+            'message'                => 'required|string|max:2000',
+            'product_name'           => 'nullable|string|max:255',
+            'product_price'          => 'nullable|numeric',
+            'product_image'          => 'nullable|string|max:500',
+            'customize_ref'          => 'nullable|string|max:50',
+            'customize_name'         => 'nullable|string|max:255',
+            'customize_details'      => 'nullable|string|max:1000',
+            'customize_instructions' => 'nullable|string|max:500',
+            'customize_status'       => 'nullable|string|max:50',
+            'customize_price'        => 'nullable|numeric',
+            'customize_image'        => 'nullable|string|max:500',
         ]);
 
         try {
@@ -726,16 +759,23 @@ class LiveChatController extends Controller
             ]);
 
             DB::table('chat_messages')->insert([
-                'chat_session_id' => $session->id,
-                'sender_type'     => 'admin',
-                'sender_id'       => session('admin_id'),
-                'message'         => $request->message,
-                'product_name'    => $request->product_name,
-                'product_price'   => $request->product_price,
-                'product_image'   => $request->product_image,
-                'is_read'         => false,
-                'created_at'      => now(),
-                'updated_at'      => now(),
+                'chat_session_id'        => $session->id,
+                'sender_type'            => 'admin',
+                'sender_id'              => session('admin_id'),
+                'message'                => $request->message,
+                'product_name'           => $request->product_name,
+                'product_price'          => $request->product_price,
+                'product_image'          => $request->product_image,
+                'customize_ref'          => $request->customize_ref,
+                'customize_name'         => $request->customize_name,
+                'customize_details'      => $request->customize_details,
+                'customize_instructions' => $request->customize_instructions,
+                'customize_status'       => $request->customize_status,
+                'customize_price'        => $request->customize_price,
+                'customize_image'        => $request->customize_image,
+                'is_read'                => false,
+                'created_at'             => now(),
+                'updated_at'             => now(),
             ]);
 
             return response()->json(['success' => true, 'message' => 'Message sent']);
@@ -922,6 +962,107 @@ class LiveChatController extends Controller
         } catch (\Exception $e) {
             Log::error('Delete all closed error: ' . $e->getMessage());
             return redirect()->back()->with('error', 'Failed to delete closed chat sessions');
+        }
+    }
+
+    // ============================================
+    // ADMIN SIDEBAR — Customer data for chat panel
+    // ============================================
+
+    /**
+     * Admin sidebar: Get a specific customer's orders
+     */
+    public function adminGetCustomerOrders($userId)
+    {
+        if (!session('admin_id')) {
+            return response()->json(['success' => false, 'message' => 'Not authenticated'], 401);
+        }
+
+        try {
+            $orders = DB::table('orders')
+                ->where('user_id', $userId)
+                ->whereIn('delivery_status', ['Pending', 'Out for Delivery', 'Delivered'])
+                ->orderBy('created_at', 'desc')
+                ->take(10)
+                ->select('id', 'customer_name', 'delivery_status', 'total', 'created_at', 'address')
+                ->get()
+                ->map(function ($order) {
+                    $order->items_count = DB::table('order_item')
+                        ->where('order_id', $order->id)
+                        ->count();
+
+                    $order->product_images = DB::table('order_item')
+                        ->join('products', 'order_item.product_id', '=', 'products.id')
+                        ->where('order_item.order_id', $order->id)
+                        ->select('products.id', 'products.name', 'products.image', 'products.price', 'order_item.quantity')
+                        ->get()
+                        ->map(function ($item) {
+                            $item->image_url = asset('asset/images/' . $item->image);
+                            return $item;
+                        });
+
+                    $order->order_number = 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
+                    return $order;
+                });
+
+            return response()->json(['success' => true, 'orders' => $orders]);
+
+        } catch (\Exception $e) {
+            Log::error('Admin get customer orders error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to get orders'], 500);
+        }
+    }
+
+    /**
+     * Admin sidebar: Get a specific customer's customizations
+     */
+    public function adminGetCustomerCustomizations($userId)
+    {
+        if (!session('admin_id')) {
+            return response()->json(['success' => false, 'message' => 'Not authenticated'], 401);
+        }
+
+        try {
+            $customizations = DB::table('product_customizations')
+                ->join('products', 'product_customizations.product_id', '=', 'products.id')
+                ->where('product_customizations.user_id', $userId)
+                ->orderBy('product_customizations.created_at', 'desc')
+                ->take(20)
+                ->select(
+                    'product_customizations.id',
+                    'product_customizations.customization_name',
+                    'product_customizations.customization_details',
+                    'product_customizations.special_instructions',
+                    'product_customizations.custom_image',
+                    'product_customizations.total_price',
+                    'product_customizations.admin_price',
+                    'product_customizations.admin_notes',
+                    'product_customizations.status',
+                    'product_customizations.created_at',
+                    'products.name as product_name',
+                    'products.image as product_image'
+                )
+                ->get()
+                ->map(function ($c) {
+                    $c->ref = 'CUST-' . str_pad($c->id, 5, '0', STR_PAD_LEFT);
+
+                    $c->image_url = $c->custom_image
+                        ? asset('uploads/customizations/' . $c->custom_image)
+                        : null;
+
+                    $c->product_image_url = $c->product_image
+                        ? asset('images/' . $c->product_image)
+                        : null;
+
+                    $c->is_pending_approval = in_array($c->status, ['Pending', 'Reviewing']);
+                    return $c;
+                });
+
+            return response()->json(['success' => true, 'customizations' => $customizations]);
+
+        } catch (\Exception $e) {
+            Log::error('Admin get customer customizations error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Failed to get customizations'], 500);
         }
     }
 }
