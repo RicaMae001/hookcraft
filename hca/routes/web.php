@@ -22,6 +22,7 @@ use App\Http\Controllers\LocationController;
 use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\DeliveryLiveChatController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\VoucherController;
 
 /*
 |--------------------------------------------------------------------------
@@ -33,34 +34,23 @@ use App\Http\Controllers\NotificationController;
 // PUBLIC ROUTES
 // ===================================
 
-// Home
 Route::get('/', [ProductController::class, 'index'])->name('home');
-
-// Shop, About, Gallery, Contact
 Route::get('/shop', [ProductController::class, 'shop'])->name('shop');
 Route::get('/about', [ProductController::class, 'about'])->name('about');
 Route::get('/gallery', [GalleryController::class, 'index'])->name('gallery');
 Route::get('/contact', [ProductController::class, 'contact'])->name('contact');
-
-// Product Details
 Route::get('/product/{id}', [ProductController::class, 'show'])->name('product.show');
 
 // ===================================
 // AUTHENTICATION ROUTES
 // ===================================
 
-// Show login page (GET) - redirects to home where modal is located
 Route::get('/login', function () {
     return redirect()->route('home')->with('show_login_modal', true);
 })->name('login');
 
-// Process login (POST)
 Route::post('/login', [UserController::class, 'login'])->name('login.submit');
-
-// Register
 Route::post('/register', [UserController::class, 'register'])->name('register');
-
-// Logout
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
 // ===================================
@@ -87,11 +77,9 @@ Route::prefix('api/locations')->group(function () {
 });
 
 // ===================================
-// NOTIFICATION API ROUTES (Universal - works for all user types)
-// Note: These routes check for ANY type of authentication (user, admin, or delivery)
+// NOTIFICATION API ROUTES
 // ===================================
 Route::prefix('api/notifications')->name('api.notifications.')->group(function () {
-    // These routes will gracefully handle unauthenticated requests
     Route::get('/', [NotificationController::class, 'index']);
     Route::get('/unread-count', [NotificationController::class, 'unreadCount']);
     Route::post('/{id}/read', [NotificationController::class, 'markAsRead']);
@@ -99,43 +87,28 @@ Route::prefix('api/notifications')->name('api.notifications.')->group(function (
     Route::delete('/{id}', [NotificationController::class, 'destroy']);
 });
 
-
 // ===================================
 // CUSTOMER AUTHENTICATED ROUTES
 // ===================================
 Route::middleware(['auth'])->group(function () {
 
     // ===================================
+    // VOUCHER ROUTES
+    // ===================================
+    Route::post('/voucher/apply', [VoucherController::class, 'apply'])->name('voucher.apply');
+
+    // ===================================
     // CUSTOMER LIVE CHAT ROUTES
     // ===================================
-    // Request STAFF chat
     Route::post('/livechat/request', [LiveChatController::class, 'request'])->name('livechat.request');
-
-    // Request DELIVERY chat
     Route::post('/livechat/request-delivery', [LiveChatController::class, 'requestDeliveryChat'])->name('livechat.request-delivery');
-
-    // Send message
     Route::post('/livechat/send', [LiveChatController::class, 'sendMessage'])->name('livechat.send');
-
-    // End chat session
     Route::post('/livechat/end', [LiveChatController::class, 'endSession'])->name('livechat.end');
-
-    // Poll for new messages
     Route::get('/livechat/poll/{sessionId}', [LiveChatController::class, 'poll'])->name('livechat.poll');
-
-    // Get active session
     Route::get('/livechat/active-session', [LiveChatController::class, 'getActiveSession'])->name('livechat.active-session');
-
-    // Get chat history
     Route::get('/livechat/history/{sessionId}', [LiveChatController::class, 'getChatHistory'])->name('livechat.history');
-
-    // Mark messages as read
     Route::post('/livechat/mark-read/{sessionId}', [LiveChatController::class, 'markAsRead'])->name('livechat.mark-read');
-
-    // Activity heartbeat
     Route::post('/livechat/heartbeat', [LiveChatController::class, 'heartbeat'])->name('livechat.heartbeat');
-
-    // Check unread messages (for navbar notification)
     Route::get('/livechat/check-unread', [LiveChatController::class, 'checkUnread'])->name('livechat.check-unread');
 
     // ===================================
@@ -154,12 +127,10 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/cart/delete/{id}', [CartController::class, 'delete'])->name('cart.delete');
 
     // ===================================
-    // CHECKOUT ROUTES (handles both regular products and customizations)
+    // CHECKOUT ROUTES
     // ===================================
     Route::get('/checkout', [CheckoutController::class, 'index'])->name('checkout.index');
     Route::post('/checkout', [CheckoutController::class, 'store'])->name('checkout.store');
-
-    // GCash payment routes
     Route::get('/checkout/gcash/{order}', [CheckoutController::class, 'showGCashPayment'])->name('checkout.gcash');
     Route::post('/checkout/gcash/{order}', [CheckoutController::class, 'submitGCashPayment'])->name('checkout.gcash.submit');
 
@@ -167,44 +138,33 @@ Route::middleware(['auth'])->group(function () {
     // THANK YOU PAGE
     // ===================================
     Route::get('/thankyou/{order_id}', function ($order_id) {
-        // Fetch the order with related items and products
         $order = Order::with(['orderItems.product'])->findOrFail($order_id);
 
-        // Verify the order belongs to the authenticated user
         if ($order->user_id !== Auth::id()) {
             abort(403, 'Unauthorized access to order');
         }
 
-        // Get order items
         $orderItems = $order->orderItems;
+        $subtotal   = $orderItems->sum(fn($item) => $item->price * $item->quantity);
 
-        // Calculate subtotal
-        $subtotal = $orderItems->sum(function($item) {
-            return $item->price * $item->quantity;
-        });
-
-        // Get cart count for navbar (from regular cart only)
-        $regularCart = Cart::where('user_id', Auth::id())
-            ->where('is_buy_now', 0)
-            ->first();
-
-        $cartCount = $regularCart
+        $regularCart = Cart::where('user_id', Auth::id())->where('is_buy_now', 0)->first();
+        $cartCount   = $regularCart
             ? CartItem::where('cart_id', $regularCart->id)->sum('quantity')
             : 0;
 
         return view('pages.thankyou', [
-            'order'      => $order,
-            'order_id'   => $order->id,
-            'order_date' => $order->created_at->format('F d, Y h:i A'),
-            'order_items' => $orderItems,
-            'subtotal'   => $subtotal,
+            'order'        => $order,
+            'order_id'     => $order->id,
+            'order_date'   => $order->created_at->format('F d, Y h:i A'),
+            'order_items'  => $orderItems,
+            'subtotal'     => $subtotal,
             'shipping_fee' => 0.00,
-            'cartCount'  => $cartCount
+            'cartCount'    => $cartCount
         ]);
     })->name('thankyou');
 
     // ===================================
-    // PROFILE/SETTINGS ROUTES
+    // PROFILE / SETTINGS ROUTES
     // ===================================
     Route::get('/profile', [ProfileController::class, 'index'])->name('profile.index');
     Route::put('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update');
@@ -218,32 +178,17 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/notifications', [NotificationController::class, 'userNotifications'])->name('user.notifications');
 
     // ===================================
-    // CUSTOMIZATION ROUTES (uses unified checkout page)
+    // CUSTOMIZATION ROUTES
     // ===================================
-
-    // Customization Management Routes
     Route::prefix('customizations')->group(function () {
-        // My customizations list
         Route::get('/my-customizations', [CustomizationController::class, 'myCustomizations'])->name('customization.my-customizations');
-
-        // Create new customization
         Route::get('/create', [CustomizationController::class, 'create'])->name('customization.create');
         Route::post('/', [CustomizationController::class, 'store'])->name('customization.store');
-
-        // View single customization
         Route::get('/{id}', [CustomizationController::class, 'show'])->name('customization.show');
-
-        // Edit customization
         Route::get('/{id}/edit', [CustomizationController::class, 'edit'])->name('customization.edit');
         Route::put('/{id}', [CustomizationController::class, 'update'])->name('customization.update');
-
-        // Delete customization
         Route::delete('/{id}', [CustomizationController::class, 'destroy'])->name('customization.destroy');
-
-        // Add to cart
         Route::post('/{id}/add-to-cart', [CustomizationController::class, 'addToCart'])->name('customization.add-to-cart');
-
-        // Proceed to checkout (this method exists in your controller)
         Route::post('/{id}/proceed-checkout', [CustomizationController::class, 'proceedCheckout'])->name('customization.proceed-checkout');
     });
 
@@ -253,8 +198,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('/orders/{order}/cancel', [OrderController::class, 'cancel'])->name('orders.cancel');
 
     // ===================================
-    // DELIVERY MAP TRACKER — Customer-facing rider location poll
-    // Used by the live map on the order card (polls every 15s)
+    // DELIVERY MAP TRACKER
     // ===================================
     Route::get('/deliveries/{id}/location', [DeliveryController::class, 'getRiderLocation'])->name('deliveries.location');
 });
@@ -325,7 +269,16 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
     Route::delete('/staff/delivery/{id}', [AdminController::class, 'deleteDelivery'])->name('staff.delivery.delete');
 
     // ===================================
-    // GALLERY MANAGEMENT ROUTES
+    // VOUCHER MANAGEMENT — SUPERADMIN ONLY
+    // ===================================
+    Route::get('/vouchers', [AdminController::class, 'vouchers'])->name('vouchers.index');
+    Route::post('/vouchers', [AdminController::class, 'storeVoucher'])->name('vouchers.store');
+    Route::put('/vouchers/{voucher}', [AdminController::class, 'updateVoucher'])->name('vouchers.update');
+    Route::delete('/vouchers/{voucher}', [AdminController::class, 'destroyVoucher'])->name('vouchers.destroy');
+    Route::post('/vouchers/{voucher}/toggle', [AdminController::class, 'toggleVoucher'])->name('vouchers.toggle');
+
+    // ===================================
+    // GALLERY MANAGEMENT
     // ===================================
     Route::prefix('gallery')->name('gallery.')->group(function () {
         Route::get('/', [GalleryController::class, 'adminIndex'])->name('index');
@@ -352,25 +305,17 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
         Route::delete('/delete/{sessionId}', [LiveChatController::class, 'adminDeleteSession'])->name('delete');
         Route::post('/bulk-delete', [LiveChatController::class, 'adminBulkDelete'])->name('bulk-delete');
         Route::post('/delete-all-closed', [LiveChatController::class, 'adminDeleteAllClosed'])->name('delete-all-closed');
-        // Sidebar data loaders
         Route::get('/customer-orders/{userId}', [LiveChatController::class, 'adminGetCustomerOrders'])->name('customer-orders');
         Route::get('/customer-customizations/{userId}', [LiveChatController::class, 'adminGetCustomerCustomizations'])->name('customer-customizations');
     });
 
     // ===================================
-    // ADMIN CUSTOMIZATION MANAGEMENT ROUTES
+    // ADMIN CUSTOMIZATION MANAGEMENT
     // ===================================
     Route::prefix('customizations')->name('customizations.')->group(function () {
-        // List all customizations
         Route::get('/', [CustomizationController::class, 'adminIndex'])->name('index');
-
-        // View single customization details
         Route::get('/{id}', [CustomizationController::class, 'adminShow'])->name('show');
-
-        // Update customization (status, price, notes)
         Route::put('/{id}', [CustomizationController::class, 'adminUpdate'])->name('update');
-
-        // Delete customization
         Route::delete('/{id}', [CustomizationController::class, 'adminDestroy'])->name('destroy');
     });
 });
@@ -380,7 +325,6 @@ Route::middleware(['admin'])->prefix('admin')->name('admin.')->group(function ()
 // ===================================
 Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(function () {
 
-    // Dashboard
     Route::get('/dashboard', [DeliveryController::class, 'dashboard'])->name('dashboard');
     Route::post('/logout', [DeliveryController::class, 'logout'])->name('logout');
 
@@ -395,15 +339,9 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
     Route::get('/deliveries', [DeliveryController::class, 'deliveries'])->name('deliveries');
     Route::put('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('update-status');
     Route::post('/deliveries/{id}/status', [DeliveryController::class, 'updateStatus'])->name('updateStatus');
-
-    // Payment Proof Upload
     Route::post('/deliveries/{id}/upload-payment-proof', [DeliveryController::class, 'uploadPaymentProof'])->name('upload-payment-proof');
-
-    // Proof of Delivery and Payment Upload Routes
     Route::post('/deliveries/{id}/upload-proof-of-delivery', [DeliveryController::class, 'uploadProofOfDelivery'])->name('upload-proof-of-delivery');
-    Route::post('/deliveries/{id}/upload-proof-of-payment',  [DeliveryController::class, 'uploadProofOfPayment'])->name('upload-proof-of-payment');
-
-    // Delivery History
+    Route::post('/deliveries/{id}/upload-proof-of-payment', [DeliveryController::class, 'uploadProofOfPayment'])->name('upload-proof-of-payment');
     Route::get('/history', [DeliveryController::class, 'history'])->name('history');
 
     // ===================================

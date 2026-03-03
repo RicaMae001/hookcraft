@@ -667,7 +667,7 @@
                 <span>Customers/User</span>
             </a>
 
-            {{-- Customize: locked for Staff, accessible for Admin only --}}
+            {{-- Customize: locked for Staff, accessible for Admin/SuperAdmin only --}}
             @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
                 <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
                     <i class="fas fa-images"></i>
@@ -677,6 +677,20 @@
                 <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Customize')">
                     <i class="fas fa-images"></i>
                     <span>Customize</span>
+                    <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
+                </a>
+            @endif
+
+            {{-- Vouchers: locked for Staff, accessible for Admin/SuperAdmin only --}}
+            @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
+                <a href="{{ route('admin.vouchers.index') }}" class="sidebar-link {{ request()->routeIs('admin.vouchers.*') ? 'active' : '' }}">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Vouchers</span>
+                </a>
+            @else
+                <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Vouchers')">
+                    <i class="fas fa-ticket-alt"></i>
+                    <span>Vouchers</span>
                     <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
                 </a>
             @endif

@@ -17,14 +17,12 @@
             box-shadow: 0 0 20px rgba(0,0,0,0.1);
             overflow: hidden;
         }
-        
         .receipt-header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             padding: 30px;
             text-align: center;
         }
-        
         .receipt-logo {
             width: 80px;
             height: 80px;
@@ -33,495 +31,83 @@
             border: 3px solid white;
             object-fit: cover;
         }
-        
-        .receipt-title {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .receipt-subtitle {
-            opacity: 0.9;
-            font-size: 0.9rem;
-        }
-        
-        .receipt-content {
-            padding: 30px;
-        }
-        
+        .receipt-title { font-size: 2rem; font-weight: bold; margin-bottom: 5px; }
+        .receipt-subtitle { opacity: 0.9; font-size: 0.9rem; }
+        .receipt-content { padding: 30px; }
         .receipt-section {
             margin-bottom: 25px;
             padding-bottom: 25px;
             border-bottom: 1px dashed #ddd;
         }
-        
-        .receipt-section:last-child {
-            border-bottom: none;
-        }
-        
-        .payment-wrapper {
-            max-width: 480px;
-            margin: 0 auto;
-            padding: 1rem;
-            padding-top: 2rem;
-        }
-
-        /* Progress Steps */
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 2rem;
-            position: relative;
-        }
-
-        .progress-steps::before {
-            content: '';
-            position: absolute;
-            top: 20px;
-            left: 0;
-            right: 0;
-            height: 2px;
-            background: #e0e6ed;
-            z-index: 0;
-        }
-
-        .step {
-            flex: 1;
-            text-align: center;
-            position: relative;
-            z-index: 1;
-        }
-
-        .step-circle {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: white;
-            border: 2px solid #e0e6ed;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 0.5rem;
-            font-weight: 600;
-            color: #94a3b8;
-            transition: all 0.3s ease;
-        }
-
-        .step.active .step-circle {
-            background: #007bff;
-            border-color: #007bff;
-            color: white;
-        }
-
-        .step.completed .step-circle {
-            background: #10b981;
-            border-color: #10b981;
-            color: white;
-        }
-
-        .step-label {
-            font-size: 0.75rem;
-            color: #64748b;
-            font-weight: 500;
-        }
-
-        .step.active .step-label {
-            color: #0f172a;
-        }
-
-        .section-title {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 15px;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        
-        .info-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px;
-        }
-        
-        .info-item {
-            margin-bottom: 10px;
-        }
-        
-        .info-label {
-            font-weight: bold;
-            color: #666;
-            font-size: 0.9rem;
-            margin-bottom: 3px;
-        }
-        
-        .info-value {
-            color: #333;
-            font-size: 1rem;
-        }
-        
-        /* Delivery Info Card */
-        .delivery-info-card {
-            background: linear-gradient(135deg, #f0f9ff, #e6f3ff);
-            border: 1px solid #b8daff;
-            border-radius: 8px;
-            padding: 15px;
-            margin-top: 10px;
-        }
-        
-        .delivery-info-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-size: 0.9rem;
-        }
-        
-        .delivery-info-row:last-child {
-            margin-bottom: 0;
-        }
-        
-        .delivery-info-label {
-            color: #0369a1;
-            font-weight: 600;
-        }
-        
-        .delivery-info-value {
-            color: #0c4a6e;
-            font-weight: 700;
-        }
-        
-        .receipt-items table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        
-        .receipt-items th {
-            background: #f8f9fa;
-            padding: 12px;
-            text-align: left;
-            font-weight: bold;
-            color: #667eea;
-            border-bottom: 2px solid #dee2e6;
-        }
-        
-        .receipt-items td {
-            padding: 12px;
-            border-bottom: 1px solid #dee2e6;
-        }
-        
-        .receipt-items tr:last-child td {
-            border-bottom: none;
-        }
-        
-        /* Enhanced Product Image Styles */
-        .item-image {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            border: 2px solid #e0e0e0;
-        }
-        
-        .customization-image {
-            border-color: #667eea;
-            border-style: dashed;
-        }
-        
-        .item-image:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-            border-color: #667eea;
-        }
-        
-        /* Category Badge */
-        .category-badge {
-            display: inline-block;
-            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
-            color: #1565c0;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            margin-left: 5px;
-            border: 1px solid #90caf9;
-        }
-        
-        /* Customization Badge */
-        .customization-badge {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            font-size: 0.75rem;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-left: 5px;
-        }
-        
-        /* Customization Details */
-        .customization-details {
-            background: #f8f9ff;
-            border-left: 3px solid #667eea;
-            padding: 12px;
-            margin-top: 8px;
-            border-radius: 5px;
-            font-size: 0.9rem;
-        }
-        
-        .customization-details h6 {
-            color: #667eea;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        
-        .customization-details p {
-            margin-bottom: 5px;
-            color: #555;
-        }
-        
-        .customization-option {
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 4px;
-            padding: 8px;
-            margin-bottom: 5px;
-        }
-        
-        /* Product Details */
-        .product-details {
-            margin-top: 5px;
-        }
-        
-        .product-category {
-            color: #666;
-            font-size: 0.8rem;
-            margin-bottom: 2px;
-        }
-        
-        .product-category i {
-            color: #667eea;
-            margin-right: 3px;
-        }
-        
-        /* Image Modal Styles */
-        .image-modal {
-            display: none;
-            position: fixed;
-            z-index: 99999;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        }
-        
-        .image-modal.active {
-            display: flex;
-            opacity: 1;
-        }
-        
-        .modal-content-wrapper {
-            margin: auto;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            max-width: 90%;
-            max-height: 90%;
-            animation: zoomIn 0.3s ease;
-        }
-        
-        @keyframes zoomIn {
-            from {
-                transform: scale(0.7);
-            }
-            to {
-                transform: scale(1);
-            }
-        }
-        
-        .modal-image {
-            max-width: 100%;
-            max-height: 80vh;
-            object-fit: contain;
-            border-radius: 10px;
-            box-shadow: 0 0 30px rgba(255,255,255,0.3);
-        }
-        
-        .modal-close {
-            position: absolute;
-            top: 20px;
-            right: 35px;
-            color: #f1f1f1;
-            font-size: 40px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: 0.3s;
-            z-index: 100001;
-        }
-        
-        .modal-close:hover,
-        .modal-close:focus {
-            color: #bbb;
-        }
-        
-        .modal-caption {
-            color: #f1f1f1;
-            text-align: center;
-            padding: 15px;
-            margin-top: 15px;
-            background: rgba(0,0,0,0.7);
-            border-radius: 5px;
-            max-width: 600px;
-        }
-        
-        .modal-caption h4 {
-            margin: 0 0 5px 0;
-            font-size: 1.2rem;
-        }
-        
-        .modal-caption p {
-            margin: 0;
-            font-size: 0.9rem;
-            opacity: 0.8;
-        }
-        
-        .total-row {
-            background: #f8f9fa;
-            font-weight: bold;
-        }
-        
-        .grand-total-row {
-            background: linear-gradient(135deg, #e8f0fe, #d9e6ff);
-            font-weight: 800;
-            font-size: 1.1rem;
-            border-top: 2px solid #667eea;
-        }
-        
-        .receipt-footer {
-            background: #f8f9fa;
-            padding: 20px;
-            text-align: center;
-            border-top: 1px dashed #ddd;
-        }
-        
-        .receipt-footer p {
-            margin: 5px 0;
-            color: #666;
-            font-size: 0.9rem;
-        }
-        
-        .status-badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: bold;
-            text-transform: uppercase;
-        }
-        
-        .status-pending {
-            background: #fff3cd;
-            color: #856404;
-        }
-        
-        .status-paid {
-            background: #d4edda;
-            color: #155724;
-        }
-        
-        .status-delivered {
-            background: #d1ecf1;
-            color: #0c5460;
-        }
-        
-        .status-cancelled {
-            background: #f8d7da;
-            color: #721c24;
-        }
-        
-        .export-button {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        
-        /* Loading overlay */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.7);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 9999;
-        }
-
-        .loading-overlay.active {
-            display: flex;
-        }
-
-        .loading-content {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            text-align: center;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 40px;
-            height: 40px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-        
+        .receipt-section:last-child { border-bottom: none; }
+        .payment-wrapper { max-width: 480px; margin: 0 auto; padding: 1rem; padding-top: 2rem; }
+        .progress-steps { display: flex; justify-content: space-between; margin-bottom: 2rem; position: relative; }
+        .progress-steps::before { content: ''; position: absolute; top: 20px; left: 0; right: 0; height: 2px; background: #e0e6ed; z-index: 0; }
+        .step { flex: 1; text-align: center; position: relative; z-index: 1; }
+        .step-circle { width: 40px; height: 40px; border-radius: 50%; background: white; border: 2px solid #e0e6ed; display: flex; align-items: center; justify-content: center; margin: 0 auto 0.5rem; font-weight: 600; color: #94a3b8; transition: all 0.3s ease; }
+        .step.active .step-circle { background: #007bff; border-color: #007bff; color: white; }
+        .step.completed .step-circle { background: #10b981; border-color: #10b981; color: white; }
+        .step-label { font-size: 0.75rem; color: #64748b; font-weight: 500; }
+        .step.active .step-label { color: #0f172a; }
+        .section-title { color: #667eea; font-weight: bold; margin-bottom: 15px; font-size: 1.1rem; display: flex; align-items: center; gap: 8px; }
+        .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px; }
+        .info-item { margin-bottom: 10px; }
+        .info-label { font-weight: bold; color: #666; font-size: 0.9rem; margin-bottom: 3px; }
+        .info-value { color: #333; font-size: 1rem; }
+        .delivery-info-card { background: linear-gradient(135deg, #f0f9ff, #e6f3ff); border: 1px solid #b8daff; border-radius: 8px; padding: 15px; margin-top: 10px; }
+        .delivery-info-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 0.9rem; }
+        .delivery-info-row:last-child { margin-bottom: 0; }
+        .delivery-info-label { color: #0369a1; font-weight: 600; }
+        .delivery-info-value { color: #0c4a6e; font-weight: 700; }
+        .receipt-items table { width: 100%; border-collapse: collapse; }
+        .receipt-items th { background: #f8f9fa; padding: 12px; text-align: left; font-weight: bold; color: #667eea; border-bottom: 2px solid #dee2e6; }
+        .receipt-items td { padding: 12px; border-bottom: 1px solid #dee2e6; }
+        .receipt-items tr:last-child td { border-bottom: none; }
+        .item-image { width: 80px; height: 80px; object-fit: cover; border-radius: 8px; cursor: pointer; transition: all 0.3s ease; border: 2px solid #e0e0e0; }
+        .customization-image { border-color: #667eea; border-style: dashed; }
+        .item-image:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-color: #667eea; }
+        .category-badge { display: inline-block; background: linear-gradient(135deg, #e3f2fd, #bbdefb); color: #1565c0; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 500; margin-left: 5px; border: 1px solid #90caf9; }
+        .customization-badge { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; font-size: 0.75rem; padding: 2px 8px; border-radius: 4px; margin-left: 5px; }
+        .customization-details { background: #f8f9ff; border-left: 3px solid #667eea; padding: 12px; margin-top: 8px; border-radius: 5px; font-size: 0.9rem; }
+        .customization-details h6 { color: #667eea; font-weight: bold; margin-bottom: 5px; }
+        .customization-details p { margin-bottom: 5px; color: #555; }
+        .customization-option { background: white; border: 1px solid #e0e0e0; border-radius: 4px; padding: 8px; margin-bottom: 5px; }
+        .product-details { margin-top: 5px; }
+        .product-category { color: #666; font-size: 0.8rem; margin-bottom: 2px; }
+        .product-category i { color: #667eea; margin-right: 3px; }
+        .image-modal { display: none; position: fixed; z-index: 99999; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); opacity: 0; transition: opacity 0.3s ease; }
+        .image-modal.active { display: flex; opacity: 1; }
+        .modal-content-wrapper { margin: auto; display: flex; flex-direction: column; align-items: center; justify-content: center; max-width: 90%; max-height: 90%; animation: zoomIn 0.3s ease; }
+        @keyframes zoomIn { from { transform: scale(0.7); } to { transform: scale(1); } }
+        .modal-image { max-width: 100%; max-height: 80vh; object-fit: contain; border-radius: 10px; box-shadow: 0 0 30px rgba(255,255,255,0.3); }
+        .modal-close { position: absolute; top: 20px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; transition: 0.3s; z-index: 100001; }
+        .modal-close:hover, .modal-close:focus { color: #bbb; }
+        .modal-caption { color: #f1f1f1; text-align: center; padding: 15px; margin-top: 15px; background: rgba(0,0,0,0.7); border-radius: 5px; max-width: 600px; }
+        .modal-caption h4 { margin: 0 0 5px 0; font-size: 1.2rem; }
+        .modal-caption p { margin: 0; font-size: 0.9rem; opacity: 0.8; }
+        .total-row { background: #f8f9fa; font-weight: bold; }
+        .grand-total-row { background: linear-gradient(135deg, #e8f0fe, #d9e6ff); font-weight: 800; font-size: 1.1rem; border-top: 2px solid #667eea; }
+        .discount-row td { color: #16a34a; font-weight: 600; background: #f0fdf4; }
+        .receipt-footer { background: #f8f9fa; padding: 20px; text-align: center; border-top: 1px dashed #ddd; }
+        .receipt-footer p { margin: 5px 0; color: #666; font-size: 0.9rem; }
+        .status-badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: bold; text-transform: uppercase; }
+        .status-pending { background: #fff3cd; color: #856404; }
+        .status-paid { background: #d4edda; color: #155724; }
+        .status-delivered { background: #d1ecf1; color: #0c5460; }
+        .status-cancelled { background: #f8d7da; color: #721c24; }
+        .export-button { position: fixed; bottom: 20px; right: 20px; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 9999; }
+        .loading-overlay.active { display: flex; }
+        .loading-content { background: white; padding: 30px; border-radius: 10px; text-align: center; }
+        .spinner { border: 4px solid #f3f3f3; border-top: 4px solid #667eea; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
         @media (max-width: 768px) {
-            .receipt-container {
-                margin: 10px;
-            }
-            
-            .receipt-content {
-                padding: 20px;
-            }
-            
-            .info-grid {
-                grid-template-columns: 1fr;
-            }
-            
-            .item-image {
-                width: 60px;
-                height: 60px;
-            }
-            
-            .modal-close {
-                top: 10px;
-                right: 15px;
-                font-size: 30px;
-            }
-            
-            .export-button {
-                position: static;
-                margin: 20px auto;
-                display: block;
-                width: auto;
-            }
+            .receipt-container { margin: 10px; }
+            .receipt-content { padding: 20px; }
+            .info-grid { grid-template-columns: 1fr; }
+            .item-image { width: 60px; height: 60px; }
+            .modal-close { top: 10px; right: 15px; font-size: 30px; }
+            .export-button { position: static; margin: 20px auto; display: block; width: auto; }
         }
     </style>
 </head>
@@ -532,14 +118,13 @@
 @include('components.navbar')
 
 <div class="payment-wrapper">
-    <!-- Progress Steps -->
     <div class="progress-steps">
         <div class="step completed">
             <div class="step-circle"><i class="bi bi-check"></i></div>
             <div class="step-label">Order</div>
         </div>
         <div class="step completed">
-             <div class="step-circle"><i class="bi bi-check"></i></div>
+            <div class="step-circle"><i class="bi bi-check"></i></div>
             <div class="step-label">Payment</div>
         </div>
         <div class="step active">
@@ -572,7 +157,8 @@
 
 <section class="thankyou py-5">
     <div class="container">
-        <!-- Success Message -->
+
+        <!-- Success Modal -->
         <div class="modal fade" id="successModal" tabindex="-1" aria-hidden="true">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content text-center p-4 border-0 shadow-lg" style="border-radius:15px;">
@@ -586,7 +172,7 @@
             </div>
         </div>
 
-        <!-- Receipt Container -->
+        <!-- Receipt -->
         <div class="receipt-container" id="receiptContainer">
             <div class="receipt-header">
                 <img src="{{ asset('asset/images/logo.jpg') }}" alt="Hookcraft Avenue Logo" class="receipt-logo">
@@ -599,11 +185,10 @@
             </div>
 
             <div class="receipt-content">
+
                 <!-- Order Information -->
                 <div class="receipt-section">
-                    <h3 class="section-title">
-                        <i class="bi bi-receipt"></i> Order Information
-                    </h3>
+                    <h3 class="section-title"><i class="bi bi-receipt"></i> Order Information</h3>
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Order Number</div>
@@ -634,9 +219,7 @@
 
                 <!-- Personal Information -->
                 <div class="receipt-section">
-                    <h3 class="section-title">
-                        <i class="bi bi-person-circle"></i> Personal Information
-                    </h3>
+                    <h3 class="section-title"><i class="bi bi-person-circle"></i> Personal Information</h3>
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Customer Name</div>
@@ -657,17 +240,13 @@
                     </div>
                 </div>
 
-                <!-- Delivery Address & Fee Information -->
+                <!-- Delivery Information -->
                 <div class="receipt-section">
-                    <h3 class="section-title">
-                        <i class="bi bi-geo-alt"></i> Delivery Information
-                    </h3>
+                    <h3 class="section-title"><i class="bi bi-geo-alt"></i> Delivery Information</h3>
                     <div class="info-item mb-3">
                         <div class="info-label">Full Address</div>
                         <div class="info-value">{{ $order->address }}</div>
                     </div>
-                    
-                    <!-- Delivery Fee Card - NEW SECTION -->
                     <div class="delivery-info-card">
                         <div class="delivery-info-row">
                             <span class="delivery-info-label"><i class="bi bi-truck"></i> Delivery Fee:</span>
@@ -688,9 +267,7 @@
 
                 <!-- Order Items -->
                 <div class="receipt-section receipt-items">
-                    <h3 class="section-title">
-                        <i class="bi bi-cart-check"></i> Order Items
-                    </h3>
+                    <h3 class="section-title"><i class="bi bi-cart-check"></i> Order Items</h3>
                     <div class="table-responsive">
                         <table class="table">
                             <thead>
@@ -707,26 +284,26 @@
                                     <td>
                                         <div class="d-flex align-items-center">
                                             @if($item->is_customization && $item->customization && $item->customization->custom_image)
-                                                <img src="{{ asset('uploads/customizations/' . $item->customization->custom_image) }}" 
-                                                     alt="{{ $item->customization->customization_name }}" 
+                                                <img src="{{ asset('uploads/customizations/' . $item->customization->custom_image) }}"
+                                                     alt="{{ $item->customization->customization_name }}"
                                                      class="item-image customization-image me-3"
                                                      data-title="{{ $item->customization->customization_name }}"
                                                      data-description="{{ $item->customization->customization_details }}"
                                                      title="Click to view customization"
                                                      crossorigin="anonymous">
                                             @elseif($item->product && $item->product->image)
-                                                <img src="{{ asset('asset/images/' . $item->product->image) }}" 
-                                                     alt="{{ $item->product->name }}" 
+                                                <img src="{{ asset('asset/images/' . $item->product->image) }}"
+                                                     alt="{{ $item->product->name }}"
                                                      class="item-image me-3"
                                                      data-title="{{ $item->product->name }}"
                                                      data-description="{{ $item->product->description ? Str::limit($item->product->description, 100) : 'No description available' }}"
                                                      title="Click to view"
                                                      crossorigin="anonymous">
                                             @else
-                                            <div class="item-image me-3 d-flex align-items-center justify-content-center bg-light" 
-                                                 style="width: 80px; height: 80px; border-radius: 8px; cursor: not-allowed;"
+                                            <div class="item-image me-3 d-flex align-items-center justify-content-center bg-light"
+                                                 style="width:80px;height:80px;border-radius:8px;cursor:not-allowed;"
                                                  title="No image available">
-                                                <i class="bi bi-image text-muted" style="font-size: 24px;"></i>
+                                                <i class="bi bi-image text-muted" style="font-size:24px;"></i>
                                             </div>
                                             @endif
                                             <div>
@@ -735,27 +312,19 @@
                                                         <strong>{{ $item->customization->customization_name ?? 'Customized Product' }}</strong>
                                                         <span class="customization-badge">CUSTOMIZED</span>
                                                         @if($item->product->category)
-                                                            <span class="category-badge">
-                                                                <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
-                                                            </span>
+                                                            <span class="category-badge"><i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}</span>
                                                         @endif
                                                     @else
                                                         <strong>{{ $item->product->name ?? 'Product' }}</strong>
                                                         @if($item->product->category)
-                                                            <span class="category-badge">
-                                                                <i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}
-                                                            </span>
+                                                            <span class="category-badge"><i class="bi bi-tag-fill"></i> {{ $item->product->category->name }}</span>
                                                         @endif
                                                     @endif
                                                 </div>
-                                                
                                                 <div class="product-details">
                                                     @if($item->product->category)
-                                                        <div class="product-category">
-                                                            <i class="bi bi-tags"></i> {{ $item->product->category->name }}
-                                                        </div>
+                                                        <div class="product-category"><i class="bi bi-tags"></i> {{ $item->product->category->name }}</div>
                                                     @endif
-                                                    
                                                     @if($item->is_customization && $item->customization)
                                                         <small class="text-muted">Based on: {{ $item->product->name ?? 'Product' }}</small>
                                                     @elseif($item->product && $item->product->description)
@@ -764,25 +333,22 @@
                                                 </div>
                                             </div>
                                         </div>
-                                        
-                                        <!-- Customization Details -->
+
                                         @if($item->is_customization && $item->customization)
                                         <div class="customization-details mt-2">
                                             <h6>Customization Details:</h6>
                                             <p><strong>Name:</strong> {{ $item->customization->customization_name }}</p>
                                             <p><strong>Details:</strong> {{ $item->customization->customization_details }}</p>
-                                            
                                             @if($item->customization->special_instructions)
                                             <p><strong>Special Instructions:</strong> {{ $item->customization->special_instructions }}</p>
                                             @endif
-                                            
                                             @if($item->customization->options && $item->customization->options->count() > 0)
                                             <div class="mt-2">
                                                 <strong>Options:</strong>
                                                 @foreach($item->customization->options as $option)
                                                 <div class="customization-option">
                                                     <small>
-                                                        <strong>{{ ucfirst($option->option_type) }}:</strong> 
+                                                        <strong>{{ ucfirst($option->option_type) }}:</strong>
                                                         {{ $option->option_value }}
                                                         @if($option->additional_price > 0)
                                                         <span class="text-success">(+₱{{ number_format($option->additional_price, 2) }})</span>
@@ -792,7 +358,6 @@
                                                 @endforeach
                                             </div>
                                             @endif
-                                            
                                             @if($item->customization->admin_price)
                                             <p class="text-success mt-2 mb-0">
                                                 <strong>Customization Price:</strong> ₱{{ number_format($item->customization->admin_price, 2) }}
@@ -823,11 +388,9 @@
                     </div>
                 </div>
 
-                <!-- Order Summary with Grand Total -->
+                <!-- Payment Summary -->
                 <div class="receipt-section">
-                    <h3 class="section-title">
-                        <i class="bi bi-calculator"></i> Payment Summary
-                    </h3>
+                    <h3 class="section-title"><i class="bi bi-calculator"></i> Payment Summary</h3>
                     <div class="row">
                         <div class="col-md-6 offset-md-6">
                             <table class="table table-borderless">
@@ -839,10 +402,28 @@
                                     <td class="text-end"><strong>Delivery Fee:</strong></td>
                                     <td class="text-end">₱{{ number_format($order->delivery_fee, 2) }}</td>
                                 </tr>
+
+                                {{-- Discount row — only shows if a voucher was applied --}}
+                                @if(isset($order->discount_amount) && $order->discount_amount > 0)
+                                <tr class="discount-row">
+                                    <td class="text-end">
+                                        <strong>
+                                            <i class="bi bi-tag-fill me-1"></i>Discount
+                                            @if($order->voucher_code)
+                                                <span style="font-size:0.8rem;font-weight:500;">({{ $order->voucher_code }})</span>
+                                            @endif
+                                            :
+                                        </strong>
+                                    </td>
+                                    <td class="text-end">-₱{{ number_format($order->discount_amount, 2) }}</td>
+                                </tr>
+                                @endif
+
                                 <tr class="total-row grand-total-row">
                                     <td class="text-end"><strong>GRAND TOTAL:</strong></td>
                                     <td class="text-end"><strong>₱{{ number_format($order->grand_total, 2) }}</strong></td>
                                 </tr>
+
                                 @if($order->payment_method === 'COD')
                                 <tr>
                                     <td colspan="2" class="text-center text-muted">
@@ -850,6 +431,7 @@
                                     </td>
                                 </tr>
                                 @endif
+
                                 @if($order->delivery_distance_km > 0)
                                 <tr>
                                     <td colspan="2" class="text-center text-muted">
@@ -861,13 +443,14 @@
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <div class="receipt-footer">
                 <p><strong>Thank you for shopping with Hookcraft Avenue!</strong></p>
                 <p>For any questions about your order, please contact our customer support.</p>
                 <p class="mb-0">
-                    <i class="bi bi-telephone me-1"></i> (032) 123-4567 | 
+                    <i class="bi bi-telephone me-1"></i> (032) 123-4567 |
                     <i class="bi bi-envelope ms-3 me-1"></i> support@hookcraftavenue.com
                 </p>
                 <p class="text-muted mt-2">
@@ -892,13 +475,14 @@
                 </div>
             </div>
         </div>
+
     </div>
 </section>
 
 <!-- Floating Export Button -->
-<button onclick="exportReceipt()" class="btn btn-primary export-button rounded-circle" 
-        style="width: 60px; height: 60px;" title="Export Receipt">
-    <i class="bi bi-download" style="font-size: 1.2rem;"></i>
+<button onclick="exportReceipt()" class="btn btn-primary export-button rounded-circle"
+        style="width:60px;height:60px;" title="Export Receipt">
+    <i class="bi bi-download" style="font-size:1.2rem;"></i>
 </button>
 
 @include('components.footer')
@@ -906,67 +490,47 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
-    // Image Modal Functions
     function openModal(imgSrc, title, description) {
         const modal = document.getElementById('imageModal');
-        const modalImg = document.getElementById('modalImage');
-        const modalTitle = document.getElementById('modalTitle');
-        const modalDescription = document.getElementById('modalDescription');
-        
-        modalImg.src = imgSrc;
-        modalTitle.textContent = title;
-        modalDescription.textContent = description;
-        
+        document.getElementById('modalImage').src = imgSrc;
+        document.getElementById('modalTitle').textContent = title;
+        document.getElementById('modalDescription').textContent = description;
         modal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
-    
+
     function closeModal() {
-        const modal = document.getElementById('imageModal');
-        modal.classList.remove('active');
+        document.getElementById('imageModal').classList.remove('active');
         document.body.style.overflow = 'auto';
     }
-    
-    // Initialize modal events
-    document.addEventListener('DOMContentLoaded', function() {
-        const modal = document.getElementById('imageModal');
+
+    document.addEventListener('DOMContentLoaded', function () {
+        const modal   = document.getElementById('imageModal');
         const closeBtn = document.querySelector('.modal-close');
-        
-        document.addEventListener('click', function(event) {
+
+        document.addEventListener('click', function (event) {
             if (event.target.classList.contains('item-image')) {
-                const title = event.target.dataset.title || event.target.alt || 'Product Image';
-                const description = event.target.dataset.description || 'No description available';
-                const imgSrc = event.target.src;
-                
-                openModal(imgSrc, title, description);
+                openModal(
+                    event.target.src,
+                    event.target.dataset.title || event.target.alt || 'Product Image',
+                    event.target.dataset.description || 'No description available'
+                );
             }
         });
-        
-        if (closeBtn) {
-            closeBtn.addEventListener('click', closeModal);
-        }
-        
-        modal.addEventListener('click', function(event) {
-            if (event.target === modal) {
-                closeModal();
-            }
-        });
-        
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Escape' && modal.classList.contains('active')) {
-                closeModal();
-            }
-        });
+
+        closeBtn?.addEventListener('click', closeModal);
+        modal.addEventListener('click', function (e) { if (e.target === modal) closeModal(); });
+        document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && modal.classList.contains('active')) closeModal(); });
     });
-    
+
     async function exportReceipt() {
         const overlay = document.getElementById('loadingOverlay');
         const receiptContainer = document.getElementById('receiptContainer');
-        
+
         try {
             overlay.classList.add('active');
             await new Promise(resolve => setTimeout(resolve, 300));
-            
+
             const canvas = await html2canvas(receiptContainer, {
                 scale: 2,
                 useCORS: true,
@@ -976,79 +540,54 @@
                 width: receiptContainer.scrollWidth,
                 height: receiptContainer.scrollHeight,
                 onclone: (clonedDoc) => {
-                    const clonedContainer = clonedDoc.getElementById('receiptContainer');
-                    if (clonedContainer) {
-                        clonedContainer.style.boxShadow = 'none';
-                        clonedContainer.style.margin = '0';
-                    }
+                    const el = clonedDoc.getElementById('receiptContainer');
+                    if (el) { el.style.boxShadow = 'none'; el.style.margin = '0'; }
                 }
             });
-            
+
             canvas.toBlob((blob) => {
-                const url = URL.createObjectURL(blob);
+                const url  = URL.createObjectURL(blob);
                 const link = document.createElement('a');
-                link.href = url;
+                link.href     = url;
                 link.download = `Hookcraft_Receipt_Order_{{ $order_id }}_${Date.now()}.png`;
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);
                 URL.revokeObjectURL(url);
-                
                 overlay.classList.remove('active');
                 showToast('Receipt exported successfully!', 'success');
             }, 'image/png', 1.0);
-            
+
         } catch (error) {
             console.error('Export error:', error);
             overlay.classList.remove('active');
             showToast('Failed to export receipt. Please try again.', 'error');
         }
     }
-    
+
     function showToast(message, type = 'info') {
-        const toastContainer = document.createElement('div');
-        toastContainer.style.position = 'fixed';
-        toastContainer.style.top = '20px';
-        toastContainer.style.right = '20px';
-        toastContainer.style.zIndex = '10000';
-        
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'position:fixed;top:20px;right:20px;z-index:10000;';
         const toast = document.createElement('div');
         toast.className = `alert alert-${type === 'success' ? 'success' : 'danger'} alert-dismissible fade show`;
         toast.setAttribute('role', 'alert');
-        toast.innerHTML = `
-            <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'} me-2"></i>
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-        `;
-        
-        toastContainer.appendChild(toast);
-        document.body.appendChild(toastContainer);
-        
-        setTimeout(() => {
-            toast.classList.remove('show');
-            setTimeout(() => toastContainer.remove(), 300);
-        }, 3000);
+        toast.innerHTML = `<i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'} me-2"></i>${message}<button type="button" class="btn-close" data-bs-dismiss="alert"></button>`;
+        wrap.appendChild(toast);
+        document.body.appendChild(wrap);
+        setTimeout(() => { toast.classList.remove('show'); setTimeout(() => wrap.remove(), 300); }, 3000);
     }
 
-    // Success Modal Auto Close
     document.addEventListener('DOMContentLoaded', function () {
         const modalElement = document.getElementById('successModal');
         if (modalElement) {
-            const successModal = new bootstrap.Modal(modalElement, {
-                backdrop: 'static',
-                keyboard: false
-            });
+            const successModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
             successModal.show();
-
             let seconds = 3;
-            const countdownElement = document.getElementById('countdown');
-            const countdownInterval = setInterval(() => {
+            const el = document.getElementById('countdown');
+            const interval = setInterval(() => {
                 seconds--;
-                if (countdownElement) countdownElement.textContent = seconds;
-                if (seconds <= 0) {
-                    clearInterval(countdownInterval);
-                    successModal.hide();
-                }
+                if (el) el.textContent = seconds;
+                if (seconds <= 0) { clearInterval(interval); successModal.hide(); }
             }, 1000);
         }
     });
