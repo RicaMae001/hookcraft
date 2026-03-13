@@ -11,7 +11,7 @@
                 <i class="fas fa-bell me-3" style="color: var(--primary-pink);"></i>
                 Notifications
             </h1>
-            <p style="color: var(--text-secondary); margin: 0;">Manage your notifications and stay updated</p>
+            <p style="color: var(--text-secondary); margin: 0;">View your notifications</p>
         </div>
         
         <div class="d-flex gap-2">
@@ -83,8 +83,7 @@
                 $timeAgo = \Carbon\Carbon::parse($notification['created_at'])->diffForHumans();
             @endphp
             
-            <div class="notification-card {{ $notification['is_read'] ? '' : 'unread' }}" 
-                 onclick="handleNotificationClick({{ $notification['id'] }}, '{{ $notification['action_url'] ?? '#' }}')">
+            <div class="notification-card {{ $notification['is_read'] ? '' : 'unread' }}">
                 <div class="d-flex gap-3 align-items-start">
                     <div class="notification-icon {{ $colorClass }}">
                         <i class="fas {{ $icon }}"></i>
@@ -141,8 +140,8 @@
     border-radius: 12px;
     padding: 1.5rem;
     margin-bottom: 1rem;
-    cursor: pointer;
     transition: all 0.2s ease;
+    cursor: default; /* Changed from pointer to default */
 }
 
 .notification-card:hover {
@@ -239,6 +238,38 @@
     background: rgba(102, 126, 234, 0.15);
     color: var(--primary-blue);
 }
+
+/* Button styles */
+.btn-modern-primary {
+    background: linear-gradient(135deg, var(--primary-blue), var(--primary-purple));
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-modern-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    color: white;
+}
+
+.btn-modern-danger {
+    background: rgba(252, 129, 129, 0.15);
+    color: var(--danger);
+    border: 1px solid transparent;
+    padding: 0.5rem 1rem;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-modern-danger:hover {
+    background: var(--danger);
+    color: white;
+}
 </style>
 
 <script>
@@ -256,6 +287,7 @@ async function markAsRead(notificationId) {
             location.reload();
         } 
     } catch (error) {
+        console.error('Error marking as read:', error);
     }
 }
 
@@ -273,6 +305,7 @@ async function markAllAsRead() {
             location.reload();
         } 
     } catch (error) {
+        console.error('Error marking all as read:', error);
     }
 }
 
@@ -294,19 +327,10 @@ async function deleteNotification(notificationId) {
             location.reload();
         } 
     } catch (error) {
+        console.error('Error deleting notification:', error);
     }
 }
 
-function handleNotificationClick(notificationId, actionUrl) {
-    // Mark as read first
-    if (actionUrl && actionUrl !== '#' && actionUrl !== 'null' && actionUrl !== '') {
-        markAsRead(notificationId).then(() => {
-            window.location.href = actionUrl;
-        });
-    } else {
-        // Just mark as read if no action URL
-        markAsRead(notificationId);
-    }
-}
+// Removed handleNotificationClick function since notifications are no longer clickable
 </script>
 @endsection

@@ -13,7 +13,6 @@ class DeliveryLiveChatController extends Controller
     {
         $coordinatorId = session('coordinator_id');
         
-        // Get waiting delivery chat sessions with order info
         $waitingSessions = DB::table('chat_sessions')
             ->where('status', 'waiting')
             ->where('chat_type', 'delivery')
@@ -21,14 +20,10 @@ class DeliveryLiveChatController extends Controller
             ->get()
             ->map(function ($session, $index) {
                 $session->queue_position = $index + 1;
-                
-                // Get customer's ongoing orders
                 $session->ongoing_orders = $this->getCustomerOngoingOrders($session->user_id);
-                
                 return $session;
             });
         
-        // Get active sessions handled by this delivery staff
         $activeSessions = DB::table('chat_sessions')
             ->where('status', 'active')
             ->where('chat_type', 'delivery')
@@ -40,7 +35,6 @@ class DeliveryLiveChatController extends Controller
                 return $session;
             });
         
-        // Get all active delivery sessions
         $allActiveSessions = DB::table('chat_sessions')
             ->where('status', 'active')
             ->where('chat_type', 'delivery')
@@ -61,11 +55,9 @@ class DeliveryLiveChatController extends Controller
                 }
                 
                 $session->ongoing_orders = $this->getCustomerOngoingOrders($session->user_id);
-                
                 return $session;
             });
         
-        // Get closed sessions for today
         $closedSessions = DB::table('chat_sessions')
             ->where('status', 'closed')
             ->where('chat_type', 'delivery')
@@ -83,7 +75,8 @@ class DeliveryLiveChatController extends Controller
     }
     
     /**
-     * Get customer's ongoing orders
+     * Get customer's ongoing orders WITH product images.
+     * Uses asset('asset/images/') — same as the rest of the app.
      */
     private function getCustomerOngoingOrders($userId)
     {
@@ -96,21 +89,30 @@ class DeliveryLiveChatController extends Controller
             ->select('id', 'customer_name', 'delivery_status', 'total', 'created_at', 'address')
             ->get()
             ->map(function ($order) {
-                // Get order items count
                 $order->items_count = DB::table('order_item')
                     ->where('order_id', $order->id)
                     ->count();
-                
-                // Generate order number (e.g., ORD-00048)
+
                 $order->order_number = 'ORD-' . str_pad($order->id, 5, '0', STR_PAD_LEFT);
-                
+
+                // ✅ Fetch product images — matches LiveChatController & checkout page
+                $order->product_images = DB::table('order_item')
+                    ->join('products', 'order_item.product_id', '=', 'products.id')
+                    ->where('order_item.order_id', $order->id)
+                    ->select('products.id', 'products.name', 'products.image', 'products.price', 'order_item.quantity')
+                    ->get()
+                    ->map(function ($item) {
+                        $item->image_url = asset('asset/images/' . $item->image);
+                        return $item;
+                    });
+
                 return $order;
             });
     }
     
     public function acceptChat($sessionId)
     {
-        $coordinatorId = session('coordinator_id');
+        $coordinatorId   = session('coordinator_id');
         $coordinatorName = session('coordinator_name');
         
         $session = DB::table('chat_sessions')->where('id', $sessionId)->first();
@@ -122,20 +124,19 @@ class DeliveryLiveChatController extends Controller
         DB::table('chat_sessions')
             ->where('id', $sessionId)
             ->update([
-                'status' => 'active',
-                'delivery_id' => $coordinatorId,
-                'started_at' => now(),
-                'last_activity' => now(),
+                'status'                 => 'active',
+                'delivery_id'            => $coordinatorId,
+                'started_at'             => now(),
+                'last_activity'          => now(),
                 'last_customer_activity' => now(),
-                'updated_at' => now()
+                'updated_at'             => now()
             ]);
         
-        // Add system message
         DB::table('chat_messages')->insert([
             'chat_session_id' => $sessionId,
-            'sender_type' => 'system',
-            'message' => $coordinatorName . ' joined the chat',
-            'created_at' => now()
+            'sender_type'     => 'system',
+            'message'         => $coordinatorName . ' joined the chat',
+            'created_at'      => now()
         ]);
         
         return redirect()->route('delivery.livechat.chat', $sessionId);
@@ -161,7 +162,6 @@ class DeliveryLiveChatController extends Controller
             ->orderBy('created_at', 'asc')
             ->get()
             ->map(function ($msg) {
-                // Add sender names for delivery messages
                 if ($msg->sender_type === 'delivery' && $msg->sender_id) {
                     $staff = DB::table('delivery_coordinator')
                         ->where('coordinator_id', $msg->sender_id)
@@ -171,14 +171,13 @@ class DeliveryLiveChatController extends Controller
                 return $msg;
             });
         
-        // Mark messages as read
         DB::table('chat_messages')
             ->where('chat_session_id', $sessionId)
             ->where('sender_type', 'customer')
             ->where('is_read', 0)
             ->update(['is_read' => 1]);
         
-        // Get customer's ongoing orders
+        // getCustomerOngoingOrders now includes product_images
         $ongoingOrders = $this->getCustomerOngoingOrders($session->user_id);
         
         return view('admin.delivery.livechat.chat', compact('session', 'messages', 'ongoingOrders'));
@@ -199,10 +198,7 @@ class DeliveryLiveChatController extends Controller
         
         $orders = $this->getCustomerOngoingOrders($session->user_id);
         
-        return response()->json([
-            'success' => true,
-            'orders' => $orders
-        ]);
+        return response()->json(['success' => true, 'orders' => $orders]);
     }
     
     public function sendMessage(Request $request)
@@ -218,89 +214,74 @@ class DeliveryLiveChatController extends Controller
         }
         
         try {
-            $validated = $request->validate([
-                'session_id' => 'required|integer',
-                'message' => 'required|string|max:2000'
+            $request->validate([
+                'session_id'    => 'required|integer',
+                'message'       => 'required|string|max:2000',
+                // ✅ Accept product fields for sharing product cards
+                'product_name'  => 'nullable|string|max:255',
+                'product_price' => 'nullable|numeric',
+                'product_image' => 'nullable|string|max:500',
             ]);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            Log::error('Validation failed', [
-                'errors' => $e->errors()
-            ]);
+            Log::error('Validation failed', ['errors' => $e->errors()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Validation failed',
-                'errors' => $e->errors()
+                'errors'  => $e->errors()
             ], 422);
         }
         
-        $sessionId = $request->session_id;
-        $message = $request->message;
-        
         try {
-            $session = DB::table('chat_sessions')->where('id', $sessionId)->first();
+            $session = DB::table('chat_sessions')->where('id', $request->session_id)->first();
             
             if (!$session) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Session not found'
-                ], 404);
+                return response()->json(['success' => false, 'message' => 'Session not found'], 404);
             }
             
             if ($session->status !== 'active') {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Chat session is not active'
-                ], 400);
+                return response()->json(['success' => false, 'message' => 'Chat session is not active'], 400);
             }
             
             if ($session->delivery_id != $coordinatorId) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Unauthorized access to this chat'
-                ], 403);
+                return response()->json(['success' => false, 'message' => 'Unauthorized access to this chat'], 403);
             }
             
-            // Insert message
+            // ✅ Store product fields alongside the message
             $messageId = DB::table('chat_messages')->insertGetId([
-                'chat_session_id' => $sessionId,
-                'sender_type' => 'delivery',
-                'sender_id' => $coordinatorId,
-                'message' => $message,
-                'is_read' => 0,
-                'created_at' => now(),
-                'updated_at' => now()
+                'chat_session_id' => $request->session_id,
+                'sender_type'     => 'delivery',
+                'sender_id'       => $coordinatorId,
+                'message'         => $request->message,
+                'product_name'    => $request->product_name,
+                'product_price'   => $request->product_price,
+                'product_image'   => $request->product_image,
+                'is_read'         => 0,
+                'created_at'      => now(),
+                'updated_at'      => now()
             ]);
             
-            // Update session activity
             DB::table('chat_sessions')
-                ->where('id', $sessionId)
-                ->update([
-                    'last_activity' => now(),
-                    'updated_at' => now()
-                ]);
+                ->where('id', $request->session_id)
+                ->update(['last_activity' => now(), 'updated_at' => now()]);
             
             return response()->json([
-                'success' => true,
-                'message' => 'Message sent successfully',
+                'success'    => true,
+                'message'    => 'Message sent successfully',
                 'message_id' => $messageId
             ]);
             
         } catch (\Exception $e) {
             Log::error('Delivery send message error', [
                 'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString()
+                'trace'   => $e->getTraceAsString()
             ]);
-            
-            return response()->json([
-                'success' => false,
-                'message' => 'Server error: ' . $e->getMessage()
-            ], 500);
+            return response()->json(['success' => false, 'message' => 'Server error: ' . $e->getMessage()], 500);
         }
     }
     
     public function endChat($sessionId)
     {
-        $coordinatorId = session('coordinator_id');
+        $coordinatorId   = session('coordinator_id');
         $coordinatorName = session('coordinator_name');
         
         $session = DB::table('chat_sessions')->where('id', $sessionId)->first();
@@ -311,17 +292,13 @@ class DeliveryLiveChatController extends Controller
         
         DB::table('chat_sessions')
             ->where('id', $sessionId)
-            ->update([
-                'status' => 'closed',
-                'closed_at' => now(),
-                'updated_at' => now()
-            ]);
+            ->update(['status' => 'closed', 'closed_at' => now(), 'updated_at' => now()]);
         
         DB::table('chat_messages')->insert([
             'chat_session_id' => $sessionId,
-            'sender_type' => 'system',
-            'message' => $coordinatorName . ' ended the chat',
-            'created_at' => now()
+            'sender_type'     => 'system',
+            'message'         => $coordinatorName . ' ended the chat',
+            'created_at'      => now()
         ]);
         
         return response()->json(['success' => true]);
@@ -344,7 +321,6 @@ class DeliveryLiveChatController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
         
-        // Mark as read
         if ($unreadMessages->count() > 0) {
             DB::table('chat_messages')
                 ->where('chat_session_id', $sessionId)
@@ -353,46 +329,40 @@ class DeliveryLiveChatController extends Controller
                 ->update(['is_read' => 1]);
         }
         
-        // Check customer activity
-        $customerActive = null;
-        $autoEndWarning = false;
+        $customerActive  = null;
+        $autoEndWarning  = false;
         
         if ($session->last_customer_activity) {
             $minutesInactive = Carbon::parse($session->last_customer_activity)->diffInMinutes(now());
-            $customerActive = $minutesInactive < 1;
-            $autoEndWarning = $minutesInactive >= 13 && $minutesInactive < 15;
+            $customerActive  = $minutesInactive < 1;
+            $autoEndWarning  = $minutesInactive >= 13 && $minutesInactive < 15;
             
-            // Auto-end if inactive for 15 minutes
             if ($minutesInactive >= 15 && $session->status === 'active') {
                 DB::table('chat_sessions')
                     ->where('id', $sessionId)
-                    ->update([
-                        'status' => 'closed',
-                        'closed_at' => now(),
-                        'closed_reason' => 'auto_inactive'
-                    ]);
+                    ->update(['status' => 'closed', 'closed_at' => now(), 'closed_reason' => 'auto_inactive']);
                 
                 DB::table('chat_messages')->insert([
                     'chat_session_id' => $sessionId,
-                    'sender_type' => 'system',
-                    'message' => 'Chat ended due to customer inactivity (15 minutes)',
-                    'created_at' => now()
+                    'sender_type'     => 'system',
+                    'message'         => 'Chat ended due to customer inactivity (15 minutes)',
+                    'created_at'      => now()
                 ]);
                 
                 return response()->json([
-                    'success' => true,
-                    'status' => 'closed',
-                    'reason' => 'customer_inactive',
+                    'success'      => true,
+                    'status'       => 'closed',
+                    'reason'       => 'customer_inactive',
                     'new_messages' => []
                 ]);
             }
         }
         
         return response()->json([
-            'success' => true,
-            'status' => $session->status,
-            'new_messages' => $unreadMessages,
-            'customer_active' => $customerActive,
+            'success'          => true,
+            'status'           => $session->status,
+            'new_messages'     => $unreadMessages,
+            'customer_active'  => $customerActive,
             'auto_end_warning' => $autoEndWarning
         ]);
     }

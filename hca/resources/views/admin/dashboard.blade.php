@@ -109,10 +109,10 @@
         <div class="col-lg-4">
             <div class="content-card">
                 <div class="content-card-header">
-                    <h3 class="content-card-title">Top Products</h3>
+                    <h3 class="content-card-title">Top Categories</h3>
                 </div>
                 <div class="p-4">
-                    <canvas id="topProductsChart"></canvas>
+                    <canvas id="topCategoriesChart"></canvas>
                 </div>
             </div>
         </div>
@@ -147,7 +147,7 @@
                             <td>
                                 <div style="font-weight: 600;">{{ $order->customer_name }}</div>
                             </td>
-                            {{-- FIXED: Show grand_total (subtotal + delivery fee), fallback to total for old orders --}}
+                            {{-- Show grand_total (subtotal + delivery fee), fallback to total for old orders --}}
                             <td>
                                 <span style="font-weight: 700; color: var(--success);">
                                     ₱{{ number_format($order->grand_total ?? $order->total, 2) }}
@@ -289,7 +289,7 @@
     // Export Functions
     function exportOrdersCSV() {
         const orders = {!! json_encode($recentOrders) !!};
-        // FIXED: Use grand_total if available, fallback to total for old orders
+        // Use grand_total if available, fallback to total for old orders
         let csv = 'Order ID,Customer Name,Subtotal,Delivery Fee,Grand Total,Payment Status,Delivery Status,Date\n';
         orders.forEach(order => {
             const subtotal    = parseFloat(order.total || 0).toFixed(2);
@@ -383,13 +383,13 @@
         }
     });
 
-    // Top Products Chart
-    new Chart(document.getElementById('topProductsChart'), {
+    // Top Categories Chart
+    new Chart(document.getElementById('topCategoriesChart'), {
         type: 'doughnut',
         data: {
-            labels: {!! json_encode($topProducts->pluck('name')) !!},
+            labels: {!! json_encode($topCategories->pluck('name')) !!},
             datasets: [{
-                data: {!! json_encode($topProducts->pluck('total_sold')) !!},
+                data: {!! json_encode($topCategories->pluck('total_sold')) !!},
                 backgroundColor: [
                     '#FF6B9D',
                     '#667EEA',
@@ -410,6 +410,17 @@
                         padding: 15,
                         usePointStyle: true,
                         font: { size: 12, family: 'DM Sans' }
+                    }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const label = context.label || '';
+                            const value = context.parsed || 0;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return ` ${label}: ${value} sold (${percentage}%)`;
+                        }
                     }
                 }
             }

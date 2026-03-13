@@ -687,7 +687,7 @@
                                 <th>Customer</th>
                                 <th>Product</th>
                                 <th>Customization Name</th>
-                                <th>Base Price</th>
+                                <!-- <th>Base Price</th> -->
                                 <th>Admin Price</th>
                                 <th>Date</th>
                                 <th>Status</th>

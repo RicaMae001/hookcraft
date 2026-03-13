@@ -14,6 +14,8 @@ use App\Models\User;
 use App\Models\Product;
 use App\Models\Cart;
 use App\Models\CartItem;
+use App\Models\Voucher;
+use App\Models\VoucherUsage;
 use App\Services\NotificationService;
 use App\Models\ProductCustomization;
 use App\Helpers\NotificationHelper;
@@ -30,7 +32,7 @@ class AdminController extends Controller
     // ============================================
     // ROLE-BASED AUTHORIZATION HELPERS
     // ============================================
-    
+
     private function checkAdminAuth()
     {
         if (!session('admin_id')) {
@@ -38,7 +40,7 @@ class AdminController extends Controller
         }
 
         $admin = DB::table('admin')->where('id', session('admin_id'))->first();
-        
+
         if (!$admin) {
             session()->forget(['admin_id', 'admin_name', 'admin_role', 'user_type']);
             return redirect()->route('staff.login')->with('error', 'Session expired. Please login again.');
@@ -65,21 +67,21 @@ class AdminController extends Controller
         if (!$this->isAdmin()) {
             Log::warning('Staff attempted to access SuperAdmin-only resource', [
                 'admin_id' => session('admin_id'),
-                'role' => session('admin_role'),
-                'url' => request()->url()
+                'role'     => session('admin_role'),
+                'url'      => request()->url()
             ]);
-            
+
             if (request()->ajax()) {
                 return response()->json([
-                    'error' => true,
-                    'title' => 'Access Denied',
+                    'error'   => true,
+                    'title'   => 'Access Denied',
                     'message' => 'Only SuperAdmin can access this section.'
                 ], 403);
             }
-            
+
             return redirect()->route('admin.dashboard')
                 ->with('error_modal', [
-                    'title' => 'Access Denied',
+                    'title'   => 'Access Denied',
                     'message' => 'Only SuperAdmin can access this section.'
                 ]);
         }
@@ -90,7 +92,7 @@ class AdminController extends Controller
     // ============================================
     // NOTIFICATION METHODS
     // ============================================
-    
+
     private function getAllNotifications()
     {
         $adminId = session('admin_id');
@@ -121,7 +123,7 @@ class AdminController extends Controller
     // ============================================
     // STOCK MANAGEMENT METHODS
     // ============================================
-    
+
     private function deductStockFromOrder($orderId)
     {
         $orderItems = DB::table('order_item')->where('order_id', $orderId)->get();
@@ -131,7 +133,7 @@ class AdminController extends Controller
 
             if ($product) {
                 $newStock = $product->stock - $item->quantity;
-                
+
                 if ($newStock < 0) {
                     throw new \Exception("Insufficient stock for product: {$product->name}");
                 }
@@ -139,23 +141,19 @@ class AdminController extends Controller
                 $product->update(['stock' => $newStock]);
 
                 if ($newStock <= 5 && $newStock > 0) {
-                    $this->notificationService->notifyLowStock(
-                        $product->id, 
-                        $product->name, 
-                        $newStock
-                    );
+                    $this->notificationService->notifyLowStock($product->id, $product->name, $newStock);
                 }
-                
+
                 if ($newStock <= 0) {
                     $this->notificationService->create([
                         'recipient_type' => 'admin',
-                        'type' => 'product_out_of_stock',
-                        'title' => 'Product Out of Stock',
-                        'message' => "{$product->name} is now out of stock!",
-                        'entity_type' => 'product',
-                        'entity_id' => $product->id,
-                        'action_url' => "/admin/products/{$product->id}/edit",
-                        'priority' => 'urgent',
+                        'type'           => 'product_out_of_stock',
+                        'title'          => 'Product Out of Stock',
+                        'message'        => "{$product->name} is now out of stock!",
+                        'entity_type'    => 'product',
+                        'entity_id'      => $product->id,
+                        'action_url'     => "/admin/products/{$product->id}/edit",
+                        'priority'       => 'urgent',
                     ]);
                 }
             }
@@ -178,11 +176,11 @@ class AdminController extends Controller
     {
         foreach ($orderItems as $item) {
             $product = Product::find($item->product_id);
-            
+
             if (!$product) {
                 throw new \Exception("Product not found: {$item->product_id}");
             }
-            
+
             if ($product->stock < $item->quantity) {
                 throw new \Exception("Insufficient stock for product: {$product->name}. Available: {$product->stock}, Requested: {$item->quantity}");
             }
@@ -193,7 +191,7 @@ class AdminController extends Controller
     // ============================================
     // LOGIN & AUTHENTICATION
     // ============================================
-    
+
     public function showLogin()
     {
         return view('admin.login');
@@ -202,7 +200,7 @@ class AdminController extends Controller
     public function login(Request $request)
     {
         $credentials = $request->validate([
-            'email' => 'required|email',
+            'email'    => 'required|email',
             'password' => 'required',
         ]);
 
@@ -210,10 +208,10 @@ class AdminController extends Controller
 
         if ($admin && Hash::check($credentials['password'], $admin->password)) {
             session([
-                'admin_id' => $admin->id,
+                'admin_id'   => $admin->id,
                 'admin_name' => $admin->name,
                 'admin_role' => $admin->role,
-                'user_type' => 'admin'
+                'user_type'  => 'admin'
             ]);
 
             Log::info('Admin logged in', ['admin_id' => $admin->id, 'role' => $admin->role]);
@@ -229,10 +227,10 @@ class AdminController extends Controller
             }
 
             session([
-                'coordinator_id' => $coordinator->coordinator_id,
-                'coordinator_name' => $coordinator->name,
+                'coordinator_id'    => $coordinator->coordinator_id,
+                'coordinator_name'  => $coordinator->name,
                 'coordinator_email' => $coordinator->email,
-                'user_type' => 'delivery'
+                'user_type'         => 'delivery'
             ]);
 
             Log::info('Delivery coordinator logged in', ['coordinator_id' => $coordinator->coordinator_id]);
@@ -255,26 +253,24 @@ class AdminController extends Controller
     // ============================================
     // DASHBOARD
     // ============================================
-    
+
     public function dashboard()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
         $notifications = $this->getAllNotifications();
-        $unreadCount = $this->getUnreadCount();
+        $unreadCount   = $this->getUnreadCount();
 
-        // FIXED: Sum grand_total instead of total so delivery fees are included in sales figure
         $totalSales = DB::table('orders')
             ->where('payment_status', 'Paid')
             ->sum(DB::raw('COALESCE(grand_total, total)'));
 
-        $totalOrders = DB::table('orders')->count();
-        $pendingOrders = DB::table('orders')->where('delivery_status', 'Pending')->count();
-        $totalProducts = Product::count();
-        $totalUsers = User::count();
+        $totalOrders    = DB::table('orders')->count();
+        $pendingOrders  = DB::table('orders')->where('delivery_status', 'Pending')->count();
+        $totalProducts  = Product::count();
+        $totalUsers     = User::count();
 
-        // Monthly Sales (last 6 months) - FIXED: use grand_total
         $monthlySales = DB::table('orders')
             ->select(
                 DB::raw('DATE_FORMAT(created_at, "%Y-%m") as month'),
@@ -291,10 +287,10 @@ class AdminController extends Controller
             ->limit(10)
             ->get();
 
-        $topProducts = DB::table('order_item')
-            ->join('products', 'order_item.product_id', '=', 'products.id')
-            ->select('products.name', DB::raw('SUM(order_item.quantity) as total_sold'))
-            ->groupBy('products.id', 'products.name')
+        $topCategories = DB::table('order_item')
+            ->join('categories', 'order_item.category_id', '=', 'categories.id')
+            ->select('categories.name', DB::raw('SUM(order_item.quantity) as total_sold'))
+            ->groupBy('categories.id', 'categories.name')
             ->orderBy('total_sold', 'desc')
             ->limit(5)
             ->get();
@@ -314,8 +310,8 @@ class AdminController extends Controller
         $isStaff = $this->isStaff();
 
         return view('admin.dashboard', compact(
-            'totalSales', 'totalOrders', 'pendingOrders', 'totalProducts', 
-            'totalUsers', 'monthlySales', 'recentOrders', 'topProducts',
+            'totalSales', 'totalOrders', 'pendingOrders', 'totalProducts',
+            'totalUsers', 'monthlySales', 'recentOrders', 'topCategories',
             'notifications', 'unreadCount', 'lowStockProducts', 'outOfStockProducts',
             'isAdmin', 'isStaff'
         ));
@@ -324,7 +320,7 @@ class AdminController extends Controller
     // ============================================
     // NOTIFICATION ACTIONS
     // ============================================
-    
+
     public function markNotificationAsRead($notificationId)
     {
         $success = $this->notificationService->markAsRead($notificationId);
@@ -349,16 +345,16 @@ class AdminController extends Controller
     // ============================================
     // USER MANAGEMENT
     // ============================================
-    
+
     public function users()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $users = User::orderBy('created_at', 'desc')->get();
+        $users   = User::orderBy('created_at', 'desc')->get();
         $isAdmin = $this->isAdmin();
         $isStaff = $this->isStaff();
-        
+
         return view('admin.users', compact('users', 'isAdmin', 'isStaff'));
     }
 
@@ -380,7 +376,7 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $user = User::findOrFail($id);
+        $user       = User::findOrFail($id);
         $user->name = $request->input('name');
         $user->email = $request->input('email');
         if ($request->filled('password')) {
@@ -396,17 +392,17 @@ class AdminController extends Controller
     // ============================================
     // PRODUCT MANAGEMENT
     // ============================================
-    
+
     public function products()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $products = Product::with('category')->orderBy('id', 'desc')->get();
+        $products   = Product::with('category')->orderBy('id', 'desc')->get();
         $categories = Category::orderBy('name')->get();
-        $isAdmin = $this->isAdmin();
-        $isStaff = $this->isStaff();
-        
+        $isAdmin    = $this->isAdmin();
+        $isStaff    = $this->isStaff();
+
         return view('admin.products', compact('products', 'categories', 'isAdmin', 'isStaff'));
     }
 
@@ -417,11 +413,11 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'name'        => 'required|string|max:255',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image'       => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
         $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
@@ -429,12 +425,12 @@ class AdminController extends Controller
 
         $product = Product::create([
             'category_id' => $validated['category_id'],
-            'name' => $validated['name'],
-            'price' => $validated['price'],
-            'stock' => $validated['stock'],
+            'name'        => $validated['name'],
+            'price'       => $validated['price'],
+            'stock'       => $validated['stock'],
             'description' => $validated['description'],
-            'image' => $imageName,
-            'admin_id' => session('admin_id'),
+            'image'       => $imageName,
+            'admin_id'    => session('admin_id'),
         ]);
 
         $this->notificationService->productCreated(
@@ -459,20 +455,19 @@ class AdminController extends Controller
 
         $validated = $request->validate([
             'category_id' => 'required|exists:categories,id',
-            'name' => 'required|string|max:255',
-            'price' => 'required|numeric|min:0',
-            'stock' => 'required|integer|min:0',
+            'name'        => 'required|string|max:255',
+            'price'       => 'required|numeric|min:0',
+            'stock'       => 'required|integer|min:0',
             'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'image'       => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
         ]);
 
-        $product = Product::findOrFail($id);
-
+        $product    = Product::findOrFail($id);
         $updateData = [
             'category_id' => $validated['category_id'],
-            'name' => $validated['name'],
-            'price' => $validated['price'],
-            'stock' => $validated['stock'],
+            'name'        => $validated['name'],
+            'price'       => $validated['price'],
+            'stock'       => $validated['stock'],
             'description' => $validated['description'],
         ];
 
@@ -480,10 +475,9 @@ class AdminController extends Controller
             if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
                 unlink(public_path('asset/images/' . $product->image));
             }
-
-            $imageName = time() . '_' . $request->file('image')->getClientOriginalName();
+            $imageName            = time() . '_' . $request->file('image')->getClientOriginalName();
             $request->file('image')->move(public_path('asset/images'), $imageName);
-            $updateData['image'] = $imageName;
+            $updateData['image']  = $imageName;
         }
 
         $product->update($updateData);
@@ -493,13 +487,13 @@ class AdminController extends Controller
         } elseif ($product->stock <= 0) {
             $this->notificationService->create([
                 'recipient_type' => 'admin',
-                'type' => 'product_out_of_stock',
-                'title' => 'Product Out of Stock',
-                'message' => "{$product->name} is now out of stock!",
-                'entity_type' => 'product',
-                'entity_id' => $product->id,
-                'action_url' => "/admin/products/{$product->id}/edit",
-                'priority' => 'urgent',
+                'type'           => 'product_out_of_stock',
+                'title'          => 'Product Out of Stock',
+                'message'        => "{$product->name} is now out of stock!",
+                'entity_type'    => 'product',
+                'entity_id'      => $product->id,
+                'action_url'     => "/admin/products/{$product->id}/edit",
+                'priority'       => 'urgent',
             ]);
         }
 
@@ -517,7 +511,7 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         $product = Product::findOrFail($id);
-        
+
         if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
             unlink(public_path('asset/images/' . $product->image));
         }
@@ -535,7 +529,7 @@ class AdminController extends Controller
     // ============================================
     // CATEGORY MANAGEMENT
     // ============================================
-    
+
     public function storeCategory(Request $request)
     {
         $authCheck = $this->checkAdminAuth();
@@ -546,7 +540,7 @@ class AdminController extends Controller
         ]);
 
         Category::create([
-            'name' => $validated['name'],
+            'name'            => $validated['name'],
             'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
 
@@ -569,7 +563,7 @@ class AdminController extends Controller
 
         $category = Category::findOrFail($id);
         $category->update([
-            'name' => $validated['name'],
+            'name'            => $validated['name'],
             'limited_edition' => $request->has('limited_edition') ? 1 : 0,
         ]);
 
@@ -587,13 +581,13 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         $category = Category::findOrFail($id);
-        
+
         if ($category->products()->count() > 0) {
             return redirect()->back()->withErrors([
                 'error' => 'Cannot delete category with existing products. Please reassign or delete the products first.'
             ]);
         }
-        
+
         $category->delete();
 
         Log::info('Category deleted', ['category_id' => $id, 'admin_id' => session('admin_id')]);
@@ -607,23 +601,23 @@ class AdminController extends Controller
     // ============================================
     // ORDER MANAGEMENT
     // ============================================
-    
+
     public function orders()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $orders = DB::table('orders')->orderBy('created_at', 'desc')->paginate(10);
+        $orders    = DB::table('orders')->orderBy('created_at', 'desc')->paginate(10);
         $allOrders = DB::table('orders')->get();
-        
+
         $coordinators = DB::table('delivery_coordinator')
             ->where('status', 'Active')
             ->orderBy('name', 'asc')
             ->get();
-        
+
         $isAdmin = $this->isAdmin();
         $isStaff = $this->isStaff();
-        
+
         return view('admin.orders', compact('orders', 'allOrders', 'coordinators', 'isAdmin', 'isStaff'));
     }
 
@@ -633,31 +627,26 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         $validated = $request->validate([
-            'payment_status' => 'required|in:Pending,Paid,Unsuccessful,Refunded',
+            'payment_status'  => 'required|in:Pending,Paid,Unsuccessful,Refunded',
             'delivery_status' => 'required|in:Pending,Out for Delivery,Delivered,Cancelled',
         ]);
 
         $currentOrder = DB::table('orders')->where('id', $id)->first();
-        
+
         DB::beginTransaction();
 
         try {
             DB::table('orders')->where('id', $id)->update([
-                'payment_status' => $validated['payment_status'],
+                'payment_status'  => $validated['payment_status'],
                 'delivery_status' => $validated['delivery_status'],
             ]);
 
             if ($validated['payment_status'] === 'Paid' && $currentOrder->payment_status !== 'Paid') {
                 $this->deductStockFromOrder($id);
-                
-                // FIXED: Use grand_total (subtotal + delivery fee) for the payment notification
+
                 if ($currentOrder->customer_name) {
                     $grandTotal = $currentOrder->grand_total ?? $currentOrder->total;
-                    $this->notificationService->notifyPaymentReceived(
-                        $id,
-                        "#{$id}",
-                        $grandTotal  // ← FIXED: was $currentOrder->total
-                    );
+                    $this->notificationService->notifyPaymentReceived($id, "#{$id}", $grandTotal);
                 }
             }
 
@@ -697,16 +686,16 @@ class AdminController extends Controller
 
         try {
             $order = DB::table('orders')->where('id', $id)->first();
-            
+
             if (!$order) {
                 return redirect()->back()->with('error', 'Order not found');
             }
-            
+
             DB::table('orders')->where('id', $id)->update([
                 'delivery_status' => 'Cancelled',
-                'payment_status' => 'Unsuccessful',
+                'payment_status'  => 'Unsuccessful',
             ]);
-            
+
             NotificationHelper::orderCancelled(
                 $id,
                 $order->customer_name,
@@ -714,16 +703,10 @@ class AdminController extends Controller
                 $order->user_id ?? null,
                 $order->coordinator_id ?? null
             );
-            
+
             if ($order->payment_status === 'Paid') {
                 $this->restoreStockFromOrder($id);
             }
-
-            Log::info('Order cancelled before deletion', [
-                'order_id' => $id,
-                'customer_name' => $order->customer_name,
-                'admin_id' => session('admin_id')
-            ]);
 
             DB::table('orders')->where('id', $id)->delete();
 
@@ -735,7 +718,7 @@ class AdminController extends Controller
 
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error('Order deletion failed', ['order_id' => $id, 'error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('Order deletion failed', ['order_id' => $id, 'error' => $e->getMessage()]);
             return redirect()->back()->withErrors(['error' => 'Failed to delete order: ' . $e->getMessage()]);
         }
     }
@@ -749,12 +732,12 @@ class AdminController extends Controller
             'coordinator_id' => 'required|exists:delivery_coordinator,coordinator_id',
         ]);
 
-        $order = DB::table('orders')->where('id', $id)->first();
+        $order       = DB::table('orders')->where('id', $id)->first();
         $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
 
         DB::table('orders')->where('id', $id)->update([
             'coordinator_id' => $validated['coordinator_id'],
-            'admin_id' => session('admin_id')
+            'admin_id'       => session('admin_id')
         ]);
 
         if ($order && $coordinator) {
@@ -767,9 +750,9 @@ class AdminController extends Controller
         }
 
         Log::info('Coordinator assigned', [
-            'order_id' => $id,
+            'order_id'       => $id,
             'coordinator_id' => $validated['coordinator_id'],
-            'admin_id' => session('admin_id')
+            'admin_id'       => session('admin_id')
         ]);
 
         return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
@@ -778,7 +761,7 @@ class AdminController extends Controller
     // ============================================
     // STAFF MANAGEMENT - SUPERADMIN ONLY
     // ============================================
-    
+
     public function staffAdmins()
     {
         $roleCheck = $this->requireAdmin();
@@ -794,23 +777,23 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:admin,email',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:admin,email',
             'password' => 'required|min:6',
-            'role' => 'required|in:SuperAdmin,Staff',
+            'role'     => 'required|in:SuperAdmin,Staff',
         ]);
 
         DB::table('admin')->insert([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
+            'name'     => $validated['name'],
+            'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role' => $validated['role'],
+            'role'     => $validated['role'],
         ]);
 
         Log::info('Admin account created', [
             'created_email' => $validated['email'],
-            'created_role' => $validated['role'],
-            'by_admin_id' => session('admin_id')
+            'created_role'  => $validated['role'],
+            'by_admin_id'   => session('admin_id')
         ]);
 
         return redirect()->back()->with('success', 'Admin account created successfully');
@@ -822,16 +805,16 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|email|unique:admin,email,' . $id,
-            'role' => 'required|in:SuperAdmin,Staff',
+            'name'     => 'required|string|max:255',
+            'email'    => 'required|email|unique:admin,email,' . $id,
+            'role'     => 'required|in:SuperAdmin,Staff',
             'password' => 'nullable|min:6',
         ]);
 
         $updateData = [
-            'name' => $validated['name'],
+            'name'  => $validated['name'],
             'email' => $validated['email'],
-            'role' => $validated['role'],
+            'role'  => $validated['role'],
         ];
 
         if (!empty($validated['password'])) {
@@ -864,7 +847,7 @@ class AdminController extends Controller
     // ============================================
     // DELIVERY COORDINATOR MANAGEMENT - SUPERADMIN ONLY
     // ============================================
-    
+
     public function staffDelivery()
     {
         $roleCheck = $this->requireAdmin();
@@ -880,20 +863,20 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'email' => 'required|email|unique:delivery_coordinator,email',
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|email|unique:delivery_coordinator,email',
             'password' => 'required|min:6',
-            'phone' => 'nullable|string|max:20',
-            'status' => 'required|in:Active,Inactive',
+            'phone'    => 'nullable|string|max:20',
+            'status'   => 'required|in:Active,Inactive',
         ]);
 
         DB::table('delivery_coordinator')->insert([
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-            'phone' => $validated['phone'],
-            'status' => $validated['status'],
-            'role' => 'Delivery',
+            'name'       => $validated['name'],
+            'email'      => $validated['email'],
+            'password'   => Hash::make($validated['password']),
+            'phone'      => $validated['phone'],
+            'status'     => $validated['status'],
+            'role'       => 'Delivery',
             'created_at' => now(),
         ]);
 
@@ -908,17 +891,17 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $validated = $request->validate([
-            'name' => 'required|string|max:100',
-            'email' => 'required|email|unique:delivery_coordinator,email,' . $id . ',coordinator_id',
-            'phone' => 'nullable|string|max:20',
-            'status' => 'required|in:Active,Inactive',
+            'name'     => 'required|string|max:100',
+            'email'    => 'required|email|unique:delivery_coordinator,email,' . $id . ',coordinator_id',
+            'phone'    => 'nullable|string|max:20',
+            'status'   => 'required|in:Active,Inactive',
             'password' => 'nullable|min:6',
         ]);
 
         $updateData = [
-            'name' => $validated['name'],
-            'email' => $validated['email'],
-            'phone' => $validated['phone'],
+            'name'   => $validated['name'],
+            'email'  => $validated['email'],
+            'phone'  => $validated['phone'],
             'status' => $validated['status'],
         ];
 
@@ -948,16 +931,16 @@ class AdminController extends Controller
     // ============================================
     // GALLERY MANAGEMENT
     // ============================================
-    
+
     public function galleryIndex()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
         $galleries = GalleryImage::orderBy('display_order', 'asc')->paginate(12);
-        $isAdmin = $this->isAdmin();
-        $isStaff = $this->isStaff();
-        
+        $isAdmin   = $this->isAdmin();
+        $isStaff   = $this->isStaff();
+
         return view('admin.gallery.index', compact('galleries', 'isAdmin', 'isStaff'));
     }
 
@@ -975,27 +958,27 @@ class AdminController extends Controller
         if ($authCheck) return $authCheck;
 
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'category' => 'required|in:birthday,casual,tiny,wedding,custom',
+            'title'         => 'required|string|max:255',
+            'description'   => 'nullable|string',
+            'image'         => 'required|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category'      => 'required|in:birthday,casual,tiny,wedding,custom',
             'display_order' => 'nullable|integer',
-            'is_active' => 'boolean'
+            'is_active'     => 'boolean'
         ]);
 
         if ($request->hasFile('image')) {
-            $image = $request->file('image');
+            $image     = $request->file('image');
             $imageName = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('asset/images'), $imageName);
 
             GalleryImage::create([
-                'title' => $request->title,
-                'description' => $request->description,
-                'image_path' => $imageName,
-                'category' => $request->category,
+                'title'         => $request->title,
+                'description'   => $request->description,
+                'image_path'    => $imageName,
+                'category'      => $request->category,
                 'display_order' => $request->display_order ?? 0,
-                'is_active' => $request->has('is_active') ? 1 : 0,
-                'admin_id' => session('admin_id')
+                'is_active'     => $request->has('is_active') ? 1 : 0,
+                'admin_id'      => session('admin_id')
             ]);
 
             Log::info('Gallery image created', ['title' => $request->title, 'admin_id' => session('admin_id')]);
@@ -1023,12 +1006,12 @@ class AdminController extends Controller
         $gallery = GalleryImage::findOrFail($id);
 
         $request->validate([
-            'title' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'image' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'category' => 'required|in:birthday,casual,tiny,wedding,custom',
+            'title'         => 'required|string|max:255',
+            'description'   => 'nullable|string',
+            'image'         => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'category'      => 'required|in:birthday,casual,tiny,wedding,custom',
             'display_order' => 'nullable|integer',
-            'is_active' => 'boolean'
+            'is_active'     => 'boolean'
         ]);
 
         $imageName = $gallery->image_path;
@@ -1037,18 +1020,18 @@ class AdminController extends Controller
             if (file_exists(public_path('asset/images/' . $gallery->image_path))) {
                 unlink(public_path('asset/images/' . $gallery->image_path));
             }
-            $image = $request->file('image');
+            $image     = $request->file('image');
             $imageName = time() . '_' . $image->getClientOriginalName();
             $image->move(public_path('asset/images'), $imageName);
         }
 
         $gallery->update([
-            'title' => $request->title,
-            'description' => $request->description,
-            'image_path' => $imageName,
-            'category' => $request->category,
+            'title'         => $request->title,
+            'description'   => $request->description,
+            'image_path'    => $imageName,
+            'category'      => $request->category,
             'display_order' => $request->display_order ?? 0,
-            'is_active' => $request->has('is_active') ? 1 : 0,
+            'is_active'     => $request->has('is_active') ? 1 : 0,
         ]);
 
         Log::info('Gallery image updated', ['gallery_id' => $id, 'admin_id' => session('admin_id')]);
@@ -1079,7 +1062,7 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $gallery = GalleryImage::findOrFail($id);
+        $gallery           = GalleryImage::findOrFail($id);
         $gallery->is_active = !$gallery->is_active;
         $gallery->save();
 
@@ -1121,18 +1104,18 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $request->validate([
-            'status' => 'required|in:Pending,Approved,Rejected,Completed',
-            'admin_price' => 'required_if:status,Approved|numeric|min:0',
-            'admin_notes' => 'nullable|string',
+            'status'       => 'required|in:Pending,Approved,Rejected,Completed',
+            'admin_price'  => 'required_if:status,Approved|numeric|min:0',
+            'admin_notes'  => 'nullable|string',
         ]);
 
         $customization = ProductCustomization::findOrFail($id);
-        $oldStatus = $customization->status;
+        $oldStatus     = $customization->status;
 
         $updateData = [
-            'status' => $request->status,
+            'status'      => $request->status,
             'admin_notes' => $request->admin_notes,
-            'admin_id' => session('admin_id'),
+            'admin_id'    => session('admin_id'),
         ];
 
         if ($request->status === 'Approved' && $request->has('admin_price')) {
@@ -1155,18 +1138,11 @@ class AdminController extends Controller
                     $request->admin_price ?? null,
                     $request->admin_notes
                 );
-                
-                Log::info('Customization status change notification sent', [
-                    'customization_id' => $customization->id,
-                    'old_status' => $oldStatus,
-                    'new_status' => $request->status,
-                    'user_id' => $customization->user_id
-                ]);
             }
         } catch (\Exception $e) {
             Log::error('Failed to send customization status notification', [
                 'customization_id' => $customization->id,
-                'error' => $e->getMessage()
+                'error'            => $e->getMessage()
             ]);
         }
 
@@ -1179,7 +1155,7 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $customization = ProductCustomization::findOrFail($id);
-        
+
         if ($customization->custom_image) {
             $imagePath = public_path('uploads/customizations/' . $customization->custom_image);
             if (file_exists($imagePath)) {
@@ -1234,7 +1210,7 @@ class AdminController extends Controller
         }
 
         DB::beginTransaction();
-        
+
         try {
             $cart = Cart::firstOrCreate(['user_id' => Auth::id(), 'is_buy_now' => 0]);
 
@@ -1249,20 +1225,20 @@ class AdminController extends Controller
             }
 
             CartItem::create([
-                'cart_id' => $cart->id,
-                'product_id' => $customization->product_id,
-                'category_id' => $customization->product->category_id,
-                'quantity' => 1,
-                'price' => $customization->admin_price,
-                'subtotal' => $customization->admin_price,
+                'cart_id'          => $cart->id,
+                'product_id'       => $customization->product_id,
+                'category_id'      => $customization->product->category_id,
+                'quantity'         => 1,
+                'price'            => $customization->admin_price,
+                'subtotal'         => $customization->admin_price,
                 'is_customization' => 1,
                 'customization_id' => $customization->id,
             ]);
 
-            $cartCount = CartItem::whereHas('cart', function($query) {
+            $cartCount = CartItem::whereHas('cart', function ($query) {
                 $query->where('user_id', Auth::id())->where('is_buy_now', 0);
             })->sum('quantity');
-            
+
             session(['cart_count' => $cartCount]);
 
             try {
@@ -1274,7 +1250,7 @@ class AdminController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to send customization cart notification', [
                     'customization_id' => $customization->id,
-                    'error' => $e->getMessage()
+                    'error'            => $e->getMessage()
                 ]);
             }
 
@@ -1285,12 +1261,110 @@ class AdminController extends Controller
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to add customization to cart', [
-                'error' => $e->getMessage(),
+                'error'            => $e->getMessage(),
                 'customization_id' => $id,
-                'user_id' => Auth::id()
+                'user_id'          => Auth::id()
             ]);
-            
+
             return back()->with('error', 'Failed to add customization to cart.');
         }
+    }
+
+    // ============================================
+    // VOUCHER MANAGEMENT - SUPERADMIN ONLY
+    // ============================================
+
+    public function vouchers()
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $vouchers = Voucher::orderByDesc('created_at')->get();
+        $isAdmin  = $this->isAdmin();
+        $isStaff  = $this->isStaff();
+
+        return view('admin.vouchers.index', compact('vouchers', 'isAdmin', 'isStaff'));
+    }
+
+    public function storeVoucher(Request $request)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $data               = $this->validatedVoucher($request);
+        $data['created_by'] = session('admin_id');
+        Voucher::create($data);
+
+        Log::info('Voucher created', ['code' => $data['code'], 'admin_id' => session('admin_id')]);
+
+        return back()->with('success', 'Voucher "' . $data['code'] . '" created successfully.');
+    }
+
+    public function updateVoucher(Request $request, Voucher $voucher)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $voucher->update($this->validatedVoucher($request, $voucher->id));
+
+        Log::info('Voucher updated', ['voucher_id' => $voucher->id, 'admin_id' => session('admin_id')]);
+
+        return back()->with('success', 'Voucher "' . $voucher->code . '" updated.');
+    }
+
+    public function destroyVoucher(Voucher $voucher)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $code = $voucher->code;
+        $voucher->delete();
+
+        Log::info('Voucher deleted', ['code' => $code, 'admin_id' => session('admin_id')]);
+
+        return back()->with('success', 'Voucher "' . $code . '" deleted.');
+    }
+
+    public function toggleVoucher(Voucher $voucher)
+    {
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $voucher->update(['is_active' => !$voucher->is_active]);
+
+        Log::info('Voucher toggled', ['voucher_id' => $voucher->id, 'is_active' => $voucher->is_active, 'admin_id' => session('admin_id')]);
+
+        return back()->with('success', 'Voucher "' . $voucher->code . '" ' . ($voucher->is_active ? 'activated' : 'deactivated') . '.');
+    }
+
+    private function validatedVoucher(Request $request, ?int $ignoreId = null): array
+    {
+        $request->validate([
+            'code'              => 'required|string|max:50|unique:vouchers,code' . ($ignoreId ? ',' . $ignoreId : ''),
+            'description'       => 'nullable|string|max:255',
+            'discount_type'     => 'required|in:percent,fixed',
+            'discount_value'    => 'required|numeric|min:0',
+            'min_order_amount'  => 'nullable|numeric|min:0',
+            'max_discount_cap'  => 'nullable|numeric|min:0',
+            'max_uses'          => 'nullable|integer|min:1',
+            'max_uses_per_user' => 'required|integer|min:1',
+            'is_active'         => 'nullable|boolean',
+            'starts_at'         => 'nullable|date',
+            'expires_at'        => 'nullable|date|after_or_equal:starts_at',
+        ]);
+
+        return [
+            'code'              => strtoupper(trim($request->code)),
+            'description'       => $request->description,
+            'discount_type'     => $request->discount_type,
+            'discount_value'    => $request->discount_value,
+            'min_order_amount'  => $request->min_order_amount ?? 0,
+            'max_discount_cap'  => $request->max_discount_cap,
+            'max_uses'          => $request->max_uses,
+            'max_uses_per_user' => $request->max_uses_per_user,
+            'is_active'         => $request->boolean('is_active'),
+            'starts_at'         => $request->starts_at ?: null,
+            'expires_at'        => $request->expires_at ?: null,
+        ];
     }
 }

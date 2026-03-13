@@ -334,13 +334,27 @@
 .notification-item {
     padding: 1rem;
     border-bottom: 1px solid var(--border-color);
-    cursor: pointer;
     transition: all 0.2s ease;
     position: relative;
 }
 
-.notification-item:hover {
+.notification-item:not(.delivery-notification) {
+    cursor: pointer;
+}
+
+.notification-item:not(.delivery-notification):hover {
     background: var(--hover-bg);
+}
+
+.notification-item.delivery-notification {
+    cursor: default;
+    opacity: 1;
+    background: rgba(252, 129, 129, 0.05);
+}
+
+.notification-item.delivery-notification .notification-icon.delivery {
+    background: rgba(252, 129, 129, 0.15);
+    color: var(--danger);
 }
 
 .notification-item.unread {
@@ -381,6 +395,10 @@
     color: var(--text-primary);
     margin-bottom: 0.25rem;
     font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.25rem;
 }
 
 .notification-message {
@@ -429,6 +447,42 @@
 .notification-priority-badge.high {
     background: rgba(246, 173, 85, 0.2);
     color: var(--warning);
+}
+
+/* Delivery notification badge */
+.notification-delivery-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(252, 129, 129, 0.2);
+    color: var(--danger);
+    margin-left: 0.5rem;
+    vertical-align: middle;
+}
+
+.notification-item.delivery-notification .notification-title {
+    color: var(--text-primary);
+}
+
+.notification-item.delivery-notification .notification-message {
+    color: var(--text-secondary);
+}
+
+.notification-item.delivery-notification .fa-lock {
+    font-size: 0.7rem;
+    margin-right: 0.25rem;
+    color: var(--text-secondary);
+}
+
+.notification-item.delivery-notification .text-muted {
+    color: var(--text-secondary) !important;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-top: 0.25rem;
 }
 
 .user-profile {
@@ -572,6 +626,66 @@ function formatTimeAgo(dateString) {
     return date.toLocaleDateString();
 }
 
+// Check if notification is from delivery
+function isDeliveryNotification(notification) {
+    if (!notification) return false;
+    
+    // Check by title keywords
+    const deliveryKeywords = [
+        'delivery', 'shipping', 'shipment', 'package', 'order', 
+        'courier', 'dispatch', 'arrived', 'shipped', 'delivered', 
+        'out for delivery', 'on the way', 'transit', 'parcel',
+        'tracking', 'delivery update', 'shipping update'
+    ];
+    
+    // Check title
+    if (notification.title) {
+        const titleLower = notification.title.toLowerCase();
+        if (deliveryKeywords.some(keyword => titleLower.includes(keyword))) {
+            return true;
+        }
+    }
+    
+    // Check message
+    if (notification.message) {
+        const messageLower = notification.message.toLowerCase();
+        if (deliveryKeywords.some(keyword => messageLower.includes(keyword))) {
+            return true;
+        }
+    }
+    
+    // Check by notification type
+    const deliveryTypes = [
+        'delivery_status_changed',
+        'delivery_assigned',
+        'order_shipped',
+        'order_delivered',
+        'order_out_for_delivery',
+        'delivery_update',
+        'shipment_created',
+        'shipment_updated',
+        'package_dispatched'
+    ];
+    
+    if (notification.type && deliveryTypes.includes(notification.type)) {
+        return true;
+    }
+    
+    // Check by icon
+    const deliveryIcons = [
+        'fa-truck', 'fa-shipping-fast', 'fa-box', 'fa-package', 
+        'fa-cube', 'fa-truck-moving', 'fa-truck-loading', 'fa-dolly',
+        'fa-parcel', 'fa-gift', 'fa-cubes', 'fa-ship'
+    ];
+    
+    const { icon } = getNotificationIcon(notification.type);
+    if (deliveryIcons.includes(icon)) {
+        return true;
+    }
+    
+    return false;
+}
+
 // Get notification icon and color based on type
 function getNotificationIcon(type) {
     const iconMap = {
@@ -598,7 +712,7 @@ async function fetchNotifications() {
     try {
         const response = await fetch('/api/notifications?limit=10', {
             method: 'GET',
-            credentials: 'same-origin', // IMPORTANT: Include session cookies
+            credentials: 'same-origin',
             headers: {
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
@@ -675,22 +789,31 @@ function displayNotifications(notifications) {
             ? `<span class="notification-priority-badge ${notification.priority}">${notification.priority.toUpperCase()}</span>` 
             : '';
         
+        const isDelivery = isDeliveryNotification(notification);
+        const deliveryBadge = isDelivery 
+            ? `` 
+            : '';
+        
+        const itemClass = `notification-item ${notification.is_read ? '' : 'unread'} ${isDelivery ? 'delivery-notification' : ''}`;
+        
         return `
-            <div class="notification-item ${notification.is_read ? '' : 'unread'}" 
-                 onclick="handleNotificationClick(${notification.id}, '${notification.action_url || '#'}')">
+            <div class="${itemClass}" 
+                 ${!isDelivery ? `onclick="handleNotificationClick(${notification.id}, '${notification.action_url || '#'}')"` : ''}>
                 <div class="d-flex gap-3">
-                    <div class="notification-icon ${color}">
+                    <div class="notification-icon ${color} ${isDelivery ? 'delivery' : ''}">
                         <i class="fas ${icon}"></i>
                     </div>
                     <div class="flex-grow-1">
                         <div class="notification-title">
                             ${escapeHtml(notification.title)}
                             ${priorityBadge}
+                            ${deliveryBadge}
                         </div>
                         <div class="notification-message">${escapeHtml(notification.message)}</div>
                         <div class="notification-time">
                             <i class="fas fa-clock me-1"></i>${formatTimeAgo(notification.created_at)}
                         </div>
+                        ${isDelivery ? '<small class="text-muted d-block mt-1"></i></small>' : ''}
                     </div>
                 </div>
             </div>
@@ -713,7 +836,7 @@ async function handleNotificationClick(notificationId, actionUrl) {
     try {
         await fetch(`/api/notifications/${notificationId}/read`, {
             method: 'POST',
-            credentials: 'same-origin', // IMPORTANT: Include session cookies
+            credentials: 'same-origin',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
                 'Content-Type': 'application/json',
@@ -733,24 +856,64 @@ async function handleNotificationClick(notificationId, actionUrl) {
     }
 }
 
-// Mark all as read
+// Mark all as read (excluding delivery notifications)
 async function markAllAsRead() {
     try {
-        const response = await fetch('/api/notifications/mark-all-read', {
-            method: 'POST',
-            credentials: 'same-origin', // IMPORTANT: Include session cookies
+        // Show loading state on button
+        const markAllBtn = document.getElementById('markAllReadBtn');
+        if (markAllBtn) {
+            markAllBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+            markAllBtn.disabled = true;
+        }
+        
+        // First, get current notifications to identify which ones to mark as read
+        const response = await fetch('/api/notifications?limit=10', {
+            method: 'GET',
+            credentials: 'same-origin',
             headers: {
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                'Accept': 'application/json',
                 'Content-Type': 'application/json',
-                'Accept': 'application/json'
+                'X-Requested-With': 'XMLHttpRequest'
             }
         });
         
         if (response.ok) {
-            await fetchNotifications();
+            const data = await response.json();
+            
+            if (data.success && data.notifications) {
+                // Filter out delivery notifications
+                const nonDeliveryNotifications = data.notifications.filter(
+                    notification => !isDeliveryNotification(notification)
+                );
+                
+                // Mark each non-delivery notification as read
+                for (const notification of nonDeliveryNotifications) {
+                    if (!notification.is_read) {
+                        await fetch(`/api/notifications/${notification.id}/read`, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                                'Content-Type': 'application/json',
+                                'Accept': 'application/json'
+                            }
+                        });
+                    }
+                }
+                
+                // Refresh notifications
+                await fetchNotifications();
+            }
         }
     } catch (error) {
         // console.error('Error marking all as read:', error); // Removed
+    } finally {
+        // Restore button
+        const markAllBtn = document.getElementById('markAllReadBtn');
+        if (markAllBtn) {
+            markAllBtn.innerHTML = '<i class="fas fa-check-double"></i>';
+            markAllBtn.disabled = false;
+        }
     }
 }
 

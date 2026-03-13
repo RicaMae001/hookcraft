@@ -68,15 +68,22 @@ class ProfileController extends Controller
         return redirect()->back()->with('success', 'Password updated successfully!');
     }
 
-    // Show purchase history
+    // Show purchase history with delivery staff information
     public function purchaseHistory()
     {
         $user = Auth::user();
         
-        // Get orders with items
+        // Get orders with delivery coordinator information using LEFT JOIN
         $orders = DB::table('orders')
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+            ->leftJoin('delivery_coordinator', 'orders.coordinator_id', '=', 'delivery_coordinator.coordinator_id')
+            ->where('orders.user_id', $user->id)
+            ->select(
+                'orders.*',
+                'delivery_coordinator.name as delivery_name',
+                'delivery_coordinator.email as delivery_email',
+                'delivery_coordinator.phone as delivery_phone'
+            )
+            ->orderBy('orders.created_at', 'desc')
             ->get();
 
         // Get cart count
@@ -93,9 +100,17 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
         
+        // Get orders with delivery coordinator information using LEFT JOIN
         $orders = DB::table('orders')
-            ->where('user_id', $user->id)
-            ->orderBy('created_at', 'desc')
+            ->leftJoin('delivery_coordinator', 'orders.coordinator_id', '=', 'delivery_coordinator.coordinator_id')
+            ->where('orders.user_id', $user->id)
+            ->select(
+                'orders.*',
+                'delivery_coordinator.name as delivery_name',
+                'delivery_coordinator.email as delivery_email',
+                'delivery_coordinator.phone as delivery_phone'
+            )
+            ->orderBy('orders.created_at', 'desc')
             ->get();
 
         // Get cart count
