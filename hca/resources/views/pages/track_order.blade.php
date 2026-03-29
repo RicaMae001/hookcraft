@@ -369,11 +369,11 @@
                                         @elseif($order->delivery_status === 'Delivered')
                                         {{-- Delivered: show compact delivered chip --}}
                                         <div class="track-eta-delivered-chip mt-3">
-                                            <i class="fas fa-check-circle me-2"></i>
-                                            Order delivered on
-                                            {{-- FIX: null-safe updated_at fallback to created_at --}}
-                                            <strong>{{ !empty($order->updated_at) ? \Carbon\Carbon::parse($order->updated_at)->format('M d, Y') : \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</strong>
-                                        </div>
+    <i class="fas fa-check-circle me-2"></i>
+    Order delivered on
+    {{-- FIX: null-safe updated_at fallback to created_at --}}
+    <strong>&nbsp;{{ !empty($order->updated_at) ? \Carbon\Carbon::parse($order->updated_at)->format('M d, Y') : \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</strong>
+</div>
                                         @endif
 
                                         {{-- ── MINI MAP ON CARD ── --}}
