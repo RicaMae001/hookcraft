@@ -21,11 +21,16 @@ class VoucherController extends Controller
             return response()->json(['ok' => false, 'message' => 'Invalid voucher code.'], 422);
         }
 
+        // 1. Validate the voucher (returns ['valid' => bool, 'message' => string])
         $result = $voucher->validate(Auth::id(), (float) $request->subtotal);
 
-        if (!$result['ok']) {
+        // 2. Check the 'valid' key
+        if (!$result['valid']) {
             return response()->json(['ok' => false, 'message' => $result['message']], 422);
         }
+
+        // 3. Compute the discount
+        $discount = $voucher->computeDiscount((float) $request->subtotal);
 
         return response()->json([
             'ok'             => true,
@@ -33,8 +38,8 @@ class VoucherController extends Controller
             'code'           => $voucher->code,
             'description'    => $voucher->description,
             'discount_label' => $voucher->discount_label,
-            'discount'       => $result['discount'],
-            'message'        => 'Voucher applied! You saved ₱' . number_format($result['discount'], 2),
+            'discount'       => $discount,
+            'message'        => 'Voucher applied! You saved ₱' . number_format($discount, 2),
         ]);
     }
 }
