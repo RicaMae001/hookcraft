@@ -181,7 +181,7 @@
                                             </div>
                                         </div>
 
-                                        {{-- ── PRODUCT ITEMS GALLERY (matching purchase history style) ── --}}
+                                        {{-- ── PRODUCT ITEMS GALLERY ── --}}
                                         <div class="products-section mt-4 px-0">
                                             <div class="products-section-title">
                                                 <i class="fas fa-shopping-bag" style="color:var(--primary-pink-dark);"></i>
@@ -263,7 +263,120 @@
                                             </div>
                                         </div>
 
-                                        {{-- ── MINI MAP ON CARD (only if not Cancelled and has coordinates) ── --}}
+                                        {{-- ══════════════════════════════════════════
+                                             ESTIMATED DELIVERY TIMELINE — ORDER CARD
+                                             Shows only for Pending / Out for Delivery
+                                             Collapsed by default, click to expand
+                                        ═══════════════════════════════════════════ --}}
+                                        @if($order->delivery_status !== 'Delivered' && $order->delivery_status !== 'Cancelled')
+                                        <div class="track-eta-card mt-3" id="card-eta-{{ $order->id }}">
+                                            {{-- Header (toggle) --}}
+                                            <div class="track-eta-header"
+                                                 onclick="toggleTrackETA({{ $order->id }})"
+                                                 role="button" aria-expanded="false">
+                                                <div class="track-eta-header-left">
+                                                    <div class="track-eta-title">
+                                                        <i class="fas fa-calendar-check"></i>
+                                                        Estimated Delivery
+                                                    </div>
+                                                    <span class="track-eta-badge" id="card-eta-badge-{{ $order->id }}">
+                                                        Calculating…
+                                                    </span>
+                                                </div>
+                                                <i class="fas fa-chevron-down track-eta-chevron" id="card-eta-chevron-{{ $order->id }}"></i>
+                                            </div>
+
+                                            {{-- Collapsible body --}}
+                                            <div class="track-eta-body" id="card-eta-body-{{ $order->id }}">
+
+                                                {{-- Progress bar --}}
+                                                <div class="track-eta-progress-wrap">
+                                                    <div class="track-eta-progress-labels">
+                                                        <span>Order Placed</span>
+                                                        <span>Production</span>
+                                                        <span>Delivered</span>
+                                                    </div>
+                                                    <div class="track-eta-progress-bg">
+                                                        <div class="track-eta-progress-fill" id="card-eta-fill-{{ $order->id }}"></div>
+                                                    </div>
+                                                </div>
+
+                                                {{-- Steps --}}
+                                                <div class="track-eta-steps">
+
+                                                    <div class="track-eta-step">
+                                                        <div class="track-eta-dot dot-order">
+                                                            <i class="fas fa-check"></i>
+                                                        </div>
+                                                        <div class="track-eta-info">
+                                                            <div class="track-eta-label">Order Confirmed</div>
+                                                            <div class="track-eta-sub">Received &amp; processing started</div>
+                                                            <div class="track-eta-date date-blue" id="card-eta-order-{{ $order->id }}">
+                                                                <i class="fas fa-calendar"></i> <span>—</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="track-eta-step">
+                                                        <div class="track-eta-dot dot-produce dot-active">
+                                                            <i class="fas fa-cut"></i>
+                                                        </div>
+                                                        <div class="track-eta-info">
+                                                            <div class="track-eta-label">Crafting / Production</div>
+                                                            <div class="track-eta-sub">Handmade with love — 1 to 2 weeks</div>
+                                                            <div class="track-eta-date" id="card-eta-prod-{{ $order->id }}">
+                                                                <i class="fas fa-calendar-week"></i> <span>—</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="track-eta-step">
+                                                        <div class="track-eta-dot dot-deliver">
+                                                            <i class="fas fa-truck"></i>
+                                                        </div>
+                                                        <div class="track-eta-info">
+                                                            <div class="track-eta-label">Out for Delivery</div>
+                                                            <div class="track-eta-sub" id="card-eta-del-sub-{{ $order->id }}">
+                                                                Shipped right after production · 1–3 days
+                                                            </div>
+                                                            <div class="track-eta-date date-green" id="card-eta-del-{{ $order->id }}">
+                                                                <i class="fas fa-home"></i> <span>—</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                </div>
+
+                                                {{-- Summary bar --}}
+                                                <div class="track-eta-summary">
+                                                    <div class="track-eta-summary-label">
+                                                        <i class="fas fa-calendar-heart" style="color:#f97316;"></i>
+                                                        Expected Arrival Window
+                                                    </div>
+                                                    <div>
+                                                        <div class="track-eta-summary-dates" id="card-eta-window-{{ $order->id }}">Calculating…</div>
+                                                        <div class="track-eta-summary-range"  id="card-eta-range-{{ $order->id }}"></div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="track-eta-disclaimer">
+                                                    <i class="fas fa-info-circle" style="color:#fb8c00;flex-shrink:0;margin-top:1px;"></i>
+                                                    <span>Dates are estimates. You'll be notified via SMS/email once your order ships.</span>
+                                                </div>
+
+                                            </div>{{-- /track-eta-body --}}
+                                        </div>{{-- /track-eta-card --}}
+                                        @elseif($order->delivery_status === 'Delivered')
+                                        {{-- Delivered: show compact delivered chip --}}
+                                        <div class="track-eta-delivered-chip mt-3">
+                                            <i class="fas fa-check-circle me-2"></i>
+                                            Order delivered on
+                                            {{-- FIX: null-safe updated_at fallback to created_at --}}
+                                            <strong>{{ !empty($order->updated_at) ? \Carbon\Carbon::parse($order->updated_at)->format('M d, Y') : \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</strong>
+                                        </div>
+                                        @endif
+
+                                        {{-- ── MINI MAP ON CARD ── --}}
                                         @if($order->delivery_status !== 'Cancelled')
                                         <div class="mini-map-wrapper mt-3" onclick="event.stopPropagation()">
                                             <div class="mini-map-header">
@@ -391,7 +504,6 @@
                                                 </div>
                                             </div>
 
-                                            {{-- Turn-by-Turn only for Out for Delivery --}}
                                             @if($order->delivery_status == 'Out for Delivery')
                                             <div class="route-steps" id="cust-route-steps-{{ $order->id }}">
                                                 <div class="route-steps-title"><i class="fas fa-route me-2"></i>Turn-by-Turn Directions</div>
@@ -402,6 +514,114 @@
                                                 </div>
                                             </div>
                                             @endif
+                                            @endif
+
+                                            {{-- ══════════════════════════════════════════
+                                                 ESTIMATED DELIVERY TIMELINE — MODAL
+                                                 Only for Pending / Out for Delivery
+                                            ═══════════════════════════════════════════ --}}
+                                            @if($order->delivery_status !== 'Delivered' && $order->delivery_status !== 'Cancelled')
+                                            <div class="modal-eta-card mb-4" id="modal-eta-{{ $order->id }}">
+                                                {{-- Header (toggle) --}}
+                                                <div class="modal-eta-header"
+                                                     onclick="toggleModalETA({{ $order->id }})"
+                                                     role="button" aria-expanded="false">
+                                                    <div class="modal-eta-header-left">
+                                                        <div class="modal-eta-title">
+                                                            <i class="fas fa-calendar-check"></i>
+                                                            Estimated Delivery Schedule
+                                                        </div>
+                                                        <span class="modal-eta-badge" id="modal-eta-badge-{{ $order->id }}">
+                                                            Calculating…
+                                                        </span>
+                                                    </div>
+                                                    <i class="fas fa-chevron-down modal-eta-chevron" id="modal-eta-chevron-{{ $order->id }}"></i>
+                                                </div>
+
+                                                {{-- Collapsible body --}}
+                                                <div class="modal-eta-body" id="modal-eta-body-{{ $order->id }}">
+
+                                                    <div class="modal-eta-progress-wrap">
+                                                        <div class="modal-eta-progress-labels">
+                                                            <span>Order Placed</span>
+                                                            <span>Production</span>
+                                                            <span>Delivered</span>
+                                                        </div>
+                                                        <div class="modal-eta-progress-bg">
+                                                            <div class="modal-eta-progress-fill" id="modal-eta-fill-{{ $order->id }}"></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-eta-steps">
+
+                                                        <div class="modal-eta-step">
+                                                            <div class="meta-dot dot-order">
+                                                                <i class="fas fa-check"></i>
+                                                            </div>
+                                                            <div class="meta-info">
+                                                                <div class="meta-label">Order Confirmed</div>
+                                                                <div class="meta-sub">Received &amp; processing started</div>
+                                                                <div class="meta-date date-blue" id="modal-eta-order-{{ $order->id }}">
+                                                                    <i class="fas fa-calendar"></i> <span>—</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-eta-step">
+                                                            <div class="meta-dot dot-produce dot-active">
+                                                                <i class="fas fa-cut"></i>
+                                                            </div>
+                                                            <div class="meta-info">
+                                                                <div class="meta-label">Crafting / Production</div>
+                                                                <div class="meta-sub">Handmade with love — 1 to 2 weeks</div>
+                                                                <div class="meta-date" id="modal-eta-prod-{{ $order->id }}">
+                                                                    <i class="fas fa-calendar-week"></i> <span>—</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <div class="modal-eta-step">
+                                                            <div class="meta-dot dot-deliver">
+                                                                <i class="fas fa-truck"></i>
+                                                            </div>
+                                                            <div class="meta-info">
+                                                                <div class="meta-label">Out for Delivery</div>
+                                                                <div class="meta-sub" id="modal-eta-del-sub-{{ $order->id }}">
+                                                                    Shipped right after production · 1–3 days
+                                                                </div>
+                                                                <div class="meta-date date-green" id="modal-eta-del-{{ $order->id }}">
+                                                                    <i class="fas fa-home"></i> <span>—</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="modal-eta-summary">
+                                                        <div class="modal-eta-summary-label">
+                                                            <i class="fas fa-calendar-heart" style="color:#f97316;"></i>
+                                                            Expected Arrival Window
+                                                        </div>
+                                                        <div>
+                                                            <div class="modal-eta-summary-dates" id="modal-eta-window-{{ $order->id }}">Calculating…</div>
+                                                            <div class="modal-eta-summary-range"  id="modal-eta-range-{{ $order->id }}"></div>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="modal-eta-disclaimer">
+                                                        <i class="fas fa-info-circle" style="color:#fb8c00;flex-shrink:0;margin-top:1px;"></i>
+                                                        <span>Dates are estimates. Production may vary by order volume. You'll be notified via SMS/email once your order ships.</span>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+                                            @elseif($order->delivery_status === 'Delivered')
+                                            <div class="track-eta-delivered-chip mb-4">
+                                                <i class="fas fa-check-circle me-2"></i>
+                                                Order successfully delivered on
+                                                {{-- FIX: null-safe updated_at fallback to created_at --}}
+                                                <strong>{{ !empty($order->updated_at) ? \Carbon\Carbon::parse($order->updated_at)->format('M d, Y') : \Carbon\Carbon::parse($order->created_at)->format('M d, Y') }}</strong>
+                                            </div>
                                             @endif
 
                                             {{-- Timeline --}}
@@ -476,7 +696,6 @@
                                                     </div>
                                                 </div>
 
-                                                {{-- Delivery Staff Info --}}
                                                 @if($order->delivery_status == 'Out for Delivery' && $order->coordinator_id)
                                                 <div class="delivery-staff-info mt-3 p-3 bg-white rounded-3 border">
                                                     <h6 class="fw-bold mb-2" style="color:var(--primary-pink-dark);">
@@ -485,9 +704,7 @@
                                                     <div class="row g-2">
                                                         <div class="col-sm-6">
                                                             <div class="d-flex align-items-center">
-                                                                <div class="staff-icon me-2">
-                                                                    <i class="fas fa-user"></i>
-                                                                </div>
+                                                                <div class="staff-icon me-2"><i class="fas fa-user"></i></div>
                                                                 <div>
                                                                     <small class="text-muted d-block">Name</small>
                                                                     <span class="fw-bold">{{ $order->delivery_name ?? 'N/A' }}</span>
@@ -496,9 +713,7 @@
                                                         </div>
                                                         <div class="col-sm-6">
                                                             <div class="d-flex align-items-center">
-                                                                <div class="staff-icon me-2">
-                                                                    <i class="fas fa-phone-alt"></i>
-                                                                </div>
+                                                                <div class="staff-icon me-2"><i class="fas fa-phone-alt"></i></div>
                                                                 <div>
                                                                     <small class="text-muted d-block">Contact</small>
                                                                     <span class="fw-bold">{{ $order->delivery_phone ?? 'N/A' }}</span>
@@ -536,7 +751,6 @@
                                                 </div>
                                                 @endif
 
-                                                {{-- Price Breakdown --}}
                                                 <div class="price-breakdown mt-3">
                                                     <h6 class="fw-bold mb-2"><i class="fas fa-receipt me-2"></i>Order Summary</h6>
                                                     <div class="price-row">
@@ -575,7 +789,7 @@
                                                 </div>
                                             </div>
 
-                                            {{-- ── PRODUCT ITEMS IN MODAL ── --}}
+                                            {{-- Product Items in Modal --}}
                                             <div class="modal-products-section mt-4">
                                                 <div class="modal-products-title">
                                                     <i class="fas fa-shopping-bag" style="color:var(--primary-pink-dark);"></i>
@@ -602,7 +816,6 @@
                                                     @else
                                                         <div class="product-item-img-placeholder"><i class="fas fa-image"></i></div>
                                                     @endif
-
                                                     <div class="product-item-info">
                                                         <div class="product-item-name">{{ $displayName }}</div>
                                                         <div class="product-item-type {{ $isCustom ? 'type-custom' : 'type-regular' }}">
@@ -610,7 +823,6 @@
                                                         </div>
                                                         <div class="product-item-qty">Qty: {{ $item->quantity }}</div>
                                                     </div>
-
                                                     <div class="product-item-price">
                                                         <div class="product-item-unit">₱{{ number_format($item->price, 2) }} each</div>
                                                         <div class="product-item-total">₱{{ number_format($item->price * $item->quantity, 2) }}</div>
@@ -679,12 +891,9 @@
         --border-color: #e5e7eb;
     }
 
-    body {
-        background: linear-gradient(135deg, #e7c9cf 50%, #beb2b2 100%);
-        min-height: 100vh;
-    }
+    body { background: linear-gradient(135deg, #e7c9cf 50%, #beb2b2 100%); min-height: 100vh; }
 
-    /* Profile Card */
+    /* Profile */
     .profile-card { border-radius: 16px; overflow: hidden; transition: transform 0.3s ease; max-width: 280px; }
     .profile-card:hover { transform: translateY(-5px); }
     .profile-image-wrapper { position: relative; display: inline-block; }
@@ -694,11 +903,9 @@
     .list-group-item:hover:not(.active) { background-color: #fff5f7; color: var(--primary-pink); }
     .list-group-item.active { background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); color: white; font-weight: 600; }
 
-    /* Main Card */
+    /* Cards */
     .main-card { border-radius: 20px; overflow: hidden; }
     .gradient-header { background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); }
-
-    /* Order Card */
     .order-card { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: all 0.3s ease; }
     .order-card:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.12); transform: translateY(-2px); }
     .order-header { padding: 1.5rem; background: linear-gradient(135deg, #fff5f7, #ffffff); border-bottom: 1px solid #f0f0f0; }
@@ -706,7 +913,7 @@
     .order-body { padding: 1.5rem; }
     .order-footer { padding: 1rem 1.5rem; background: #f8f9fa; border-top: 1px solid #f0f0f0; }
 
-    /* Info Section */
+    /* Info */
     .info-section { background: #f8f9fa; padding: 1.5rem; border-radius: 12px; }
     .section-title { color: #333; font-size: 0.95rem; font-weight: 600; }
     .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
@@ -714,53 +921,49 @@
     .info-item.full-width { grid-column: 1 / -1; }
     .info-item i { font-size: 18px; margin-top: 2px; }
 
-    /* Status Badges */
+    /* Badges */
     .status-badge { display: inline-flex; align-items: center; padding: 0.5rem 1rem; border-radius: 50px; font-size: 0.875rem; font-weight: 600; }
     .status-success { background: #d1fae5; color: #065f46; }
     .status-warning { background: #fef3c7; color: #92400e; }
-    .status-danger { background: #fee2e2; color: #991b1b; }
-    .status-info { background: #dbeafe; color: #1e40af; }
+    .status-danger  { background: #fee2e2; color: #991b1b; }
+    .status-info    { background: #dbeafe; color: #1e40af; }
     .status-secondary { background: #e5e7eb; color: #374151; }
 
-    /* ── PRODUCT ITEMS GALLERY (same as purchase history) ── */
+    /* Product gallery */
     .products-section { padding: 0; }
     .products-section-title { font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; }
     .products-scroll { display: flex; gap: 0.75rem; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; }
     .products-scroll::-webkit-scrollbar { display: none; }
-
     .product-thumb { flex-shrink: 0; width: 88px; border-radius: 12px; overflow: hidden; border: 2px solid #f0f0f0; background: #f8f9fa; cursor: pointer; position: relative; transition: all 0.25s ease; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
     .product-thumb:hover { transform: translateY(-4px) scale(1.03); box-shadow: 0 8px 20px rgba(0,0,0,0.14); border-color: var(--primary-pink); }
     .product-thumb img { width: 88px; height: 88px; object-fit: cover; display: block; }
     .product-thumb-label { padding: 4px 6px; font-size: 0.6rem; font-weight: 500; color: #374151; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; background: #fff; }
-
-    .product-qty-badge { position: absolute; top: 4px; right: 4px; background: linear-gradient(135deg,var(--gradient-start),var(--gradient-end)); color: #fff; font-size: 0.55rem; font-weight: 700; padding: 2px 5px; border-radius: 8px; min-width: 16px; text-align: center; }
+    .product-qty-badge { position: absolute; top: 4px; right: 4px; background: linear-gradient(135deg,var(--gradient-start),var(--gradient-end)); color: #fff; font-size: 0.55rem; font-weight: 700; padding: 2px 5px; border-radius: 8px; }
     .product-type-badge { position: absolute; top: 4px; left: 4px; font-size: 0.5rem; font-weight: 700; padding: 2px 5px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
     .badge-custom  { background: rgba(245,158,11,0.9); color: #fff; }
     .badge-regular { background: rgba(107,114,128,0.75); color: #fff; }
-
     .products-more { flex-shrink: 0; width: 88px; height: 88px; border-radius: 12px; border: 2px dashed var(--primary-pink); background: #fff5f7; display: flex; align-items: center; justify-content: center; font-size: 0.78rem; font-weight: 700; color: var(--primary-pink-dark); cursor: pointer; transition: all 0.2s; text-align: center; line-height: 1.3; }
     .products-more:hover { background: #ffeef1; }
 
-    /* ── MODAL PRODUCT ITEMS ── */
+    /* Modal products */
     .modal-products-section { margin-bottom: 1.3rem; }
     .modal-products-title { font-size: 0.82rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 6px; }
-
     .product-item-row { display: flex; align-items: center; gap: 1rem; padding: 0.85rem 1rem; background: #f8f9fa; border: 1px solid #f0f0f0; border-radius: 12px; margin-bottom: 0.6rem; transition: all 0.2s; }
     .product-item-row:hover { background: #fff5f7; transform: translateX(2px); }
     .product-item-img { width: 60px; height: 60px; border-radius: 10px; object-fit: cover; border: 2px solid #f0f0f0; flex-shrink: 0; cursor: pointer; transition: all 0.2s; }
     .product-item-img:hover { transform: scale(1.06); box-shadow: 0 4px 14px rgba(0,0,0,0.12); }
     .product-item-img-placeholder { width: 60px; height: 60px; border-radius: 10px; background: #fff5f7; border: 2px solid #f0f0f0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: var(--primary-pink); font-size: 1.3rem; }
     .product-item-info { flex: 1; min-width: 0; }
-    .product-item-name { font-weight: 600; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .product-item-type { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.04em; display: inline-block; margin-bottom: 3px; }
+    .product-item-name  { font-weight: 600; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .product-item-type  { font-size: 0.65rem; font-weight: 700; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: 0.04em; display: inline-block; margin-bottom: 3px; }
     .type-custom  { background: rgba(245,158,11,0.12); color: #b45309; }
     .type-regular { background: rgba(107,114,128,0.1);  color: #4b5563; }
-    .product-item-qty { font-size: 0.76rem; color: var(--text-secondary); }
+    .product-item-qty   { font-size: 0.76rem; color: var(--text-secondary); }
     .product-item-price { text-align: right; flex-shrink: 0; }
     .product-item-unit  { font-size: 0.72rem; color: var(--text-secondary); }
     .product-item-total { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
 
-    /* Image Lightbox */
+    /* Lightbox */
     .img-lightbox { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 99999; align-items: center; justify-content: center; padding: 20px; }
     .img-lightbox.show { display: flex; animation: fadeOverlay 0.2s ease; }
     .img-lightbox img { max-width: 90%; max-height: 85vh; border-radius: 12px; object-fit: contain; }
@@ -786,7 +989,124 @@
     .milestone span { font-size: 0.75rem; font-weight: 500; color: #6b7280; }
     .milestone.active span { color: #111827; font-weight: 600; }
 
-    /* ── MINI MAP ── */
+    /* ════════════════════════════════════════════
+       ESTIMATED DELIVERY TIMELINE — ORDER CARD
+    ═══════════════════════════════════════════ */
+    .track-eta-card {
+        background: linear-gradient(135deg, #fffbf0, #fff8e8);
+        border: 1.5px solid #f6c35a;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(246,195,90,0.15);
+    }
+    .track-eta-header {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        padding: 0.55rem 0.9rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 6px;
+        cursor: pointer;
+        user-select: none;
+        transition: filter 0.18s;
+    }
+    .track-eta-header:hover { filter: brightness(1.07); }
+    .track-eta-header-left { display: flex; align-items: center; gap: 7px; flex: 1; min-width: 0; flex-wrap: wrap; gap: 5px; }
+    .track-eta-title { display: flex; align-items: center; gap: 7px; font-size: 0.8rem; font-weight: 800; color: #fff; white-space: nowrap; }
+    .track-eta-badge { background: rgba(255,255,255,0.22); color: #fff; font-size: 0.66rem; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .track-eta-chevron { color: rgba(255,255,255,0.85); font-size: 0.75rem; flex-shrink: 0; transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); }
+    .track-eta-card.open .track-eta-chevron { transform: rotate(180deg); }
+    .track-eta-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), padding 0.28s ease; }
+    .track-eta-card.open .track-eta-body { max-height: 580px; padding: 0.75rem 0.9rem; }
+
+    /* Shared ETA step styles (card + modal) */
+    .track-eta-steps, .modal-eta-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 0.6rem; }
+    .track-eta-step, .modal-eta-step { display: flex; align-items: flex-start; gap: 10px; position: relative; padding-bottom: 0.5rem; }
+    .track-eta-step:last-child, .modal-eta-step:last-child { padding-bottom: 0; }
+    .track-eta-step:not(:last-child)::before, .modal-eta-step:not(:last-child)::before {
+        content: ''; position: absolute; left: 13px; top: 26px; bottom: 0; width: 2px;
+        background: linear-gradient(to bottom, #fdba74, #fcd34d); border-radius: 2px;
+    }
+    .track-eta-dot, .meta-dot {
+        width: 27px; height: 27px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        font-size: 0.68rem; flex-shrink: 0; border: 2.5px solid #fff;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.13); color: #fff; position: relative; z-index: 1;
+    }
+    .dot-order   { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+    .dot-produce { background: linear-gradient(135deg, #f97316, #c2410c); }
+    .dot-deliver { background: linear-gradient(135deg, #22c55e, #15803d); }
+    .dot-active  { animation: pulse-dot 1.5s ease-in-out infinite; }
+    @keyframes pulse-dot {
+        0%,100% { box-shadow: 0 2px 6px rgba(0,0,0,0.13), 0 0 0 0 rgba(249,115,22,0.4); }
+        50%      { box-shadow: 0 2px 6px rgba(0,0,0,0.13), 0 0 0 6px rgba(249,115,22,0); }
+    }
+    .track-eta-info, .meta-info { flex: 1; min-width: 0; }
+    .track-eta-label, .meta-label { font-size: 0.8rem; font-weight: 700; color: #7c2d12; line-height: 1.2; }
+    .track-eta-sub,   .meta-sub   { font-size: 0.7rem; color: #9a3412; line-height: 1.3; margin-top: 1px; }
+    .track-eta-date, .meta-date {
+        font-size: 0.68rem; font-weight: 800; margin-top: 3px;
+        display: inline-flex; align-items: center; gap: 4px;
+        background: rgba(249,115,22,0.12); color: #c2410c;
+        padding: 2px 8px; border-radius: 8px; border: 1px solid rgba(249,115,22,0.2);
+    }
+    .track-eta-date.date-green, .meta-date.date-green { background: rgba(34,197,94,0.1); color: #15803d; border-color: rgba(34,197,94,0.2); }
+    .track-eta-date.date-blue,  .meta-date.date-blue  { background: rgba(59,130,246,0.1); color: #1d4ed8; border-color: rgba(59,130,246,0.2); }
+
+    /* Progress bar (card) */
+    .track-eta-progress-wrap { margin-bottom: 0.6rem; }
+    .track-eta-progress-labels { display: flex; justify-content: space-between; font-size: 0.62rem; color: #b45309; font-weight: 600; margin-bottom: 3px; }
+    .track-eta-progress-bg   { height: 5px; background: #fed7aa; border-radius: 10px; overflow: hidden; }
+    .track-eta-progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg,#3b82f6 0%,#f97316 50%,#22c55e 100%); width: 0%; transition: width 1s ease; }
+
+    /* Summary bar (card) */
+    .track-eta-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; background: linear-gradient(135deg,#fff7ed,#fef3c7); border: 1px solid #fed7aa; border-radius: 9px; padding: 0.5rem 0.7rem; }
+    .track-eta-summary-label  { font-size: 0.72rem; font-weight: 600; color: #92400e; display: flex; align-items: center; gap: 5px; }
+    .track-eta-summary-dates  { font-size: 0.76rem; font-weight: 800; color: #c2410c; }
+    .track-eta-summary-range  { font-size: 0.65rem; color: #b45309; font-weight: 500; }
+    .track-eta-disclaimer { font-size: 0.68rem; color: #b45309; margin-top: 0.45rem; display: flex; align-items: flex-start; gap: 5px; line-height: 1.4; padding-top: 0.4rem; border-top: 1px dashed #fcd34d; }
+
+    /* Delivered chip */
+    .track-eta-delivered-chip { display: inline-flex; align-items: center; background: linear-gradient(135deg,#d1fae5,#a7f3d0); border: 1px solid #6ee7b7; border-radius: 10px; padding: 0.45rem 0.9rem; font-size: 0.8rem; color: #065f46; font-weight: 600; }
+
+    /* ════════════════════════════════════════════
+       ESTIMATED DELIVERY TIMELINE — MODAL
+    ═══════════════════════════════════════════ */
+    .modal-eta-card {
+        background: linear-gradient(135deg, #fffbf0, #fff8e8);
+        border: 1.5px solid #f6c35a;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 2px 8px rgba(246,195,90,0.15);
+    }
+    .modal-eta-header {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        padding: 0.6rem 1rem;
+        display: flex; align-items: center; justify-content: space-between; gap: 6px;
+        cursor: pointer; user-select: none; transition: filter 0.18s;
+    }
+    .modal-eta-header:hover { filter: brightness(1.07); }
+    .modal-eta-header-left { display: flex; align-items: center; gap: 7px; flex: 1; flex-wrap: wrap; gap: 5px; }
+    .modal-eta-title { display: flex; align-items: center; gap: 7px; font-size: 0.85rem; font-weight: 800; color: #fff; white-space: nowrap; }
+    .modal-eta-badge { background: rgba(255,255,255,0.22); color: #fff; font-size: 0.7rem; font-weight: 700; padding: 2px 9px; border-radius: 20px; white-space: nowrap; }
+    .modal-eta-chevron { color: rgba(255,255,255,0.85); font-size: 0.8rem; flex-shrink: 0; transition: transform 0.28s cubic-bezier(0.4,0,0.2,1); }
+    .modal-eta-card.open .modal-eta-chevron { transform: rotate(180deg); }
+    .modal-eta-body { padding: 0; max-height: 0; overflow: hidden; transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1), padding 0.28s ease; }
+    .modal-eta-card.open .modal-eta-body { max-height: 580px; padding: 0.9rem 1rem; }
+
+    /* Progress bar (modal) */
+    .modal-eta-progress-wrap { margin-bottom: 0.6rem; }
+    .modal-eta-progress-labels { display: flex; justify-content: space-between; font-size: 0.65rem; color: #b45309; font-weight: 600; margin-bottom: 3px; }
+    .modal-eta-progress-bg   { height: 6px; background: #fed7aa; border-radius: 10px; overflow: hidden; }
+    .modal-eta-progress-fill { height: 100%; border-radius: 10px; background: linear-gradient(90deg,#3b82f6 0%,#f97316 50%,#22c55e 100%); width: 0%; transition: width 1s ease; }
+
+    /* Summary bar (modal) */
+    .modal-eta-summary { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 6px; background: linear-gradient(135deg,#fff7ed,#fef3c7); border: 1px solid #fed7aa; border-radius: 9px; padding: 0.55rem 0.75rem; }
+    .modal-eta-summary-label  { font-size: 0.75rem; font-weight: 600; color: #92400e; display: flex; align-items: center; gap: 5px; }
+    .modal-eta-summary-dates  { font-size: 0.78rem; font-weight: 800; color: #c2410c; }
+    .modal-eta-summary-range  { font-size: 0.68rem; color: #b45309; font-weight: 500; }
+    .modal-eta-disclaimer { font-size: 0.7rem; color: #b45309; margin-top: 0.5rem; display: flex; align-items: flex-start; gap: 5px; line-height: 1.4; padding-top: 0.45rem; border-top: 1px dashed #fcd34d; }
+
+    /* Maps */
     .mini-map-wrapper { border-radius: 12px; overflow: hidden; border: 1px solid var(--border-color); }
     .mini-map-header { display: flex; align-items: center; justify-content: space-between; padding: 8px 14px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); color: #fff; flex-wrap: wrap; gap: 6px; }
     .mini-map-title { display: flex; align-items: center; gap: 7px; font-weight: 700; font-size: 0.82rem; }
@@ -801,13 +1121,12 @@
     .btn-gradient:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(255,182,193,0.4); color: white; }
     .btn-action { padding: 0.5rem 1.25rem; border-radius: 8px; font-weight: 600; transition: all 0.3s ease; }
 
-    /* ═══ DELIVERY DETAIL MODAL ═══ */
+    /* Modal */
     .delivery-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px); z-index: 9000; align-items: center; justify-content: center; padding: 16px; }
     .delivery-modal-overlay.active { display: flex; animation: fadeOverlay 0.2s ease; }
     @keyframes fadeOverlay { from{opacity:0} to{opacity:1} }
     .delivery-modal { background: #fff; border-radius: 20px; width: 100%; max-width: 880px; max-height: 92vh; overflow-y: auto; box-shadow: 0 24px 60px rgba(0,0,0,0.3); animation: slideModal 0.28s cubic-bezier(0.34,1.3,0.64,1); position: relative; }
     @keyframes slideModal { from{opacity:0;transform:translateY(40px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
-
     .dmodal-header { display: flex; align-items: center; justify-content: space-between; padding: 1.2rem 1.6rem; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius: 20px 20px 0 0; color: #fff; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; gap: 8px; }
     .dmodal-header-left { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
     .dmodal-order-id { background: rgba(255,255,255,0.3); padding: 4px 12px; border-radius: 8px; font-weight: 700; font-size: 0.9rem; }
@@ -816,7 +1135,7 @@
     .dmodal-close:hover { background: rgba(255,255,255,0.4); transform: rotate(90deg); }
     .dmodal-body { padding: 1.5rem; }
 
-    /* Modal Map */
+    /* Modal map */
     .modal-map-wrapper { border-radius: 14px; overflow: hidden; border: 1px solid var(--border-color); margin-bottom: 1.3rem; }
     .modal-map-header { display: flex; align-items: center; justify-content: space-between; padding: 10px 15px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); color: #fff; gap: 8px; flex-wrap: wrap; }
     .modal-map-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 0.92rem; }
@@ -830,10 +1149,10 @@
     .badge-modern { padding: 0.32rem 0.8rem; border-radius: 8px; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 0.3rem; }
     .badge-success { background: rgba(16,185,129,0.15); color: var(--success); }
     .badge-warning { background: rgba(245,158,11,0.15); color: var(--warning); }
-    .badge-danger  { background: rgba(239,68,68,0.15); color: var(--danger); }
-    .badge-info    { background: rgba(59,130,246,0.15); color: var(--info); }
+    .badge-danger  { background: rgba(239,68,68,0.15);  color: var(--danger);  }
+    .badge-info    { background: rgba(59,130,246,0.15);  color: var(--info);    }
 
-    /* Route Steps */
+    /* Route steps */
     .route-steps { background: #f8f9fa; border: 1px solid var(--border-color); border-radius: 12px; padding: 13px; margin-bottom: 1.2rem; max-height: 200px; overflow-y: auto; }
     .route-steps-title { font-size: 0.78rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 9px; }
     .step-item { display: flex; align-items: flex-start; gap: 9px; padding: 6px 0; border-bottom: 1px solid var(--border-color); }
@@ -849,7 +1168,7 @@
     .timeline-item-modern:last-child::before { display: none; }
     .timeline-marker-modern { position: absolute; left: 18px; top: 15px; width: 28px; height: 28px; border-radius: 50%; background: white; border: 3px solid #e5e7eb; display: flex; align-items: center; justify-content: center; font-size: 12px; color: #9ca3af; z-index: 1; transition: all 0.3s ease; }
     .timeline-item-modern.completed .timeline-marker-modern { background: var(--success); border-color: var(--success); color: white; box-shadow: 0 0 0 4px rgba(16,185,129,0.2); }
-    .timeline-item-modern.cancelled .timeline-marker-modern { background: var(--danger); border-color: var(--danger); color: white; box-shadow: 0 0 0 4px rgba(239,68,68,0.2); }
+    .timeline-item-modern.cancelled .timeline-marker-modern { background: var(--danger);  border-color: var(--danger);  color: white; box-shadow: 0 0 0 4px rgba(239,68,68,0.2); }
     .timeline-item-modern.completed::before { background: linear-gradient(to bottom, var(--success), #86efac); }
     .timeline-item-modern.cancelled::before { background: linear-gradient(to bottom, var(--danger), #fca5a5); }
     .timeline-content-modern { background: white; padding: 1.25rem; border-radius: 12px; border: 2px solid #f3f4f6; transition: all 0.3s ease; }
@@ -857,12 +1176,12 @@
     .timeline-item-modern.cancelled .timeline-content-modern { border-color: #fee2e2; background: #fef2f2; }
     .timeline-badge { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius: 10px; color: white; margin-bottom: 0.75rem; }
 
-    /* Delivery Info Card */
+    /* Delivery info card */
     .delivery-info-card { background: #f8f9fa; padding: 1.5rem; border-radius: 12px; border: 2px solid #f0f0f0; }
     .delivery-staff-info { border-left: 4px solid var(--primary-pink) !important; }
     .staff-icon { width: 32px; height: 32px; background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end)); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; flex-shrink: 0; }
 
-    /* Price Breakdown */
+    /* Price */
     .price-breakdown { background: white; border-radius: 10px; border: 1px solid #f0f0f0; padding: 1rem 1.25rem; }
     .price-row { display: flex; justify-content: space-between; align-items: center; padding: 0.35rem 0; border-bottom: 1px dashed #f0f0f0; font-size: 0.9rem; }
     .price-row:last-child { border-bottom: none; }
@@ -870,7 +1189,7 @@
     .price-label { color: #6b7280; }
     .price-value { color: #111827; }
 
-    /* Empty State */
+    /* Empty state */
     .empty-state { text-align: center; padding: 4rem 2rem; }
     .empty-icon { width: 120px; height: 120px; background: linear-gradient(135deg, #fef5f7, #fff5f7); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; }
     .empty-icon i { font-size: 60px; color: var(--primary-pink); opacity: 0.6; }
@@ -891,6 +1210,7 @@
         .profile-card { max-width: 100%; margin-bottom: 1.5rem; }
         .delivery-modal { max-height: 96vh; }
         .modal-map-canvas { height: 240px; }
+        .track-eta-summary, .modal-eta-summary { flex-direction: column; align-items: flex-start; }
     }
     </style>
 
@@ -905,11 +1225,13 @@
             ->whereNotIn('delivery_status', ['Cancelled'])
             ->map(function($o) {
                 return [
-                    'id'      => $o->id,
-                    'address' => $o->address,
-                    'lat'     => isset($o->latitude)  && $o->latitude  ? (float)$o->latitude  : null,
-                    'lng'     => isset($o->longitude) && $o->longitude ? (float)$o->longitude : null,
-                    'status'  => $o->delivery_status,
+                    'id'         => $o->id,
+                    'address'    => $o->address,
+                    'lat'        => isset($o->latitude)  && $o->latitude  ? (float)$o->latitude  : null,
+                    'lng'        => isset($o->longitude) && $o->longitude ? (float)$o->longitude : null,
+                    'status'     => $o->delivery_status,
+                    'created_at' => $o->created_at,
+                    'distance_km'=> isset($o->delivery_distance_km) ? (float)$o->delivery_distance_km : 0,
                 ];
             })
             ->values();
@@ -918,14 +1240,123 @@
     const orderCoords  = {};
     orderMapData.forEach(o => { orderCoords[o.id] = o; });
 
-    const mapInstances  = {};
+    const mapInstances   = {};
     const modalMapInited = {};
-    const liveTrackers  = {};
-    const riderMarkers  = {};
+    const liveTrackers   = {};
+    const riderMarkers   = {};
 
-    // ─── Helpers ────────────────────────────────────
+    /* ════════════════════════════════════════════════════════════
+       PH HOLIDAYS 2026 — for business day calculation
+    ═══════════════════════════════════════════════════════════ */
+    const PH_HOLIDAYS = new Set([
+        '2026-01-01','2026-02-25','2026-04-02','2026-04-03','2026-04-04',
+        '2026-04-09','2026-05-01','2026-06-12','2026-08-21','2026-08-31',
+        '2026-11-01','2026-11-02','2026-11-30','2026-12-08',
+        '2026-12-24','2026-12-25','2026-12-30','2026-12-31',
+    ]);
+
+    function toYMD(d) {
+        return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    }
+    function isBusinessDay(d) {
+        const dow = d.getDay();
+        return dow !== 0 && dow !== 6 && !PH_HOLIDAYS.has(toYMD(d));
+    }
+    function addBusinessDays(start, days) {
+        const r = new Date(start); let added = 0;
+        while (added < days) { r.setDate(r.getDate()+1); if (isBusinessDay(r)) added++; }
+        return r;
+    }
+    function fmtDate(d) {
+        return d.toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric',year:'numeric'});
+    }
+    function fmtShort(d) {
+        return d.toLocaleDateString('en-PH',{month:'short',day:'numeric'});
+    }
+
+    function computeOrderETA(orderPlacedAt, distanceKm) {
+        const placed = new Date(orderPlacedAt);
+        placed.setHours(0, 0, 0, 0);
+        let orderDate = new Date(placed);
+        if (!isBusinessDay(orderDate)) orderDate = addBusinessDays(placed, 1);
+        const prodEnd_early = addBusinessDays(orderDate, 7);
+        const prodEnd_late  = addBusinessDays(orderDate, 14);
+        const delMaxDays = distanceKm > 10 ? 3 : (distanceKm > 0 ? 2 : 3);
+        const del_early  = addBusinessDays(prodEnd_early, 1);
+        const del_late   = addBusinessDays(prodEnd_late,  delMaxDays);
+        return { orderDate, prodEnd_early, prodEnd_late, del_early, del_late, distanceKm };
+    }
+
+    function renderETA(orderId, prefix, fillId, orderPlacedAt, distanceKm) {
+        const eta = computeOrderETA(orderPlacedAt, distanceKm || 0);
+        const setDateChip = (id, text) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const sp = el.querySelector('span');
+            if (sp) sp.textContent = text;
+        };
+        setDateChip(`${prefix}-order-${orderId}`, fmtDate(eta.orderDate));
+        const prodSame = eta.prodEnd_early.getTime() === eta.prodEnd_late.getTime();
+        setDateChip(`${prefix}-prod-${orderId}`,
+            prodSame ? fmtDate(eta.prodEnd_early)
+                     : fmtShort(eta.prodEnd_early) + ' – ' + fmtDate(eta.prodEnd_late));
+        const delSame = eta.del_early.getTime() === eta.del_late.getTime();
+        setDateChip(`${prefix}-del-${orderId}`,
+            delSame ? fmtDate(eta.del_early)
+                    : fmtShort(eta.del_early) + ' – ' + fmtDate(eta.del_late));
+        const sub = document.getElementById(`${prefix}-del-sub-${orderId}`);
+        if (sub) {
+            sub.textContent = distanceKm > 0
+                ? `Shipped after production · ~${distanceKm.toFixed(1)} km · 1–${distanceKm > 10 ? 3 : 2} business days`
+                : 'Shipped right after production · 1–3 business days';
+        }
+        const window_ = document.getElementById(`${prefix}-window-${orderId}`);
+        if (window_) window_.textContent = fmtShort(eta.del_early) + ' – ' + fmtDate(eta.del_late);
+        const range_ = document.getElementById(`${prefix}-range-${orderId}`);
+        if (range_) {
+            const minD = Math.round((eta.del_early - eta.orderDate) / 86400000);
+            const maxD = Math.round((eta.del_late  - eta.orderDate) / 86400000);
+            range_.textContent = `Approx. ${minD}–${maxD} calendar days from order`;
+        }
+        const badge = document.getElementById(`${prefix}-badge-${orderId}`);
+        if (badge) badge.textContent = fmtShort(eta.del_early) + ' – ' + fmtShort(eta.del_late);
+    }
+
+    function toggleTrackETA(id) {
+        const card = document.getElementById('card-eta-'+id);
+        if (!card) return;
+        const isOpen = card.classList.toggle('open');
+        card.querySelector('.track-eta-header')?.setAttribute('aria-expanded', String(isOpen));
+        if (isOpen) {
+            setTimeout(() => {
+                const fill = document.getElementById('card-eta-fill-'+id);
+                if (fill) fill.style.width = '16%';
+            }, 220);
+        } else {
+            const fill = document.getElementById('card-eta-fill-'+id);
+            if (fill) fill.style.width = '0%';
+        }
+    }
+
+    function toggleModalETA(id) {
+        const card = document.getElementById('modal-eta-'+id);
+        if (!card) return;
+        const isOpen = card.classList.toggle('open');
+        card.querySelector('.modal-eta-header')?.setAttribute('aria-expanded', String(isOpen));
+        if (isOpen) {
+            setTimeout(() => {
+                const fill = document.getElementById('modal-eta-fill-'+id);
+                if (fill) fill.style.width = '16%';
+            }, 220);
+        } else {
+            const fill = document.getElementById('modal-eta-fill-'+id);
+            if (fill) fill.style.width = '0%';
+        }
+    }
+
+    // ─── Helpers ─────────────────────────────────────
     function haversine(a,b,c,d) {
-        const R=6371, r=x=>x*Math.PI/180;
+        const R=6371,r=x=>x*Math.PI/180;
         const q=Math.sin(r(c-a)/2)**2+Math.cos(r(a))*Math.cos(r(c))*Math.sin(r(d-b)/2)**2;
         return R*2*Math.atan2(Math.sqrt(q),Math.sqrt(1-q));
     }
@@ -948,7 +1379,7 @@
     }
     document.getElementById('trackLightboxImg')?.addEventListener('click', e => e.stopPropagation());
 
-    // ─── Modal open/close ───────────────────────────
+    // ─── Modal open/close ─────────────────────────────
     function openTrackModal(id) {
         const overlay = document.getElementById('track-overlay-'+id);
         if (!overlay) return;
@@ -958,6 +1389,8 @@
             modalMapInited[id] = true;
             if (orderCoords[id]) setTimeout(()=>initOrderMap(id,'modal'),80);
         }
+        const o = orderCoords[id];
+        if (o) renderETA(id, 'modal-eta', 'modal-eta-fill-'+id, o.created_at, o.distance_km || 0);
     }
     function closeTrackModal(id) {
         const overlay = document.getElementById('track-overlay-'+id);
@@ -974,7 +1407,7 @@
         closeTrackLightbox();
     });
 
-    // ─── Map init ───────────────────────────────────
+    // ─── Map init ─────────────────────────────────────
     function initOrderMap(id, mapType) {
         const data = orderCoords[id];
         if (!data) return;
@@ -1000,12 +1433,8 @@
 
         const map = L.map(mapEl, { zoomControl:isModal, scrollWheelZoom:isModal });
         mapInstances[key] = map;
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap',maxZoom:19}).addTo(map);
 
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
-            attribution:'© OpenStreetMap', maxZoom:19
-        }).addTo(map);
-
-        // Destination marker
         const destHtml = isDelivered
             ? '<div style="width:34px;height:34px;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,#10b981,#34d399);display:flex;align-items:center;justify-content:center;color:#fff;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,0.25);"><i class="fas fa-check" style="transform:rotate(45deg);font-size:0.8rem;"></i></div>'
             : '<div style="width:34px;height:34px;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,#f093fb,#f5576c);display:flex;align-items:center;justify-content:center;color:#fff;transform:rotate(-45deg);box-shadow:0 3px 10px rgba(0,0,0,0.25);"><i class="fas fa-home" style="transform:rotate(45deg);font-size:0.8rem;"></i></div>';
@@ -1015,7 +1444,6 @@
         }).addTo(map).bindPopup(isDelivered?'<b>✅ Delivered here</b>':'<b>📦 Your delivery address</b>');
 
         if (!isLive) {
-            // Pending or Delivered — draw store → customer route
             fetch(`https://router.project-osrm.org/route/v1/driving/${STORE_LNG},${STORE_LAT};${destLng},${destLat}?overview=full&geometries=geojson`)
                 .then(r=>r.json()).then(data=>{
                     if(data.code==='Ok'&&data.routes?.length){
@@ -1032,16 +1460,18 @@
                                     <i class="fas fa-map-marked-alt me-1"></i>Open Maps</a>`, true);
                         } else {
                             setEl('cust-mini-dist-'+id, fmtDist(distKm));
+                            if (orderCoords[id]) {
+                                orderCoords[id].distance_km = distKm;
+                                renderETA(id, 'card-eta', 'card-eta-fill-'+id, orderCoords[id].created_at, distKm);
+                            }
                         }
                     } else { map.setView([destLat,destLng],15); }
                 }).catch(()=>map.setView([destLat,destLng],15));
-
             const statusKey=(mapType==='mini'?'cust-mini-status-':'cust-modal-map-status-')+id;
             setEl(statusKey, isDelivered?'✓ Delivered':'Pending');
             return;
         }
 
-        // Live (Out for Delivery) — draw route then get GPS
         drawOrderRoute(map, destLat, destLng, id, mapType);
         requestOrderGPS(map, id, destLat, destLng, mapType);
     }
@@ -1070,15 +1500,10 @@
             const durS   = route.duration;
 
             addStoreMarker(map);
-            // Glow
             L.polyline(coords,{color:'#FFB6C1',weight:isModal?14:10,opacity:0.2,lineJoin:'round',lineCap:'round'}).addTo(map);
-            // Main line
             L.polyline(coords,{color:'#FF9EAD',weight:isModal?6:4,opacity:0.95,lineJoin:'round',lineCap:'round'}).addTo(map);
-            // Center dash
             L.polyline(coords,{color:'#fff',weight:isModal?2.5:1.5,opacity:0.7,dashArray:'8 18',lineJoin:'round',lineCap:'round'}).addTo(map);
-            // Dest pulse
             L.circle([destLat,destLng],{radius:35,color:'#f5576c',fillColor:'#f5576c',fillOpacity:0.15,weight:2}).addTo(map);
-
             map.fitBounds(L.polyline(coords).getBounds(),{padding:isModal?[55,55]:[28,28]});
 
             if(isModal){
@@ -1093,6 +1518,10 @@
             } else {
                 setEl('cust-mini-dist-'+id, fmtDist(distKm));
                 setEl('cust-mini-eta-'+id,  fmtTime(durS));
+                if (orderCoords[id]) {
+                    orderCoords[id].distance_km = distKm;
+                    renderETA(id, 'card-eta', 'card-eta-fill-'+id, orderCoords[id].created_at, distKm);
+                }
             }
             setEl(statusKey, 'Route loaded');
         } catch(e) {
@@ -1145,8 +1574,7 @@
             setEl('cust-modal-eta-'+id, fmtTime(remKm/30*3600));
             const pct=Math.max(0,Math.min(100,Math.round((1-remKm/haversine(STORE_LAT,STORE_LNG,destLat,destLng))*100)));
             buildOrderProgressBar(id,pct);
-            const statusKey='cust-modal-map-status-'+id;
-            setEl(statusKey, pct>=95?'Arriving!':'On the way '+pct+'%');
+            setEl('cust-modal-map-status-'+id, pct>=95?'Arriving!':'On the way '+pct+'%');
         } else {
             setEl('cust-mini-eta-'+id, fmtTime(remKm/30*3600));
         }
@@ -1176,7 +1604,7 @@
         const steps=route.legs?.[0]?.steps??[];
         if(!steps.length){ container.innerHTML='<div class="step-item"><span style="color:#9ca3af;font-size:0.82rem;">No steps available.</span></div>'; return; }
         container.innerHTML=steps.map((s,i)=>{
-            const type=s.maneuver?.type??'', mod=s.maneuver?.modifier??'', name=s.name||'road';
+            const type=s.maneuver?.type??'',mod=s.maneuver?.modifier??'',name=s.name||'road';
             const dist=s.distance<1000?s.distance.toFixed(0)+' m':(s.distance/1000).toFixed(1)+' km';
             const icons={'arrive':'🏁','depart':'🚀','roundabout':'⭕'};
             let icon=icons[type]||'⬆';
@@ -1186,13 +1614,13 @@
         }).join('');
     }
 
-    // ─── Init mini maps on page load ─────────────────
+    // ─── Init on page load ────────────────────────────
     document.addEventListener('DOMContentLoaded', ()=>{
-        orderMapData.forEach((o,i)=>{
-            setTimeout(()=>initOrderMap(o.id,'mini'), i*180);
+        orderMapData.forEach((o, i) => {
+            renderETA(o.id, 'card-eta', 'card-eta-fill-'+o.id, o.created_at, o.distance_km || 0);
+            setTimeout(() => initOrderMap(o.id, 'mini'), i * 180);
         });
 
-        // Toast auto-hide
         document.querySelectorAll('.toast-notification').forEach(t=>{
             setTimeout(()=>{ t.style.opacity='0'; t.style.transform='translateX(400px)'; setTimeout(()=>t.remove(),300); },5000);
             t.addEventListener('click',()=>{ t.style.opacity='0'; t.style.transform='translateX(400px)'; setTimeout(()=>t.remove(),300); });
