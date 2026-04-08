@@ -77,12 +77,7 @@
 
 <!-- Profile Dropdown Menu -->
 <div class="profile-dropdown-menu" id="profileDropdown" style="display: none;">
-    <a class="dropdown-item" href="#">
-        <i class="fas fa-user me-2"></i> My Profile
-    </a>
-    <a class="dropdown-item" href="#">
-        <i class="fas fa-cog me-2"></i> Settings
-    </a>
+   
     <div class="dropdown-divider"></div>
     <form action="{{ route('admin.logout') }}" method="POST" class="w-100 m-0">
         @csrf

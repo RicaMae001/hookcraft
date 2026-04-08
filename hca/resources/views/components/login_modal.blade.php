@@ -38,7 +38,6 @@
     border-radius: 24px 0 0 24px;
   }
 
-  /* Animated background elements */
   .hookcraft-brand-section::before {
     content: '';
     position: absolute;
@@ -75,7 +74,6 @@
     }
   }
 
-  /* Decorative circles */
   .hookcraft-decorative-circle {
     position: absolute;
     border-radius: 50%;
@@ -404,7 +402,6 @@
     top: 20px;
     right: 20px;
     z-index: 100;
-    
     border-radius: 50%;
     opacity: 0.8;
     transition: all 0.3s ease;
@@ -484,7 +481,9 @@
 <div class="modal fade hookcraft-modal" id="loginModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content">
-      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"> <i class="fas fa-times"></i></button>
+      <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close">
+        <i class="fas fa-times"></i>
+      </button>
       <div class="modal-body">
         <div class="hookcraft-login-container">
           <!-- Brand Section with Decorative Elements -->
@@ -504,7 +503,8 @@
             <h2 class="hookcraft-form-title">Welcome Back</h2>
             <p class="hookcraft-form-subtitle">Log in to continue your journey</p>
             
-            <form method="POST" action="{{ route('login.submit') }}">
+            {{-- ✅ FIXED: added id="loginForm" so the JS can find this element --}}
+            <form id="loginForm" method="POST" action="{{ route('login.submit') }}">
               @csrf
               
               <div class="hookcraft-input-group">
@@ -522,7 +522,7 @@
                   <input type="checkbox" name="remember">
                   Remember me
                 </label>
-                <a href="#" class="hookcraft-forgot-link">Forgot Password?</a>
+               <a href="{{ route('password.forgot') }}">Forgot Password?</a>
               </div>
               
               <button type="submit" class="hookcraft-login-btn">Login</button>
@@ -532,7 +532,11 @@
               </div>
               
               <p class="hookcraft-signup-text">
-                Don't have an account? <a href="#" class="hookcraft-signup-link" data-bs-toggle="modal" data-bs-target="#signupModal" data-bs-dismiss="modal">Sign Up</a>
+                Don't have an account? 
+                <a href="#" class="hookcraft-signup-link" 
+                   data-bs-toggle="modal" 
+                   data-bs-target="#signupModal" 
+                   data-bs-dismiss="modal">Sign Up</a>
               </p>
             </form>
           </div>
@@ -543,10 +547,10 @@
 </div>
 
 <script>
-// Optional: Add form submission animation
+// Login form submission animation
 document.addEventListener('DOMContentLoaded', function() {
-  const loginForm = document.getElementById('loginForm');
-  const loginBtn = loginForm?.querySelector('.hookcraft-login-btn');
+  const loginForm = document.getElementById('loginForm'); // ✅ FIXED: now correctly finds the form
+  const loginBtn  = loginForm?.querySelector('.hookcraft-login-btn');
   
   loginForm?.addEventListener('submit', function(e) {
     if (loginBtn) {

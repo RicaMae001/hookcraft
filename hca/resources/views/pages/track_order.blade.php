@@ -403,11 +403,7 @@
                                                     <i class="fas fa-clock me-1" style="color:#f59e0b;"></i>
                                                     <span id="cust-mini-eta-{{ $order->id }}">—</span>
                                                 </span>
-                                                <button class="btn btn-gradient btn-sm py-1 px-3"
-                                                        onclick="openTrackModal({{ $order->id }})"
-                                                        style="font-size:0.75rem;">
-                                                    <i class="fas fa-expand-alt me-1"></i>View Full Map
-                                                </button>
+                                               
                                             </div>
                                         </div>
                                         @endif

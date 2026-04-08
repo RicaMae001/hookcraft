@@ -792,7 +792,7 @@
 
                                         <div class="eta-disclaimer">
                                             <i class="bi bi-info-circle-fill" style="color:#fb8c00;flex-shrink:0;margin-top:1px;"></i>
-                                            <span>Dates are estimates. Production may vary by order volume. You'll be notified via email or notifications once your order delivers.</span>
+                                            <span>Dates are estimates. Production may vary by order volume. You'll be notified via email or notifications once your order deliver.</span>
                                         </div>
                                     </div>
                                 </div>
@@ -1496,52 +1496,42 @@ async function drawRoadRoute(destLat, destLng, labelName) {
     }
 }
 
-// ── Geolocation on load ───────────────────────────────────────
+// ── Location Initialization (Default to Cebu City) ────────────
 document.addEventListener('DOMContentLoaded', function () {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async pos => {
-                const { latitude: lat, longitude: lng } = pos.coords;
-                const id = detectCityId(lat, lng);
-                await loadCities(id);
-                if (id && citiesData.length) { citySelect.value = id; citySelect.dispatchEvent(new Event('change')); }
-            },
-            () => loadAllCities()
-        );
-    } else {
-        loadAllCities();
-    }
+    // Load all cities first, then hardcode the default city
+    loadAndPreselectCity();
 });
 
-function detectCityId(lat, lng) {
-    for (const [id, cfg] of Object.entries(CITY_CONFIGS)) {
-        const b = cfg.bounds;
-        if (lat >= b[0][0] && lat <= b[1][0] && lng >= b[0][1] && lng <= b[1][1]) return parseInt(id);
-    }
-    return null;
-}
-
-async function loadCities(detectedId) {
+async function loadAndPreselectCity() {
+    // Step 1: Load all cities into the dropdown first
     try {
         const res  = await fetch('/api/locations/cities/1');
         const data = await res.json();
-        citiesData = (detectedId && CITY_CONFIGS[detectedId]) ? data.filter(c => c.id === detectedId) : data.filter(c => CITY_CONFIGS[c.id]);
-        fillCityDropdown();
-        if (detectedId && CITY_CONFIGS[detectedId]) {
-            document.getElementById('locationInfoBox').innerHTML =
-                '<i class="bi bi-check-circle-fill" style="color:#15803d;flex-shrink:0;"></i>' +
-                '<span><strong>Great!</strong> You\'re in our delivery area: <strong>' + CITY_CONFIGS[detectedId].name + '</strong></span>';
-        }
-    } catch { loadAllCities(); }
-}
-
-async function loadAllCities() {
-    try {
-        const res  = await fetch('/api/locations/cities/1');
-        const data = await res.json();
+        
+        // Filter and fill the dropdown
         citiesData = data.filter(c => CITY_CONFIGS[c.id]);
         fillCityDropdown();
-    } catch (e) { console.error('City load error:', e); }
+    } catch (e) {
+        console.error('City load error:', e);
+        return; // Stop execution if we can't load the cities
+    }
+
+    // Step 2: Skip browser geolocation and hardcode Cebu City (ID: 1)
+    const defaultCityId = 1;
+
+    // Update the UI info box with the success message
+    const infoBox = document.getElementById('locationInfoBox');
+    if (infoBox) {
+        infoBox.innerHTML =
+            '<i class="bi bi-check-circle-fill" style="color:#15803d;flex-shrink:0;"></i>' +
+            '<span><strong>Great!</strong> You\'re in our delivery area: <strong>Cebu City</strong></span>';
+    }
+
+    // Set the dropdown value to '1' and trigger the change event
+    if (typeof citySelect !== 'undefined' && citySelect) {
+        citySelect.value = String(defaultCityId);
+        citySelect.dispatchEvent(new Event('change'));
+    }
 }
 
 function fillCityDropdown() {

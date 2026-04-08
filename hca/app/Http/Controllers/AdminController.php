@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\GalleryImage;
 use App\Models\Category;
 use App\Models\User;
@@ -19,6 +20,7 @@ use App\Models\VoucherUsage;
 use App\Services\NotificationService;
 use App\Models\ProductCustomization;
 use App\Helpers\NotificationHelper;
+use App\Mail\OrderAssignedMail;
 
 class AdminController extends Controller
 {
@@ -51,7 +53,7 @@ class AdminController extends Controller
 
     private function isAdmin()
     {
-        return session('admin_role') === 'SuperAdmin';
+        return session('admin_role') === 'SuperAdmin' || session('admin_role') === 'Admin';
     }
 
     private function isStaff()
@@ -75,14 +77,14 @@ class AdminController extends Controller
                 return response()->json([
                     'error'   => true,
                     'title'   => 'Access Denied',
-                    'message' => 'Only SuperAdmin can access this section.'
+                    'message' => 'Only Admin can access this section.'
                 ], 403);
             }
 
-            return redirect()->route('admin.dashboard')
+            return redirect()->route('admin.orders')
                 ->with('error_modal', [
                     'title'   => 'Access Denied',
-                    'message' => 'Only SuperAdmin can access this section.'
+                    'message' => 'Only Admin can access this section.'
                 ]);
         }
 
@@ -251,13 +253,17 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // DASHBOARD
+    // DASHBOARD — Admin/SuperAdmin only
     // ============================================
 
     public function dashboard()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
+
+        // Staff cannot access the dashboard
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
 
         $notifications = $this->getAllNotifications();
         $unreadCount   = $this->getUnreadCount();
@@ -343,13 +349,17 @@ class AdminController extends Controller
     }
 
     // ============================================
-    // USER MANAGEMENT
+    // USER MANAGEMENT — Admin/SuperAdmin only
     // ============================================
 
     public function users()
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
+
+        // Staff cannot access user management
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
 
         $users   = User::orderBy('created_at', 'desc')->get();
         $isAdmin = $this->isAdmin();
@@ -362,6 +372,9 @@ class AdminController extends Controller
     {
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
+
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
 
         $user = User::findOrFail($id);
         $user->delete();
@@ -376,8 +389,11 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $user       = User::findOrFail($id);
-        $user->name = $request->input('name');
+        $roleCheck = $this->requireAdmin();
+        if ($roleCheck) return $roleCheck;
+
+        $user        = User::findOrFail($id);
+        $user->name  = $request->input('name');
         $user->email = $request->input('email');
         if ($request->filled('password')) {
             $user->password = bcrypt($request->input('password'));
@@ -475,9 +491,9 @@ class AdminController extends Controller
             if ($product->image && file_exists(public_path('asset/images/' . $product->image))) {
                 unlink(public_path('asset/images/' . $product->image));
             }
-            $imageName            = time() . '_' . $request->file('image')->getClientOriginalName();
+            $imageName           = time() . '_' . $request->file('image')->getClientOriginalName();
             $request->file('image')->move(public_path('asset/images'), $imageName);
-            $updateData['image']  = $imageName;
+            $updateData['image'] = $imageName;
         }
 
         $product->update($updateData);
@@ -733,11 +749,13 @@ class AdminController extends Controller
         ]);
 
         $order       = DB::table('orders')->where('id', $id)->first();
-        $coordinator = DB::table('delivery_coordinator')->where('coordinator_id', $validated['coordinator_id'])->first();
+        $coordinator = DB::table('delivery_coordinator')
+                         ->where('coordinator_id', $validated['coordinator_id'])
+                         ->first();
 
         DB::table('orders')->where('id', $id)->update([
             'coordinator_id' => $validated['coordinator_id'],
-            'admin_id'       => session('admin_id')
+            'admin_id'       => session('admin_id'),
         ]);
 
         if ($order && $coordinator) {
@@ -747,12 +765,42 @@ class AdminController extends Controller
                 $coordinator->name,
                 $order->customer_name ?? 'Customer'
             );
+
+            try {
+                $toEmail = null;
+
+                if (!empty($order->user_id)) {
+                    $user    = DB::table('users')->where('id', $order->user_id)->first();
+                    $toEmail = $user->email ?? null;
+                }
+
+                if (!$toEmail && !empty($order->email)) {
+                    $toEmail = $order->email;
+                }
+
+                if ($toEmail) {
+                    Mail::to($toEmail)->send(new OrderAssignedMail($order, $coordinator));
+                    Log::info('Order assigned email sent', [
+                        'order_id' => $id,
+                        'to'       => $toEmail,
+                    ]);
+                } else {
+                    Log::warning('Order assigned email skipped — no email found', [
+                        'order_id' => $id,
+                    ]);
+                }
+            } catch (\Exception $e) {
+                Log::error('Failed to send order assigned email', [
+                    'order_id' => $id,
+                    'error'    => $e->getMessage(),
+                ]);
+            }
         }
 
         Log::info('Coordinator assigned', [
             'order_id'       => $id,
             'coordinator_id' => $validated['coordinator_id'],
-            'admin_id'       => session('admin_id')
+            'admin_id'       => session('admin_id'),
         ]);
 
         return redirect()->back()->with('success', 'Delivery coordinator assigned successfully!');
@@ -1062,7 +1110,7 @@ class AdminController extends Controller
         $authCheck = $this->checkAdminAuth();
         if ($authCheck) return $authCheck;
 
-        $gallery           = GalleryImage::findOrFail($id);
+        $gallery            = GalleryImage::findOrFail($id);
         $gallery->is_active = !$gallery->is_active;
         $gallery->save();
 
@@ -1104,9 +1152,9 @@ class AdminController extends Controller
         if ($roleCheck) return $roleCheck;
 
         $request->validate([
-            'status'       => 'required|in:Pending,Approved,Rejected,Completed',
-            'admin_price'  => 'required_if:status,Approved|numeric|min:0',
-            'admin_notes'  => 'nullable|string',
+            'status'      => 'required|in:Pending,Approved,Rejected,Completed',
+            'admin_price' => 'required_if:status,Approved|numeric|min:0',
+            'admin_notes' => 'nullable|string',
         ]);
 
         $customization = ProductCustomization::findOrFail($id);
