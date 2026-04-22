@@ -161,37 +161,228 @@
         .btn-terms-accept:disabled { opacity: 0.5; cursor: not-allowed; }
 
         /* Voucher */
-        .voucher-input {
-            flex: 1;
-            border-radius: 8px;
-            border: 1.5px solid var(--border-color);
-            padding: 0.55rem 0.8rem;
-            font-size: 0.85rem;
-            color: var(--dark-navy);
-            background: #fff;
-            outline: none;
-            text-transform: uppercase;
-            transition: border-color 0.2s;
-        }
+        .voucher-input { flex: 1; border-radius: 8px; border: 1.5px solid var(--border-color); padding: 0.55rem 0.8rem; font-size: 0.85rem; color: var(--dark-navy); background: #fff; outline: none; text-transform: uppercase; transition: border-color 0.2s; }
         .voucher-input:focus { border-color: var(--primary-pink); }
-        .btn-apply-voucher {
-            border-radius: 8px;
-            padding: 0.55rem 1rem;
-            font-size: 0.82rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose));
-            color: #fff;
-            border: none;
+        .btn-apply-voucher { border-radius: 8px; padding: 0.55rem 1rem; font-size: 0.82rem; font-weight: 700; background: linear-gradient(135deg, var(--primary-pink), var(--accent-rose)); color: #fff; border: none; cursor: pointer; white-space: nowrap; }
+        .btn-apply-voucher:disabled { opacity: 0.6; cursor: not-allowed; }
+        .voucher-applied-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1px solid #86efac; border-radius: 8px; padding: 0.55rem 0.75rem; margin-top: 0.45rem; }
+
+        /* ── Estimated Delivery Timeline (Collapsible) ── */
+        .eta-card {
+            background: linear-gradient(135deg, #fffbf0, #fff8e8);
+            border: 1.5px solid #f6c35a;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-top: 0.65rem;
+            box-shadow: 0 2px 8px rgba(246,195,90,0.15);
+        }
+        /* Clickable header toggle */
+        .eta-header {
+            background: linear-gradient(135deg, #f97316, #ea580c);
+            padding: 0.55rem 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 6px;
             cursor: pointer;
+            user-select: none;
+            transition: filter 0.18s;
+        }
+        .eta-header:hover { filter: brightness(1.07); }
+        .eta-header-left {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            min-width: 0;
+            flex: 1;
+        }
+        .eta-header-title {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.82rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: 0.02em;
             white-space: nowrap;
         }
-        .btn-apply-voucher:disabled { opacity: 0.6; cursor: not-allowed; }
-        .voucher-applied-box {
-            background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-            border: 1px solid #86efac;
+        .eta-header-badge {
+            background: rgba(255,255,255,0.22);
+            color: #fff;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+        .eta-chevron {
+            color: rgba(255,255,255,0.85);
+            font-size: 0.8rem;
+            flex-shrink: 0;
+            transition: transform 0.28s cubic-bezier(0.4,0,0.2,1);
+        }
+        .eta-card.open .eta-chevron { transform: rotate(180deg); }
+
+        /* Collapsible body */
+        .eta-body {
+            padding: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.38s cubic-bezier(0.4,0,0.2,1),
+                        padding 0.28s ease;
+        }
+        .eta-card.open .eta-body {
+            max-height: 600px;
+            padding: 0.8rem 0.9rem;
+        }
+
+        /* Timeline Steps */
+        .eta-steps { display: flex; flex-direction: column; gap: 0; margin-bottom: 0.6rem; }
+        .eta-step {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            position: relative;
+            padding-bottom: 0.55rem;
+        }
+        .eta-step:last-child { padding-bottom: 0; }
+        .eta-step:not(:last-child)::before {
+            content: '';
+            position: absolute;
+            left: 13px;
+            top: 28px;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, #fdba74, #fcd34d);
+            border-radius: 2px;
+        }
+        .eta-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.72rem;
+            flex-shrink: 0;
+            border: 2.5px solid #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.14);
+            color: #fff;
+            position: relative;
+            z-index: 1;
+        }
+        .eta-dot.dot-order    { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+        .eta-dot.dot-produce  { background: linear-gradient(135deg, #f97316, #c2410c); }
+        .eta-dot.dot-deliver  { background: linear-gradient(135deg, #22c55e, #15803d); }
+        .eta-dot.dot-active   { animation: pulse-dot 1.5s ease-in-out infinite; }
+        @keyframes pulse-dot {
+            0%, 100% { box-shadow: 0 2px 8px rgba(0,0,0,0.14), 0 0 0 0 rgba(249,115,22,0.4); }
+            50%       { box-shadow: 0 2px 8px rgba(0,0,0,0.14), 0 0 0 6px rgba(249,115,22,0); }
+        }
+        .eta-step-info { flex: 1; min-width: 0; }
+        .eta-step-label {
+            font-size: 0.82rem;
+            font-weight: 700;
+            color: #7c2d12;
+            line-height: 1.2;
+        }
+        .eta-step-sub {
+            font-size: 0.72rem;
+            color: #9a3412;
+            line-height: 1.3;
+            margin-top: 1px;
+        }
+        .eta-step-date {
+            font-size: 0.7rem;
+            font-weight: 800;
+            margin-top: 3px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(249,115,22,0.12);
+            color: #c2410c;
+            padding: 2px 8px;
             border-radius: 8px;
+            border: 1px solid rgba(249,115,22,0.2);
+        }
+        .eta-step-date.date-green {
+            background: rgba(34,197,94,0.1);
+            color: #15803d;
+            border-color: rgba(34,197,94,0.2);
+        }
+        .eta-step-date.date-blue {
+            background: rgba(59,130,246,0.1);
+            color: #1d4ed8;
+            border-color: rgba(59,130,246,0.2);
+        }
+
+        /* Summary bar */
+        .eta-summary-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: linear-gradient(135deg, #fff7ed, #fef3c7);
+            border: 1px solid #fed7aa;
+            border-radius: 9px;
             padding: 0.55rem 0.75rem;
-            margin-top: 0.45rem;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+        .eta-summary-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: #92400e;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .eta-summary-dates {
+            font-size: 0.78rem;
+            font-weight: 800;
+            color: #c2410c;
+            text-align: right;
+        }
+        .eta-summary-range {
+            font-size: 0.68rem;
+            color: #b45309;
+            font-weight: 500;
+        }
+        .eta-disclaimer {
+            font-size: 0.7rem;
+            color: #b45309;
+            margin-top: 0.5rem;
+            display: flex;
+            align-items: flex-start;
+            gap: 5px;
+            line-height: 1.4;
+            padding-top: 0.45rem;
+            border-top: 1px dashed #fcd34d;
+        }
+        /* Progress bar */
+        .eta-progress-wrap { margin-bottom: 0.65rem; }
+        .eta-progress-labels {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.65rem;
+            color: #b45309;
+            font-weight: 600;
+            margin-bottom: 3px;
+        }
+        .eta-progress-bar-bg {
+            height: 6px;
+            background: #fed7aa;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .eta-progress-bar-fill {
+            height: 100%;
+            border-radius: 10px;
+            background: linear-gradient(90deg, #3b82f6 0%, #f97316 50%, #22c55e 100%);
+            width: 0%;
+            transition: width 1s ease;
         }
 
         @media (max-width: 991px) {
@@ -211,6 +402,8 @@
             .col-md-6 { width: 100%; }
             .modal-terms-footer { flex-direction: column; align-items: flex-start; }
             .modal-terms-actions { width: 100%; }
+            .eta-summary-bar { flex-direction: column; align-items: flex-start; }
+            .eta-summary-dates { text-align: left; }
         }
     </style>
 </head>
@@ -509,6 +702,102 @@
                                     <span class="gt-value" id="grandTotalDisplay">₱{{ number_format($total, 2) }}</span>
                                 </div>
 
+                                {{-- ── ESTIMATED DELIVERY TIMELINE ── --}}
+                                <div class="eta-card" id="etaCard">
+                                    <div class="eta-header" onclick="toggleETA()" role="button" aria-expanded="false" aria-controls="etaBody">
+                                        <div class="eta-header-left">
+                                            <div class="eta-header-title">
+                                                <i class="bi bi-calendar-check"></i>
+                                                Estimated Delivery
+                                            </div>
+                                            <span class="eta-header-badge" id="etaHeaderBadge">Calculating…</span>
+                                        </div>
+                                        <i class="bi bi-chevron-down eta-chevron" id="etaChevron"></i>
+                                    </div>
+                                    <div class="eta-body" id="etaBody">
+
+                                        {{-- Progress bar --}}
+                                        <div class="eta-progress-wrap">
+                                            <div class="eta-progress-labels">
+                                                <span>Order Placed</span>
+                                                <span>Production</span>
+                                                <span>Delivered</span>
+                                            </div>
+                                            <div class="eta-progress-bar-bg">
+                                                <div class="eta-progress-bar-fill" id="etaProgressFill"></div>
+                                            </div>
+                                        </div>
+
+                                        {{-- Steps --}}
+                                        <div class="eta-steps">
+
+                                            {{-- Step 1: Order Confirmed --}}
+                                            <div class="eta-step">
+                                                <div class="eta-dot dot-order">
+                                                    <i class="bi bi-check-lg"></i>
+                                                </div>
+                                                <div class="eta-step-info">
+                                                    <div class="eta-step-label">Order Confirmed</div>
+                                                    <div class="eta-step-sub">We receive &amp; start processing your order</div>
+                                                    <div class="eta-step-date date-blue" id="etaOrderDate">
+                                                        <i class="bi bi-calendar3"></i>
+                                                        <span>—</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Step 2: Production --}}
+                                            <div class="eta-step">
+                                                <div class="eta-dot dot-produce dot-active">
+                                                    <i class="bi bi-scissors"></i>
+                                                </div>
+                                                <div class="eta-step-info">
+                                                    <div class="eta-step-label">Crafting / Production</div>
+                                                    <div class="eta-step-sub">Handmade with love — 1 to 2 weeks</div>
+                                                    <div class="eta-step-date" id="etaProductionDate">
+                                                        <i class="bi bi-calendar-range"></i>
+                                                        <span>—</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {{-- Step 3: Delivery --}}
+                                            <div class="eta-step">
+                                                <div class="eta-dot dot-deliver">
+                                                    <i class="bi bi-truck"></i>
+                                                </div>
+                                                <div class="eta-step-info">
+                                                    <div class="eta-step-label">Out for Delivery</div>
+                                                    <div class="eta-step-sub" id="etaDeliverySub">Shipped right after production · 1–3 days</div>
+                                                    <div class="eta-step-date date-green" id="etaDeliveryDate">
+                                                        <i class="bi bi-house-door"></i>
+                                                        <span>—</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                        </div>
+
+                                        {{-- Summary bar --}}
+                                        <div class="eta-summary-bar" id="etaSummaryBar">
+                                            <div class="eta-summary-label">
+                                                <i class="bi bi-calendar2-heart" style="color:#f97316;"></i>
+                                                Expected Arrival Window
+                                            </div>
+                                            <div>
+                                                <div class="eta-summary-dates" id="etaWindowDisplay">Calculating…</div>
+                                                <div class="eta-summary-range" id="etaWindowRange"></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="eta-disclaimer">
+                                            <i class="bi bi-info-circle-fill" style="color:#fb8c00;flex-shrink:0;margin-top:1px;"></i>
+                                            <span>Dates are estimates. Production may vary by order volume. You'll be notified via email or notifications once your order deliver.</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- ── END ESTIMATED DELIVERY TIMELINE ── --}}
+
                                 <div id="codReminder" class="alert alert-warning" style="display:none;margin-top:0.5rem;padding:0.5rem 0.75rem;">
                                     <i class="bi bi-cash"></i>
                                     <span>Please prepare <strong id="codAmount">₱0.00</strong> in cash upon delivery.</span>
@@ -606,7 +895,7 @@
                 <ul class="terms-list">
                     <li>Delivery is available only within Cebu City and selected areas</li>
                     <li>Delivery fees are calculated based on distance and displayed before order placement</li>
-                    <li>Estimated delivery time is 1-3 business days within Cebu City</li>
+                    <li>Estimated delivery time is 1–2 weeks production + 1–3 business days shipping within Cebu City</li>
                     <li>Please ensure someone is available to receive the order at the provided address</li>
                 </ul>
             </div>
@@ -688,6 +977,213 @@ let currentDiscount = 0;
 
 const citySelect     = document.getElementById('citySelect');
 const barangaySelect = document.getElementById('barangaySelect');
+
+/* ════════════════════════════════════════════════════════
+   ESTIMATED DELIVERY DATE CALCULATOR
+   ════════════════════════════════════════════════════════
+   Rules:
+   - Production: 7 business days (min, ~1 week) to 14 business days (max, ~2 weeks)
+   - Shipping after production: +1 business day (min) to +3 business days (max)
+   - Business days = Mon–Fri, skip PH public holidays
+   - Delivery days further adjusted by distance: >10 km = +1 extra day
+   ════════════════════════════════════════════════════════ */
+
+// Philippine public holidays (static, update yearly as needed)
+const PH_HOLIDAYS = new Set([
+    '2026-01-01', // New Year's Day
+    '2026-02-25', // EDSA Revolution
+    '2026-04-02', // Maundy Thursday
+    '2026-04-03', // Good Friday
+    '2026-04-04', // Black Saturday
+    '2026-04-09', // Araw ng Kagitingan
+    '2026-05-01', // Labor Day
+    '2026-06-12', // Independence Day
+    '2026-08-21', // Ninoy Aquino Day
+    '2026-08-31', // National Heroes Day
+    '2026-11-01', // All Saints Day
+    '2026-11-02', // All Souls Day
+    '2026-11-30', // Bonifacio Day
+    '2026-12-08', // Immaculate Conception
+    '2026-12-24', // Christmas Eve
+    '2026-12-25', // Christmas Day
+    '2026-12-30', // Rizal Day
+    '2026-12-31', // New Year's Eve
+]);
+
+/**
+ * Format a Date object to "YYYY-MM-DD" for holiday lookup.
+ */
+function toYMD(date) {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+}
+
+/**
+ * Returns true if the date is a business day (Mon–Fri, not a PH holiday).
+ */
+function isBusinessDay(date) {
+    const dow = date.getDay(); // 0=Sun, 6=Sat
+    if (dow === 0 || dow === 6) return false;
+    return !PH_HOLIDAYS.has(toYMD(date));
+}
+
+/**
+ * Add N business days to a Date, skipping weekends & PH holidays.
+ * Returns a new Date (does NOT mutate the input).
+ */
+function addBusinessDays(startDate, days) {
+    const result = new Date(startDate);
+    let added = 0;
+    while (added < days) {
+        result.setDate(result.getDate() + 1);
+        if (isBusinessDay(result)) added++;
+    }
+    return result;
+}
+
+/**
+ * Format date as "Mon, Jan 5, 2026"
+ */
+function fmtDate(date) {
+    return date.toLocaleDateString('en-PH', {
+        weekday: 'short',
+        month:   'short',
+        day:     'numeric',
+        year:    'numeric'
+    });
+}
+
+/**
+ * Format date as "Jan 5" (short, for range display)
+ */
+function fmtShort(date) {
+    return date.toLocaleDateString('en-PH', { month: 'short', day: 'numeric' });
+}
+
+/**
+ * Core ETA calculator.
+ * @param {number} distanceKm – road distance from store to customer (0 if unknown)
+ * @returns object with all computed dates
+ */
+function computeETA(distanceKm) {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // ── Order confirmation: today (or next business day if today is a holiday/weekend) ──
+    let orderDate = new Date(today);
+    if (!isBusinessDay(orderDate)) {
+        orderDate = addBusinessDays(today, 1);
+    }
+
+    // ── Production: 7 bd (earliest) to 14 bd (latest) ──
+    const productionMinDays = 7;
+    const productionMaxDays = 14;
+
+    const productionStartDate = orderDate;                                          // crafting begins same day order is confirmed
+    const productionEndEarliest = addBusinessDays(productionStartDate, productionMinDays);
+    const productionEndLatest   = addBusinessDays(productionStartDate, productionMaxDays);
+
+    // ── Delivery days: 1 bd (nearby) to 3 bd (far/unknown) ──
+    // If distance > 10 km OR unknown (0), allow 3 days; else 1 day
+    let deliveryMinDays = 1;
+    let deliveryMaxDays = distanceKm > 10 ? 3 : (distanceKm > 0 ? 2 : 3);
+
+    const deliveryEarliest = addBusinessDays(productionEndEarliest, deliveryMinDays);
+    const deliveryLatest   = addBusinessDays(productionEndLatest,   deliveryMaxDays);
+
+    return {
+        orderDate,
+        productionStartDate,
+        productionEndEarliest,
+        productionEndLatest,
+        deliveryEarliest,
+        deliveryLatest,
+        distanceKm
+    };
+}
+
+/**
+ * Update all ETA UI elements with computed dates.
+ * @param {number} distanceKm
+ */
+function updateETADisplay(distanceKm) {
+    const eta = computeETA(distanceKm || 0);
+
+    // Step 1 – Order date
+    const orderDateEl = document.getElementById('etaOrderDate');
+    orderDateEl.querySelector('span').textContent = fmtDate(eta.orderDate);
+
+    // Step 2 – Production window
+    const prodDateEl = document.getElementById('etaProductionDate');
+    const prodEarlySame = eta.productionEndEarliest.getTime() === eta.productionEndLatest.getTime();
+    if (prodEarlySame) {
+        prodDateEl.querySelector('span').textContent = fmtDate(eta.productionEndEarliest);
+    } else {
+        prodDateEl.querySelector('span').textContent =
+            fmtShort(eta.productionEndEarliest) + ' – ' + fmtDate(eta.productionEndLatest);
+    }
+
+    // Step 3 – Delivery window
+    const delivDateEl = document.getElementById('etaDeliveryDate');
+    const delivSame = eta.deliveryEarliest.getTime() === eta.deliveryLatest.getTime();
+    if (delivSame) {
+        delivDateEl.querySelector('span').textContent = fmtDate(eta.deliveryEarliest);
+    } else {
+        delivDateEl.querySelector('span').textContent =
+            fmtShort(eta.deliveryEarliest) + ' – ' + fmtDate(eta.deliveryLatest);
+    }
+
+    // Delivery sub-text: show distance if known
+    const delivSubEl = document.getElementById('etaDeliverySub');
+    if (distanceKm > 0) {
+        delivSubEl.textContent = `Shipped after production · ~${distanceKm.toFixed(1)} km · 1–${distanceKm > 10 ? 3 : 2} business days`;
+    } else {
+        delivSubEl.textContent = 'Shipped right after production · 1–3 business days';
+    }
+
+    // Summary bar
+    document.getElementById('etaWindowDisplay').textContent =
+        fmtShort(eta.deliveryEarliest) + ' – ' + fmtDate(eta.deliveryLatest);
+
+    const totalMinDays = Math.round((eta.deliveryEarliest - eta.orderDate) / (1000 * 60 * 60 * 24));
+    const totalMaxDays = Math.round((eta.deliveryLatest   - eta.orderDate) / (1000 * 60 * 60 * 24));
+    document.getElementById('etaWindowRange').textContent =
+        `Approx. ${totalMinDays}–${totalMaxDays} calendar days from order`;
+
+    // Header badge
+    document.getElementById('etaHeaderBadge').textContent =
+        fmtShort(eta.deliveryEarliest) + ' – ' + fmtShort(eta.deliveryLatest);
+
+    // Progress bar – animate to ~16% only when open
+    if (document.getElementById('etaCard').classList.contains('open')) {
+        setTimeout(() => {
+            document.getElementById('etaProgressFill').style.width = '16%';
+        }, 300);
+    }
+}
+
+/**
+ * Toggle the ETA dropdown open/closed.
+ */
+function toggleETA() {
+    const card   = document.getElementById('etaCard');
+    const isOpen = card.classList.toggle('open');
+    card.querySelector('.eta-header').setAttribute('aria-expanded', String(isOpen));
+    if (isOpen) {
+        setTimeout(() => { document.getElementById('etaProgressFill').style.width = '16%'; }, 220);
+    } else {
+        document.getElementById('etaProgressFill').style.width = '0%';
+    }
+}
+
+// Initialize ETA on page load with no distance (unknown)
+document.addEventListener('DOMContentLoaded', function () {
+    updateETADisplay(0);
+});
+
+/* ════════════════════════════════════════════════════════ */
 
 // ── Voucher ───────────────────────────────────────────────────
 async function applyVoucher() {
@@ -847,6 +1343,9 @@ function applyDeliveryFee(destLat, destLng, labelName, roadKm) {
     document.getElementById('deliveryFeeInput').value                = fee.toFixed(2);
     document.getElementById('deliveryDistanceInput').value           = displayRoad.toFixed(1);
 
+    // ── Update ETA with actual road distance ──
+    updateETADisplay(displayRoad);
+
     refreshTotals();
 }
 
@@ -876,7 +1375,8 @@ function resetFee() {
     document.getElementById('deliveryFeeInput').value          = '0';
     document.getElementById('deliveryDistanceInput').value     = '0';
     resetMapFooter();
-    setMapStatus('Select barangay');
+    setMapStatus('Select address');
+    updateETADisplay(0); // reset ETA to unknown distance
     refreshTotals();
 }
 
@@ -994,37 +1494,49 @@ async function drawRoadRoute(destLat, destLng, labelName) {
     }
 }
 
-// ── Load only Cebu City on page load (no geolocation needed) ──
+// ── Location Initialization (Default to Cebu City) ────────────
 document.addEventListener('DOMContentLoaded', function () {
-    loadCebuCity();
+    // Load all cities first, then hardcode the default city
+    loadAndPreselectCity();
 });
 
-async function loadCebuCity() {
+async function loadAndPreselectCity() {
+    // Step 1: Load all cities into the dropdown first
     try {
         const res  = await fetch('/api/locations/cities/1');
         const data = await res.json();
-
-        // Filter to Cebu City only (id: 1)
-        citiesData = data.filter(c => c.id === CEBU_CITY_ID);
-
-        // Populate city dropdown
-        citySelect.innerHTML = '<option value="">Select City</option>';
-        citiesData.forEach(c => citySelect.add(new Option(c.city_name, c.id)));
-
-        // Auto-select Cebu City
-        citySelect.value = CEBU_CITY_ID;
-        citySelect.dispatchEvent(new Event('change'));
-
+        
+        // Filter and fill the dropdown
+        citiesData = data.filter(c => CITY_CONFIGS[c.id]);
+        fillCityDropdown();
     } catch (e) {
-        console.error('Failed to load cities:', e);
-        // Fallback: manually add Cebu City if API fails
-        citySelect.innerHTML = '<option value="1">Cebu City</option>';
-        citySelect.value = 1;
+        console.error('City load error:', e);
+        return; // Stop execution if we can't load the cities
+    }
+
+    // Step 2: Skip browser geolocation and hardcode Cebu City (ID: 1)
+    const defaultCityId = 1;
+
+    // Update the UI info box with the success message
+    const infoBox = document.getElementById('locationInfoBox');
+    if (infoBox) {
+        infoBox.innerHTML =
+            '<i class="bi bi-check-circle-fill" style="color:#15803d;flex-shrink:0;"></i>' +
+            '<span><strong>Great!</strong> You\'re in our delivery area: <strong>Cebu City</strong></span>';
+    }
+
+    // Set the dropdown value to '1' and trigger the change event
+    if (typeof citySelect !== 'undefined' && citySelect) {
+        citySelect.value = String(defaultCityId);
         citySelect.dispatchEvent(new Event('change'));
     }
 }
 
-// ── City change handler ───────────────────────────────────────
+function fillCityDropdown() {
+    citySelect.innerHTML = '<option value="">Select City</option>';
+    citiesData.forEach(c => citySelect.add(new Option(c.city_name, c.id)));
+}
+
 citySelect.addEventListener('change', function () {
     const id = parseInt(this.value);
     if (!id) { resetCity(); return; }

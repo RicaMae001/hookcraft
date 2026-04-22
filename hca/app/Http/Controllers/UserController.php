@@ -17,15 +17,35 @@ class UserController extends Controller
         Log::info('Registration started', $request->except('password', 'password_confirmation'));
 
         try {
+            // ===================================
+            // OTP GUARD — block if not verified
+            // ===================================
+            if (!session('otp_verified')) {
+                Log::warning('Registration blocked — OTP not verified', ['email' => $request->email]);
+                return redirect()->back()
+                    ->withInput($request->except('password', 'password_confirmation'))
+                    ->withErrors(['email' => 'Please verify your email with OTP before registering.']);
+            }
+
+            if (session('pending_otp_email') !== $request->email) {
+                Log::warning('Registration blocked — email mismatch', [
+                    'form_email'    => $request->email,
+                    'session_email' => session('pending_otp_email'),
+                ]);
+                return redirect()->back()
+                    ->withInput($request->except('password', 'password_confirmation'))
+                    ->withErrors(['email' => 'Email does not match the verified OTP email.']);
+            }
+
             // Step 1: Validate
             $data = $request->validate([
-                'name' => 'required|string|max:255',
-                'email' => 'required|email|unique:users,email',
+                'name'     => 'required|string|max:255',
+                'email'    => 'required|email|unique:users,email',
                 'password' => 'required|confirmed|min:6',
             ]);
 
             Log::info('✅ Validation passed', ['name' => $data['name'], 'email' => $data['email']]);
-            
+
             // Step 2: Check if email already exists (double check)
             $existingUser = DB::table('users')->where('email', $data['email'])->first();
             if ($existingUser) {
@@ -34,45 +54,56 @@ class UserController extends Controller
                     ->withInput($request->except('password', 'password_confirmation'))
                     ->withErrors(['email' => 'This email is already registered.']);
             }
-            
+
             Log::info('✅ Email is unique');
 
-            // Try direct DB insert with role
+            // Step 3: Insert user
             Log::info('Attempting to insert user...');
-            
+
             $userId = DB::table('users')->insertGetId([
-                'name' => $data['name'],
-                'email' => $data['email'],
-                'password' => Hash::make($data['password']),
-                'role' => 'User', // Set role as User
-                'created_at' => now(),
+                'name'         => $data['name'],
+                'email'        => $data['email'],
+                'password'     => Hash::make($data['password']),
+                'role'         => 'User',
+                'otp_verified' => 1, // mark as verified
+                'created_at'   => now(),
             ]);
 
             Log::info('✅ User created successfully!', ['user_id' => $userId, 'role' => 'User']);
-            
-            // Verify the user was actually inserted
+
+            // Step 4: Verify the user was actually inserted
             $insertedUser = DB::table('users')->where('id', $userId)->first();
             Log::info('✅ User verified in database', ['user' => $insertedUser]);
 
-            // Get the user and login
+            // Step 5: Clear OTP session data
+            session()->forget([
+                'pending_otp',
+                'pending_otp_email',
+                'pending_otp_expires',
+                'otp_verified',
+            ]);
+
+            Log::info('✅ OTP session cleared');
+
+            // Step 6: Login the new user
             $user = User::find($userId);
             Auth::login($user);
 
             return redirect()->route('home')->with('success', 'Registration successful!');
-            
+
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Validation failed', ['errors' => $e->errors()]);
             return redirect()->back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors($e->errors());
-                
+
         } catch (\Exception $e) {
             Log::error('Registration error', [
                 'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
+                'file'    => $e->getFile(),
+                'line'    => $e->getLine(),
             ]);
-            
+
             return redirect()->back()
                 ->withInput($request->except('password', 'password_confirmation'))
                 ->withErrors(['error' => 'Registration failed: ' . $e->getMessage()]);
@@ -89,13 +120,13 @@ class UserController extends Controller
 
         // Check if user exists in users table
         $user = DB::table('users')->where('email', $credentials['email'])->first();
-        
+
         if ($user) {
             // Verify it's a User role
             if ($user->role !== 'User') {
                 Log::warning('Invalid user role attempting login', [
                     'email' => $credentials['email'],
-                    'role' => $user->role
+                    'role'  => $user->role
                 ]);
                 return back()->withErrors(['email' => 'Invalid credentials']);
             }
@@ -105,7 +136,7 @@ class UserController extends Controller
                 $request->session()->regenerate();
                 Log::info('User logged in successfully', [
                     'user_id' => Auth::id(),
-                    'role' => 'User'
+                    'role'    => 'User'
                 ]);
                 return redirect()->route('home');
             }
@@ -115,7 +146,7 @@ class UserController extends Controller
         $deliveryCoordinator = DB::table('delivery_coordinator')
             ->where('email', $credentials['email'])
             ->first();
-        
+
         if ($deliveryCoordinator) {
             Log::warning('Delivery coordinator attempted user login', [
                 'email' => $credentials['email']
@@ -132,12 +163,12 @@ class UserController extends Controller
     // Logout
     public function logout(Request $request)
     {
-        $userId = Auth::id();
+        $userId   = Auth::id();
         $userRole = Auth::user()->role ?? 'Unknown';
-        
+
         Log::info('User logging out', [
             'user_id' => $userId,
-            'role' => $userRole
+            'role'    => $userRole
         ]);
 
         Auth::logout();
@@ -159,6 +190,6 @@ class UserController extends Controller
             return redirect()->route('login')->with('error', 'Unauthorized access');
         }
 
-        return null; // Continue
+        return null;
     }
 }

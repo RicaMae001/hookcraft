@@ -5,9 +5,11 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Auth;
 use App\Services\NotificationService;
 use App\Helpers\NotificationHelper;
+use App\Mail\OrderCancelledMail;
 
 class OrderController extends Controller
 {
@@ -19,11 +21,56 @@ class OrderController extends Controller
         $this->notificationService = $notificationService;
     }
 
+    // ============================================
+    // EMAIL HELPER
+    // ============================================
+
     /**
-     * ===============================
-     * CUSTOMER: Cancel Order
-     * ===============================
+     * Resolve customer email from user_id or order.email fallback,
+     * then send the cancellation email. Wrapped in try/catch so a
+     * mail failure never breaks the cancellation flow.
      */
+    private function sendCancelledEmail($order, string $reason, string $cancelledBy): void
+    {
+        try {
+            $toEmail = null;
+
+            if (!empty($order->user_id)) {
+                $user    = DB::table('users')->where('id', $order->user_id)->first();
+                $toEmail = $user->email ?? null;
+            }
+
+            if (!$toEmail && !empty($order->email)) {
+                $toEmail = $order->email;
+            }
+
+            if (!$toEmail) {
+                Log::warning('Order cancelled email skipped — no email found', [
+                    'order_id' => $order->id,
+                ]);
+                return;
+            }
+
+            Mail::to($toEmail)->send(new OrderCancelledMail($order, $reason, $cancelledBy));
+
+            Log::info('Order cancelled email sent', [
+                'order_id'     => $order->id,
+                'to'           => $toEmail,
+                'cancelled_by' => $cancelledBy,
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Failed to send order cancelled email', [
+                'order_id' => $order->id,
+                'error'    => $e->getMessage(),
+            ]);
+        }
+    }
+
+    // ============================================
+    // CUSTOMER: Cancel Order
+    // ============================================
+
     public function cancel(Request $request, $id)
     {
         $order = DB::table('orders')
@@ -46,7 +93,6 @@ class OrderController extends Controller
         DB::beginTransaction();
 
         try {
-            // Update order status
             DB::table('orders')->where('id', $id)->update([
                 'delivery_status' => 'Cancelled',
                 'payment_status'  => 'Unsuccessful',
@@ -57,37 +103,28 @@ class OrderController extends Controller
                 $this->restoreStockFromOrder($id);
             }
 
-            /**
-             * ===============================
-             * NOTIFICATIONS - FIXED
-             * ===============================
-             * Send notification to ALL parties:
-             * - Admin/Staff (always)
-             * - Customer (always) 
-             * - Delivery Coordinator (only if assigned)
-             */
-
+            // In-app notifications to all parties
             NotificationHelper::orderCancelled(
-                $id,                      // orderId
-                $order->customer_name,    // customerName
-                'Cancelled by customer',  // reason
-                auth()->id(),             // userId (customer)
-                $order->coordinator_id    // coordinatorId (FIXED: was delivery_coordinator_id)
+                $id,
+                $order->customer_name,
+                'Cancelled by customer',
+                auth()->id(),
+                $order->coordinator_id
             );
 
             DB::commit();
+
+            // Send cancellation email to customer
+            $this->sendCancelledEmail($order, 'Cancelled by customer', 'customer');
 
             Log::info('Order cancelled by customer', [
                 'order_id'       => $id,
                 'user_id'        => auth()->id(),
                 'coordinator_id' => $order->coordinator_id,
-                'customer_name'  => $order->customer_name
+                'customer_name'  => $order->customer_name,
             ]);
 
-            return back()->with(
-                'success',
-                'Order cancelled successfully.'
-            );
+            return back()->with('success', 'Order cancelled successfully.');
 
         } catch (\Exception $e) {
             DB::rollBack();
@@ -96,21 +133,17 @@ class OrderController extends Controller
                 'order_id' => $id,
                 'user_id'  => auth()->id(),
                 'error'    => $e->getMessage(),
-                'trace'    => $e->getTraceAsString()
+                'trace'    => $e->getTraceAsString(),
             ]);
 
-            return back()->with(
-                'error',
-                'Failed to cancel order. Please try again.'
-            );
+            return back()->with('error', 'Failed to cancel order. Please try again.');
         }
     }
 
-    /**
-     * ===============================
-     * ADMIN: Update Order Status
-     * ===============================
-     */
+    // ============================================
+    // ADMIN: Update Order Status
+    // ============================================
+
     public function updateStatus(Request $request, $id)
     {
         $order = DB::table('orders')->where('id', $id)->first();
@@ -118,7 +151,7 @@ class OrderController extends Controller
         if (!$order) {
             return response()->json([
                 'success' => false,
-                'message' => 'Order not found'
+                'message' => 'Order not found',
             ], 404);
         }
 
@@ -142,7 +175,7 @@ class OrderController extends Controller
                 DB::table('orders')->where('id', $id)->update($updateData);
             }
 
-            $newPaymentStatus  = $request->payment_status ?? $oldPaymentStatus;
+            $newPaymentStatus  = $request->payment_status  ?? $oldPaymentStatus;
             $newDeliveryStatus = $request->delivery_status ?? $oldDeliveryStatus;
 
             // Stock handling
@@ -154,28 +187,33 @@ class OrderController extends Controller
                 $this->restoreStockFromOrder($id);
             }
 
-            // Handle cancellation
+            // Handle cancellation by admin
             if ($newDeliveryStatus === 'Cancelled' && $oldDeliveryStatus !== 'Cancelled') {
 
                 if ($order->payment_status === 'Paid') {
                     $this->restoreStockFromOrder($id);
                 }
 
-                // Send notifications to all parties (FIXED: coordinator_id)
+                $reason = $request->reason ?? 'Cancelled by admin';
+
+                // In-app notifications
                 NotificationHelper::orderCancelled(
                     $id,
                     $order->customer_name,
-                    $request->reason ?? 'Cancelled by admin',
+                    $reason,
                     $order->user_id,
                     $order->coordinator_id
                 );
+
+                // Send cancellation email to customer
+                $this->sendCancelledEmail($order, $reason, 'admin');
             }
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Order updated successfully'
+                'message' => 'Order updated successfully',
             ]);
 
         } catch (\Exception $e) {
@@ -183,21 +221,20 @@ class OrderController extends Controller
 
             Log::error('Error updating order', [
                 'order_id' => $id,
-                'error'    => $e->getMessage()
+                'error'    => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update order'
+                'message' => 'Failed to update order',
             ], 500);
         }
     }
 
-    /**
-     * ===============================
-     * STOCK HELPERS
-     * ===============================
-     */
+    // ============================================
+    // STOCK HELPERS
+    // ============================================
+
     private function deductStockFromOrder($orderId)
     {
         $items = DB::table('order_item')->where('order_id', $orderId)->get();

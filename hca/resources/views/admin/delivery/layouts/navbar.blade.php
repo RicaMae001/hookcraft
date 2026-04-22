@@ -74,14 +74,7 @@
 
 <!-- Profile Dropdown Menu -->
 <div class="profile-menu-dropdown" id="profileMenu" style="display: none;">
-    <a href="#" class="profile-menu-item">
-        <i class="fas fa-user me-2"></i>
-        <span>Profile</span>
-    </a>
-    <a href="{{ route('delivery.history') }}" class="profile-menu-item">
-        <i class="fas fa-history me-2"></i>
-        <span>History</span>
-    </a>
+ 
     <div class="dropdown-divider"></div>
     <form action="{{ route('delivery.logout') }}" method="POST" class="w-100 m-0">
         @csrf

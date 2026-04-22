@@ -101,7 +101,7 @@
                 <thead>
                     <tr>
                         <th style="width: 80px;">Image</th>
-                        <th>ID</th>
+                     
                         <th>Product Name</th>
                         <th>Category</th>
                         <th>Price</th>
@@ -117,14 +117,12 @@
                                      alt="{{ $product->name }}" 
                                      style="width: 60px; height: 60px; object-fit: cover; border-radius: 12px; border: 2px solid var(--border-color);">
                             </td>
-                            <td>
-                                <span style="font-weight: 700; color: var(--text-secondary);">#{{ $product->id }}</span>
-                            </td>
+                           
                             <td>
                                 <div style="font-weight: 600;">{{ $product->name }}</div>
                             </td>
                             <td>
-                                <span class="badge-modern badge-info">{{ $product->category_name }}</span>
+                                <span class="badge-modern badge-info">{{ $product->category->name ?? 'N/A' }}</span>
                             </td>
                             <td>
                                 <span style="font-weight: 700; color: var(--success);">₱{{ number_format($product->price, 2) }}</span>
@@ -322,7 +320,7 @@
                     <table class="modern-table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                               
                                 <th>Category Name</th>
                                 <th>Description</th>
                                 <th class="text-center">Actions</th>
@@ -331,7 +329,7 @@
                         <tbody>
                             @foreach($categories as $category)
                                 <tr>
-                                    <td><span style="font-weight: 700; color: var(--text-secondary);">#{{ $category->id }}</span></td>
+                                   
                                     <td><strong>{{ $category->name }}</strong></td>
                                     <td style="color: var(--text-secondary);">{{ $category->description ?? 'No description' }}</td>
                                     <td>

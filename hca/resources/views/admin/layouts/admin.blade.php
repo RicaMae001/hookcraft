@@ -646,11 +646,20 @@
 
         <div class="sidebar-section">
             <div class="sidebar-section-title">Main Menu</div>
-            
-            <a href="{{ route('admin.dashboard') }}" class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-                <i class="fas fa-home"></i>
-                <span>Dashboard</span>
-            </a>
+
+            {{-- Dashboard: locked for Staff --}}
+            @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
+                <a href="{{ route('admin.dashboard') }}" class="sidebar-link {{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                </a>
+            @else
+                <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Dashboard')">
+                    <i class="fas fa-home"></i>
+                    <span>Dashboard</span>
+                    <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
+                </a>
+            @endif
 
             <a href="{{ route('admin.orders') }}" class="sidebar-link {{ request()->routeIs('admin.orders') ? 'active' : '' }}">
                 <i class="fas fa-shopping-bag"></i>
@@ -662,12 +671,21 @@
                 <span>Products</span>
             </a>
 
-            <a href="{{ route('admin.users') }}" class="sidebar-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
-                <i class="fas fa-users"></i>
-                <span>Customers/User</span>
-            </a>
+            {{-- Customers/User: locked for Staff --}}
+            @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
+                <a href="{{ route('admin.users') }}" class="sidebar-link {{ request()->routeIs('admin.users') ? 'active' : '' }}">
+                    <i class="fas fa-users"></i>
+                    <span>Customers/User</span>
+                </a>
+            @else
+                <a href="#" class="sidebar-link restricted" onclick="showAccessDeniedModal(event, 'Customers/User')">
+                    <i class="fas fa-users"></i>
+                    <span>Customers/User</span>
+                    <i class="fas fa-lock ms-auto" style="font-size: 0.875rem; width: auto;"></i>
+                </a>
+            @endif
 
-            {{-- Customize: locked for Staff, accessible for Admin/SuperAdmin only --}}
+            {{-- Customize: locked for Staff --}}
             @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
                 <a href="{{ route('admin.customizations.index') }}" class="sidebar-link {{ request()->routeIs('admin.customizations.*') ? 'active' : '' }}">
                     <i class="fas fa-images"></i>
@@ -681,7 +699,7 @@
                 </a>
             @endif
 
-            {{-- Vouchers: locked for Staff, accessible for Admin/SuperAdmin only --}}
+            {{-- Vouchers: locked for Staff --}}
             @if(session('admin_role') === 'Admin' || session('admin_role') === 'SuperAdmin')
                 <a href="{{ route('admin.vouchers.index') }}" class="sidebar-link {{ request()->routeIs('admin.vouchers.*') ? 'active' : '' }}">
                     <i class="fas fa-ticket-alt"></i>
@@ -773,7 +791,7 @@
                     <h5>You don't have permission to access <span id="sectionName" style="color: var(--danger);"></span></h5>
                     <p class="text-muted">Only Admin can access this section. Please contact your administrator if you need access.</p>
                 </div>
-                <div class="modal-footer border-0 justify-content: center;">
+                <div class="modal-footer border-0 justify-content-center">
                     <button type="button" class="btn btn-modern-secondary" data-bs-dismiss="modal">Close</button>
                 </div>
             </div>
@@ -800,7 +818,6 @@
 
         // Notification Toggle
         function toggleNotifications() {
-            // Add your notification logic here
             alert('Notifications feature coming soon!');
         }
 

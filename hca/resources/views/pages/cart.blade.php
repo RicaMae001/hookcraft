@@ -35,20 +35,23 @@
             box-sizing: border-box;
         }
 
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: linear-gradient(135deg, #fdf2f8 0%, #f8fafc 100%);
-            color: var(--dark-navy);
-            line-height: 1.6;
-            min-height: 100vh;
-        }
+     body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #fdf2f8 0%, #f8fafc 100%);
+    color: var(--dark-navy);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
 
-        /* Container */
-        .cart-wrapper {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 1.5rem 0.5rem;
-        }
+/* Container */
+.cart-wrapper {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1.5rem 0.5rem;
+    flex: 1;
+}
 
         /* Page Header */
         .page-header {

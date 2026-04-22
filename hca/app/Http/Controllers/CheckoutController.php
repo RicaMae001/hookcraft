@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Order;
@@ -14,6 +15,7 @@ use App\Models\Voucher;
 use App\Models\VoucherUsage;
 use App\Helpers\NotificationHelper;
 use App\Services\NotificationService;
+use App\Mail\OrderPlacedMail;
 
 class CheckoutController extends Controller
 {
@@ -264,6 +266,17 @@ class CheckoutController extends Controller
             } catch (\Exception $e) {
                 Log::error('Failed to send order created notification', [
                     'order_id' => $order->id,
+                    'error'    => $e->getMessage(),
+                ]);
+            }
+
+            // Send Order Placed email to customer
+            try {
+                Mail::to($order->email)->send(new OrderPlacedMail($order));
+            } catch (\Exception $e) {
+                Log::error('Failed to send order placed email', [
+                    'order_id' => $order->id,
+                    'email'    => $order->email,
                     'error'    => $e->getMessage(),
                 ]);
             }

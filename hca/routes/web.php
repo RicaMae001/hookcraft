@@ -23,6 +23,8 @@ use App\Http\Controllers\LiveChatController;
 use App\Http\Controllers\DeliveryLiveChatController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\VoucherController;
+use App\Http\Controllers\OtpController; // <-- ADDED
+use App\Http\Controllers\ForgotPasswordController;
 
 /*
 |--------------------------------------------------------------------------
@@ -52,6 +54,12 @@ Route::get('/login', function () {
 Route::post('/login', [UserController::class, 'login'])->name('login.submit');
 Route::post('/register', [UserController::class, 'register'])->name('register');
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
+
+// ===================================
+// OTP ROUTES (must be outside auth middleware)
+// ===================================
+Route::post('/otp/send',   [OtpController::class, 'send'])->name('otp.send');
+Route::post('/otp/verify', [OtpController::class, 'verify'])->name('otp.verify');
 
 // ===================================
 // CHATBOT ROUTES
@@ -359,3 +367,8 @@ Route::middleware(['delivery'])->prefix('delivery')->name('delivery.')->group(fu
 });
 
 Route::view('/terms-and-conditions', 'pages.terms')->name('terms');
+
+Route::get('/forgot-password',           [ForgotPasswordController::class, 'show'])->name('password.forgot');
+Route::post('/forgot-password/send-otp', [ForgotPasswordController::class, 'sendOtp'])->name('password.send-otp');
+Route::post('/forgot-password/verify',   [ForgotPasswordController::class, 'verifyOtp'])->name('password.verify-otp');
+Route::post('/forgot-password/reset',    [ForgotPasswordController::class, 'resetPassword'])->name('password.reset');
