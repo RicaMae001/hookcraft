@@ -308,21 +308,21 @@
                     <div class="card-body">
 
                         <div class="location-info" id="locationInfoBox">
-                            <i class="bi bi-info-circle" style="flex-shrink:0;margin-top:2px;"></i>
-                            <span><strong>Service Area:</strong> We currently deliver within Cebu City</span>
+                            <i class="bi bi-check-circle-fill" style="color:#15803d;flex-shrink:0;margin-top:2px;"></i>
+                            <span><strong>Service Area:</strong> We currently deliver within <strong>Cebu City</strong></span>
                         </div>
 
                         <div class="cols-row">
                             <div class="col-md-6 form-group">
                                 <label class="form-label">City *</label>
                                 <select class="form-select" id="citySelect" name="city_id" required>
-                                    <option value="">Select City</option>
+                                    <option value="">Loading...</option>
                                 </select>
                             </div>
                             <div class="col-md-6 form-group">
                                 <label class="form-label">Barangay *</label>
                                 <select class="form-select" id="barangaySelect" name="barangay_id" disabled required>
-                                    <option value="">Select city first</option>
+                                    <option value="">Select barangay</option>
                                 </select>
                             </div>
                         </div>
@@ -338,7 +338,7 @@
                             <div class="map-wrapper">
                                 <div class="map-header">
                                     <div class="map-header-title"><i class="bi bi-truck"></i>Delivery Route</div>
-                                    <span class="map-status-pill" id="mapStatusPill">Select address</span>
+                                    <span class="map-status-pill" id="mapStatusPill">Select barangay</span>
                                 </div>
                                 <div id="map"></div>
                                 <div class="map-footer">
@@ -367,7 +367,7 @@
                             <small style="color:var(--secondary-gray);display:block;margin-bottom:4px;">Selected Address:</small>
                             <span class="location-badge">Central Visayas</span>
                             <span class="location-badge">Cebu</span>
-                            <span class="location-badge" id="selectedCity">—</span>
+                            <span class="location-badge" id="selectedCity">Cebu City</span>
                             <span class="location-badge" id="selectedBarangay">—</span>
                         </div>
 
@@ -480,7 +480,7 @@
                                     <div class="fee-row">
                                         <span class="fee-label"><i class="bi bi-truck" style="margin-right:3px;"></i>Delivery Fee</span>
                                         <span class="fee-value" id="deliveryFeeDisplay">
-                                            <span style="font-size:0.78rem;font-weight:400;color:#b45309;">Select address</span>
+                                            <span style="font-size:0.78rem;font-weight:400;color:#b45309;">Select barangay</span>
                                         </span>
                                     </div>
                                     <div class="delivery-route-mini" id="deliveryRouteInfo" style="display:none;">
@@ -674,11 +674,10 @@ const ORIGIN   = { lat: 10.314152, lng: 123.906935 };
 const SUBTOTAL = {{ $total }};
 const DELIVERY = { baseFee: 40, baseKm: 2, ratePerKm: 15, maxFee: 200, roadFactor: 1.3 };
 
+// Only Cebu City config
+const CEBU_CITY_ID = 1;
 const CITY_CONFIGS = {
-    1: { name: 'Cebu City',      center: [10.3157, 123.8854], bounds: [[10.25, 123.80], [10.38, 123.97]], minZoom: 12, maxZoom: 18 },
-    2: { name: 'Lapu-Lapu City', center: [10.3103, 123.9494], bounds: [[10.27, 123.90], [10.35, 124.00]], minZoom: 13, maxZoom: 18 },
-    3: { name: 'Mandaue City',   center: [10.3237, 123.9227], bounds: [[10.28, 123.88], [10.37, 123.97]], minZoom: 13, maxZoom: 18 },
-    4: { name: 'Talisay City',   center: [10.2444, 123.8493], bounds: [[10.20, 123.81], [10.29, 123.89]], minZoom: 13, maxZoom: 18 }
+    1: { name: 'Cebu City', center: [10.3157, 123.8854], bounds: [[10.25, 123.80], [10.38, 123.97]], minZoom: 12, maxZoom: 18 }
 };
 
 let citiesData    = [];
@@ -805,7 +804,7 @@ function acceptTermsAndSubmit() {
 // ── Form Validation ───────────────────────────────────────────
 function validateCheckoutForm() {
     if (!citySelect.value || !barangaySelect.value) {
-        alert('Please select your city and barangay before placing your order.');
+        alert('Please select your barangay before placing your order.');
         return false;
     }
     return true;
@@ -872,12 +871,12 @@ function showCalculating() {
 
 function resetFee() {
     currentFee = 0;
-    document.getElementById('deliveryFeeDisplay').innerHTML    = '<span style="font-size:0.78rem;font-weight:400;color:#b45309;">Select address</span>';
+    document.getElementById('deliveryFeeDisplay').innerHTML    = '<span style="font-size:0.78rem;font-weight:400;color:#b45309;">Select barangay</span>';
     document.getElementById('deliveryRouteInfo').style.display = 'none';
     document.getElementById('deliveryFeeInput').value          = '0';
     document.getElementById('deliveryDistanceInput').value     = '0';
     resetMapFooter();
-    setMapStatus('Select address');
+    setMapStatus('Select barangay');
     refreshTotals();
 }
 
@@ -906,8 +905,8 @@ function ensureDeliveryFieldsSet() {
 
 // ── Map Setup ─────────────────────────────────────────────────
 const map = L.map('map', {
-    center: [10.3219, 123.9019], zoom: 13, minZoom: 11, maxZoom: 18,
-    maxBounds: [[10.15, 123.75], [10.45, 124.05]], maxBoundsViscosity: 1.0
+    center: [10.3157, 123.8854], zoom: 13, minZoom: 12, maxZoom: 18,
+    maxBounds: [[10.25, 123.80], [10.38, 123.97]], maxBoundsViscosity: 1.0
 });
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 18 }).addTo(map);
 
@@ -952,9 +951,8 @@ function placeDestMarker(lat, lng, popupText) {
     map.setView([lat, lng], 15);
 }
 
-function inBounds(lat, lng, cityId) {
-    if (!CITY_CONFIGS[cityId]) return false;
-    const b = CITY_CONFIGS[cityId].bounds;
+function inBounds(lat, lng) {
+    const b = CITY_CONFIGS[CEBU_CITY_ID].bounds;
     return lat >= b[0][0] && lat <= b[1][0] && lng >= b[0][1] && lng <= b[1][1];
 }
 
@@ -996,62 +994,41 @@ async function drawRoadRoute(destLat, destLng, labelName) {
     }
 }
 
-// ── Geolocation on load ───────────────────────────────────────
+// ── Load only Cebu City on page load (no geolocation needed) ──
 document.addEventListener('DOMContentLoaded', function () {
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(
-            async pos => {
-                const { latitude: lat, longitude: lng } = pos.coords;
-                const id = detectCityId(lat, lng);
-                await loadCities(id);
-                if (id && citiesData.length) { citySelect.value = id; citySelect.dispatchEvent(new Event('change')); }
-            },
-            () => loadAllCities()
-        );
-    } else {
-        loadAllCities();
-    }
+    loadCebuCity();
 });
 
-function detectCityId(lat, lng) {
-    for (const [id, cfg] of Object.entries(CITY_CONFIGS)) {
-        const b = cfg.bounds;
-        if (lat >= b[0][0] && lat <= b[1][0] && lng >= b[0][1] && lng <= b[1][1]) return parseInt(id);
+async function loadCebuCity() {
+    try {
+        const res  = await fetch('/api/locations/cities/1');
+        const data = await res.json();
+
+        // Filter to Cebu City only (id: 1)
+        citiesData = data.filter(c => c.id === CEBU_CITY_ID);
+
+        // Populate city dropdown
+        citySelect.innerHTML = '<option value="">Select City</option>';
+        citiesData.forEach(c => citySelect.add(new Option(c.city_name, c.id)));
+
+        // Auto-select Cebu City
+        citySelect.value = CEBU_CITY_ID;
+        citySelect.dispatchEvent(new Event('change'));
+
+    } catch (e) {
+        console.error('Failed to load cities:', e);
+        // Fallback: manually add Cebu City if API fails
+        citySelect.innerHTML = '<option value="1">Cebu City</option>';
+        citySelect.value = 1;
+        citySelect.dispatchEvent(new Event('change'));
     }
-    return null;
 }
 
-async function loadCities(detectedId) {
-    try {
-        const res  = await fetch('/api/locations/cities/1');
-        const data = await res.json();
-        citiesData = (detectedId && CITY_CONFIGS[detectedId]) ? data.filter(c => c.id === detectedId) : data.filter(c => CITY_CONFIGS[c.id]);
-        fillCityDropdown();
-        if (detectedId && CITY_CONFIGS[detectedId]) {
-            document.getElementById('locationInfoBox').innerHTML =
-                '<i class="bi bi-check-circle-fill" style="color:#15803d;flex-shrink:0;"></i>' +
-                '<span><strong>Great!</strong> You\'re in our delivery area: <strong>' + CITY_CONFIGS[detectedId].name + '</strong></span>';
-        }
-    } catch { loadAllCities(); }
-}
-
-async function loadAllCities() {
-    try {
-        const res  = await fetch('/api/locations/cities/1');
-        const data = await res.json();
-        citiesData = data.filter(c => CITY_CONFIGS[c.id]);
-        fillCityDropdown();
-    } catch (e) { console.error('City load error:', e); }
-}
-
-function fillCityDropdown() {
-    citySelect.innerHTML = '<option value="">Select City</option>';
-    citiesData.forEach(c => citySelect.add(new Option(c.city_name, c.id)));
-}
-
+// ── City change handler ───────────────────────────────────────
 citySelect.addEventListener('change', function () {
     const id = parseInt(this.value);
     if (!id) { resetCity(); return; }
+
     currentCity = citiesData.find(c => c.id === id);
     if (!currentCity || !CITY_CONFIGS[id]) return;
 
@@ -1072,7 +1049,7 @@ citySelect.addEventListener('change', function () {
 
 function resetCity() {
     barangaySelect.disabled = true;
-    barangaySelect.innerHTML = '<option value="">Select city first</option>';
+    barangaySelect.innerHTML = '<option value="">Select barangay</option>';
     if (boundaryRect) map.removeLayer(boundaryRect);
     clearRouteLayers();
     document.getElementById('addressDisplay').classList.remove('active');
@@ -1081,12 +1058,19 @@ function resetCity() {
 }
 
 function loadBarangays(cityId) {
+    barangaySelect.disabled = true;
+    barangaySelect.innerHTML = '<option value="">Loading barangays…</option>';
+
     fetch('/api/locations/barangays/' + cityId)
         .then(r => r.json())
         .then(data => {
             barangaysData = data;
             barangaySelect.innerHTML = '<option value="">Choose Barangay</option>';
             data.forEach(b => barangaySelect.add(new Option(b.barangay_name, b.id)));
+            barangaySelect.disabled = false;
+        })
+        .catch(() => {
+            barangaySelect.innerHTML = '<option value="">Failed to load — refresh page</option>';
             barangaySelect.disabled = false;
         });
 }
@@ -1124,26 +1108,27 @@ async function geocodeBarangay(barangay) {
         const results = await res.json();
 
         let lat, lng;
-        if (results.length > 0 && inBounds(parseFloat(results[0].lat), parseFloat(results[0].lon), currentCity.id)) {
+        if (results.length > 0 && inBounds(parseFloat(results[0].lat), parseFloat(results[0].lon))) {
             lat = parseFloat(results[0].lat);
             lng = parseFloat(results[0].lon);
         } else {
-            [lat, lng] = CITY_CONFIGS[currentCity.id].center;
+            [lat, lng] = CITY_CONFIGS[CEBU_CITY_ID].center;
         }
 
         placeDestMarker(lat, lng, label);
         await drawRoadRoute(lat, lng, label);
     } catch {
-        const [lat, lng] = CITY_CONFIGS[currentCity.id].center;
+        const [lat, lng] = CITY_CONFIGS[CEBU_CITY_ID].center;
         placeDestMarker(lat, lng, label);
         await drawRoadRoute(lat, lng, label);
     }
 }
 
+// ── Map click handler ─────────────────────────────────────────
 map.on('click', async function (e) {
-    if (!currentCity) { alert('Please select your city first.'); return; }
+    if (!currentCity) { alert('Please wait, loading city data…'); return; }
     const { lat, lng } = e.latlng;
-    if (!inBounds(lat, lng, currentCity.id)) { alert('Please select a location within ' + currentCity.city_name + ' only.'); return; }
+    if (!inBounds(lat, lng)) { alert('Please select a location within Cebu City only.'); return; }
 
     placeDestMarker(lat, lng, null);
     showCalculating();
