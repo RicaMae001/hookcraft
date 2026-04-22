@@ -515,14 +515,7 @@
                 @endif
 
                 @if($customization->canCheckout())
-                <div class="action-row">
-                    <a href="{{ route('customization.add-to-cart', $customization->id) }}" class="btn btn-success">
-                        <i class="fas fa-cart-plus"></i> Add to Cart
-                    </a>
-                    <a href="{{ route('customization.proceed-checkout', $customization->id) }}" class="btn btn-checkout">
-                        <i class="fas fa-bolt"></i> Checkout Now
-                    </a>
-                </div>
+             
                 @elseif($customization->order_id)
                 <div class="ordered-notice">
                     <i class="fas fa-check-double"></i>
